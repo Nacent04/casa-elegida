@@ -1,0 +1,1313 @@
+{
+  "lista": [
+    {
+      "id": "FAC-1776813128562",
+      "fecha": "21/4/2026, 08:12:08",
+      "fechaTimestamp": 1776813128562,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "1",
+          "vFoto": "/uploads/logo-1775187346058.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "2",
+          "vFoto": "/uploads/logo-1775187344070.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        }
+      ],
+      "pago": {
+        "total": 117000,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Kevin Apolinar",
+        "apellido": "Pacheco Ferreyra",
+        "dni": "9999999",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "03816569211",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776813103173"
+    },
+    {
+      "id": "FAC-1776522884999",
+      "fecha": "18/4/2026, 11:34:44",
+      "fechaTimestamp": 1776522884999,
+      "items": [
+        {
+          "pId": 1775493104614,
+          "pNom": "MANTA ESCOCESA",
+          "vNom": "2",
+          "vFoto": "/uploads/logo-1775493156626.jpg",
+          "precio": 15500,
+          "precioMayor": 12500,
+          "cant": 5,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 77500
+        }
+      ],
+      "pago": {
+        "total": 77500,
+        "metodo": "efectivo"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "esMayorista": false,
+      "razonMayorista": "",
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1776467018071",
+      "fecha": "17/4/2026, 08:03:38",
+      "fechaTimestamp": 1776467018071,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "14",
+          "vFoto": "/uploads/logo-1775483169641.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "13",
+          "vFoto": "/uploads/logo-1775483161974.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        }
+      ],
+      "pago": {
+        "total": 117000,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Kevin",
+        "apellido": "Ferreyra",
+        "dni": "45330596",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "03816569211",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776466976975"
+    },
+    {
+      "id": "FAC-1776465405391",
+      "fecha": "17/4/2026, 07:36:45",
+      "fechaTimestamp": 1776465405391,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "6",
+          "vFoto": "/uploads/logo-1775483124956.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "9",
+          "vFoto": "/uploads/logo-1775483139634.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 1,
+          "esManual": false,
+          "subtotal": 19500
+        },
+        {
+          "pId": 1775493104614,
+          "pNom": "MANTA ESCOCESA",
+          "vNom": "1",
+          "vFoto": "/uploads/logo-1775493154924.jpg",
+          "precio": 12500,
+          "precioOriginal": 15500,
+          "cant": 5,
+          "esManual": false,
+          "subtotal": 62500
+        }
+      ],
+      "pago": {
+        "total": 140500,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "rosa",
+        "apellido": "santos",
+        "dni": "43363459",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "3815243006",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776465366932"
+    },
+    {
+      "id": "FAC-1776461132808",
+      "fecha": "17/4/2026, 06:25:32",
+      "fechaTimestamp": 1776461132808,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "7",
+          "vFoto": "/uploads/logo-1775483129220.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "4",
+          "vFoto": "/uploads/logo-1775483115573.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        }
+      ],
+      "pago": {
+        "total": 117000,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "roky",
+        "apellido": "balboa",
+        "dni": "9999999",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "3819999999",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776461120008"
+    },
+    {
+      "id": "FAC-1776444983967",
+      "fecha": "17/4/2026, 01:56:23",
+      "fechaTimestamp": 1776444983967,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "10",
+          "vFoto": "/uploads/logo-1775483145037.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "11",
+          "vFoto": "/uploads/logo-1775483155936.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        }
+      ],
+      "pago": {
+        "total": 117000,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Kevin Apolinar",
+        "apellido": "Pacheco Ferreyra",
+        "dni": "45330596",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "03816569211",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776444962511"
+    },
+    {
+      "id": "FAC-1776439522712",
+      "fecha": "17/4/2026, 12:25:22",
+      "fechaTimestamp": 1776439522712,
+      "items": [
+        {
+          "pId": 1775493104614,
+          "pNom": "MANTA ESCOCESA",
+          "vNom": "10",
+          "vFoto": "/uploads/logo-1775493175620.jpg",
+          "precio": 12500,
+          "cant": 5,
+          "esManual": false,
+          "precioOriginal": 15500,
+          "subtotal": 62500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "12",
+          "vFoto": "/uploads/logo-1775483158670.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        }
+      ],
+      "pago": {
+        "total": 121000,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Kevin Apolinar",
+        "apellido": "Pacheco Ferreyra",
+        "dni": "45330596",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "03816569211",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776439504685"
+    },
+    {
+      "id": "FAC-1776434843979",
+      "fecha": "17/4/2026, 11:07:23",
+      "fechaTimestamp": 1776434843979,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "2",
+          "vFoto": "/uploads/logo-1775187344070.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "5",
+          "vFoto": "/uploads/logo-1775483120151.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "8",
+          "vFoto": "/uploads/logo-1775483134179.jpg",
+          "precio": 19500,
+          "precioOriginal": 23000,
+          "cant": 3,
+          "esManual": false,
+          "subtotal": 58500
+        }
+      ],
+      "pago": {
+        "total": 175500,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Kevin",
+        "apellido": "Ferreyra",
+        "dni": "45330596",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "03816569211",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776434787275"
+    },
+    {
+      "id": "FAC-1776434689773",
+      "fecha": "17/4/2026, 11:04:49",
+      "fechaTimestamp": 1776434689773,
+      "items": [
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "1",
+          "vFoto": "/uploads/logo-1775187346058.jpg",
+          "precio": 19500,
+          "cant": 3,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 58500
+        },
+        {
+          "pId": 1775187307897,
+          "pNom": "MANTA CON CORDERO ANIMAL PRINT",
+          "vNom": "9",
+          "vFoto": "/uploads/logo-1775483139634.jpg",
+          "precio": 19500,
+          "cant": 2,
+          "esManual": false,
+          "precioOriginal": 23000,
+          "subtotal": 39000
+        }
+      ],
+      "pago": {
+        "total": 97500,
+        "metodo": "pedido_online"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Kevin",
+        "apellido": "Ferreyra",
+        "dni": "45330596",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "03816569211",
+        "provincia": "",
+        "localidad": "",
+        "cp": "",
+        "direccion": "",
+        "altura": "",
+        "referencias": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1776434654584"
+    },
+    {
+      "id": "FAC-1775060198086",
+      "fecha": "1/4/2026, 01:16:38",
+      "fechaTimestamp": 1775060198089,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "precioMayor": 6000,
+          "cant": 17,
+          "pDescripcion": "",
+          "esManual": false,
+          "aplicaMayorista": true,
+          "precioOriginal": 7000,
+          "subtotal": 102000
+        }
+      ],
+      "pago": {
+        "total": 102000,
+        "metodo": "pedido_online",
+        "fecha": "2026-04-01T16:16:38.089Z"
+      },
+      "logistica": "envio",
+      "cliente": {
+        "nombre": "abdul",
+        "email": "kapachecoferreyra@gmail.com",
+        "telefono": "3816569211",
+        "direccion": "Avenida Alem 1067",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "razonMayorista": "Compra mayorista",
+      "estado": "completada",
+      "origen": "tienda",
+      "pedidoId": "PED-1774933045639"
+    },
+    {
+      "id": "FAC-1775019251256",
+      "fecha": "1/4/2026, 01:54:11",
+      "fechaTimestamp": 1775019251261,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 7000,
+          "precioMayor": 6000,
+          "cant": 13,
+          "pDescripcion": "",
+          "esManual": false,
+          "aplicaMayorista": false,
+          "subtotal": 91000
+        }
+      ],
+      "pago": {
+        "total": 91000,
+        "metodo": "efectivo",
+        "fecha": "2026-04-01T04:54:11.261Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "esMayorista": false,
+      "razonMayorista": "",
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1775017234066",
+      "fecha": "1/4/2026, 01:20:34",
+      "fechaTimestamp": 1775017234071,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "precioMayor": 6000,
+          "cant": 14,
+          "pDescripcion": "",
+          "esManual": false,
+          "precioOriginal": 6000,
+          "aplicaMayorista": false,
+          "subtotal": 84000
+        }
+      ],
+      "pago": {
+        "total": 84000,
+        "metodo": "efectivo",
+        "fecha": "2026-04-01T04:20:34.071Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "razonMayorista": "Mayorista por monto ($ 84.000)",
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774882521417",
+      "fecha": "30/3/2026, 11:55:21",
+      "fechaTimestamp": 1774882521417,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "precioMayor": 6000,
+          "cant": 10,
+          "pDescripcion": "",
+          "esManual": false,
+          "precioOriginal": 7000,
+          "aplicaMayorista": true,
+          "subtotal": 60000
+        }
+      ],
+      "pago": {
+        "total": 60000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-30T14:55:21.418Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "esMayorista": true,
+      "mayoristaConfig": {
+        "habilitado": true,
+        "tipo": "cantidad",
+        "valor": 3
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774716655367",
+      "fecha": "28/3/2026, 01:50:55",
+      "fechaTimestamp": 1774716655561,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "VERDE",
+          "vFoto": "/uploads/logo-1774585554777.jpg",
+          "precio": 6000,
+          "cant": 4,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 24000
+        },
+        {
+          "pId": 1774678417116,
+          "pNom": "PRODUCTO DE PRUEBA",
+          "vNom": "Unica",
+          "vFoto": "/uploads/logo-1774678439427.png",
+          "precio": 1000,
+          "cant": 3,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 3000
+        },
+        {
+          "pId": 1000000,
+          "pNom": "bolso",
+          "vNom": "unica",
+          "vFoto": "",
+          "precio": 10000,
+          "cant": 2,
+          "pDescripcion": "",
+          "esManual": true,
+          "subtotal": 20000
+        }
+      ],
+      "pago": {
+        "total": 47000,
+        "metodo": "mixto",
+        "fecha": "2026-03-28T16:50:55.561Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774716338407",
+      "fecha": "28/3/2026, 01:45:38",
+      "fechaTimestamp": 1774716338426,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 3,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 18000
+        },
+        {
+          "pId": 1774678417116,
+          "pNom": "PRODUCTO DE PRUEBA",
+          "vNom": "Unica",
+          "vFoto": "/uploads/logo-1774678439427.png",
+          "precio": 1000,
+          "cant": 4,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 4000
+        }
+      ],
+      "pago": {
+        "total": 22000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-28T16:45:38.426Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774715851814",
+      "fecha": "28/3/2026, 01:37:31",
+      "fechaTimestamp": 1774715851814,
+      "items": [
+        {
+          "pId": 1774678417116,
+          "pNom": "PRODUCTO DE PRUEBA",
+          "vNom": "Unica",
+          "vFoto": "/uploads/logo-1774678439427.png",
+          "precio": 1000,
+          "cant": 3,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 3000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 2,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 12000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "BEIGE",
+          "vFoto": "/uploads/logo-1774585558590.jpg",
+          "precio": 6000,
+          "cant": 2,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 12000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "VERDE",
+          "vFoto": "/uploads/logo-1774585554777.jpg",
+          "precio": 6000,
+          "cant": 2,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 12000
+        }
+      ],
+      "pago": {
+        "total": 39000,
+        "metodo": "mixto",
+        "fecha": "2026-03-28T16:37:31.814Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774715528430",
+      "fecha": "28/3/2026, 01:32:08",
+      "fechaTimestamp": 1774715528430,
+      "items": [
+        {
+          "pId": 1000000,
+          "pNom": "EFE",
+          "vNom": "Variante 1",
+          "vFoto": "",
+          "precio": 10000,
+          "cant": 5,
+          "pDescripcion": "",
+          "esManual": true,
+          "subtotal": 50000
+        }
+      ],
+      "pago": {
+        "total": 50000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-28T16:32:08.430Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774715427149",
+      "fecha": "28/3/2026, 01:30:27",
+      "fechaTimestamp": 1774715427179,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "BEIGE",
+          "vFoto": "/uploads/logo-1774585558590.jpg",
+          "precio": 6000,
+          "cant": 6,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 36000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 2,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 12000
+        },
+        {
+          "pId": 1000000,
+          "pNom": "JABON",
+          "vNom": "UNICO",
+          "vFoto": "",
+          "precio": 500,
+          "cant": 10,
+          "pDescripcion": "",
+          "esManual": true,
+          "subtotal": 5000
+        }
+      ],
+      "pago": {
+        "total": 53000,
+        "metodo": "mixto",
+        "fecha": "2026-03-28T16:30:27.179Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774682354533",
+      "fecha": "28/3/2026, 04:19:14",
+      "fechaTimestamp": 1774682354556,
+      "items": [
+        {
+          "pId": 1774678417116,
+          "pNom": "PRODUCTO DE PRUEBA",
+          "vNom": "Unica",
+          "vFoto": "/uploads/logo-1774678439427.png",
+          "precio": 1000,
+          "cant": 4,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 4000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "BEIGE",
+          "vFoto": "/uploads/logo-1774585558590.jpg",
+          "precio": 6000,
+          "cant": 9,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 54000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "VERDE",
+          "vFoto": "/uploads/logo-1774585554777.jpg",
+          "precio": 6000,
+          "cant": 1,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 6000
+        }
+      ],
+      "pago": {
+        "total": 64000,
+        "metodo": "mixto",
+        "fecha": "2026-03-28T07:19:14.556Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774678502095",
+      "fecha": "28/3/2026, 03:15:02",
+      "fechaTimestamp": 1774678502204,
+      "items": [
+        {
+          "pId": 1774678417116,
+          "pNom": "PRODUCTO DE PRUEBA",
+          "vNom": "Unica",
+          "vFoto": "/uploads/logo-1774678439427.png",
+          "precio": 1000,
+          "cant": 6,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 6000
+        }
+      ],
+      "pago": {
+        "total": 6000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-28T06:15:02.204Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774660594222",
+      "fecha": "27/3/2026, 10:16:34",
+      "fechaTimestamp": 1774660594244,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 4,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 24000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "VERDE",
+          "vFoto": "/uploads/logo-1774585554777.jpg",
+          "precio": 6000,
+          "cant": 3,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 18000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "BEIGE",
+          "vFoto": "/uploads/logo-1774585558590.jpg",
+          "precio": 6000,
+          "cant": 5,
+          "pDescripcion": "",
+          "esManual": false,
+          "subtotal": 30000
+        }
+      ],
+      "pago": {
+        "total": 72000,
+        "metodo": "transferencia",
+        "fecha": "2026-03-28T01:16:34.244Z"
+      },
+      "logistica": "envio",
+      "cliente": {
+        "nombre": "KEVIN PACHECO",
+        "dni": "45330596",
+        "celular": "3816569211",
+        "email": "kapachecoferreyra@gmail.com",
+        "cp": "4000",
+        "provincia": "Tucumán",
+        "localidad": "San Miguel de Tucumán",
+        "domicilio": "AV. ALEM 067",
+        "medioEnvio": "Via Cargo",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774643751271",
+      "fecha": "27/3/2026, 05:35:51",
+      "fechaTimestamp": 1774643751271,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 10,
+          "pDescripcion": "",
+          "subtotal": 60000
+        }
+      ],
+      "pago": {
+        "total": 60000,
+        "metodo": "mixto",
+        "fecha": "2026-03-27T20:35:51.271Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774638348613",
+      "fecha": "27/3/2026, 04:05:48",
+      "fechaTimestamp": 1774638348631,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 8,
+          "pDescripcion": "",
+          "subtotal": 48000
+        }
+      ],
+      "pago": {
+        "total": 48000,
+        "metodo": "mixto",
+        "fecha": "2026-03-27T19:05:48.631Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774594053187",
+      "fecha": "27/3/2026, 03:47:33",
+      "fechaTimestamp": 1774594053204,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 5,
+          "pDescripcion": "",
+          "subtotal": 30000
+        }
+      ],
+      "pago": {
+        "total": 30000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-27T06:47:33.204Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774587477475",
+      "fecha": "27/3/2026, 01:57:57",
+      "fechaTimestamp": 1774587477490,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 4,
+          "pDescripcion": "",
+          "subtotal": 24000
+        }
+      ],
+      "pago": {
+        "total": 24000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-27T04:57:57.490Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774586347606",
+      "fecha": "27/3/2026, 01:39:07",
+      "fechaTimestamp": 1774586347620,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 7,
+          "pDescripcion": "",
+          "subtotal": 42000
+        }
+      ],
+      "pago": {
+        "total": 42000,
+        "metodo": "efectivo",
+        "fecha": "2026-03-27T04:39:07.620Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    },
+    {
+      "id": "FAC-1774585614156",
+      "fecha": "27/3/2026, 01:26:54",
+      "fechaTimestamp": 1774585614177,
+      "items": [
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "AZUL",
+          "vFoto": "/uploads/logo-1774585551248.jpg",
+          "precio": 6000,
+          "cant": 10,
+          "pDescripcion": "",
+          "subtotal": 60000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "BEIGE",
+          "vFoto": "/uploads/logo-1774585558590.jpg",
+          "precio": 6000,
+          "cant": 5,
+          "pDescripcion": "",
+          "subtotal": 30000
+        },
+        {
+          "pId": 1774585489808,
+          "pNom": "TOALLON GOLDSUN",
+          "vNom": "VERDE",
+          "vFoto": "/uploads/logo-1774585554777.jpg",
+          "precio": 6000,
+          "cant": 6,
+          "pDescripcion": "",
+          "subtotal": 36000
+        }
+      ],
+      "pago": {
+        "total": 126000,
+        "metodo": "mixto",
+        "fecha": "2026-03-27T04:26:54.177Z"
+      },
+      "logistica": "local",
+      "cliente": {
+        "nombre": "Mostrador",
+        "dni": "",
+        "celular": "",
+        "email": "",
+        "cp": "",
+        "provincia": "",
+        "localidad": "",
+        "domicilio": "",
+        "medioEnvio": "",
+        "notas": ""
+      },
+      "estado": "completada"
+    }
+  ]
+}

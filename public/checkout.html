@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Finalizar Compra | Blanquería Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #8B5E3C;
+            --primary-light: #A0714F;
+            --primary-dark: #6B4423;
+            --secondary: #D4A574;
+            --bg-light: #FDF8F4;
+            --bg-white: #FFFFFF;
+            --text-dark: #3E2A1E;
+            --text-light: #7B6B5A;
+            --success: #4CAF50;
+            --danger: #F44336;
+            --warning: #FF9800;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .checkout-header {
+            background: var(--bg-white);
+            padding: 16px 20px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .checkout-header h1 {
+            font-size: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .back-btn:hover { background: #F0E6DC; color: var(--text-dark); }
+        
+        .checkout-container {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            flex: 1;
+        }
+        
+        @media (min-width: 900px) {
+            .checkout-header { padding: 20px 32px; }
+            .checkout-header h1 { font-size: 24px; }
+            .checkout-container {
+                grid-template-columns: 1fr 380px;
+                gap: 32px;
+                padding: 0 32px;
+                margin: 40px auto;
+            }
+        }
+        
+        .checkout-form-section {
+            background: var(--bg-white);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        @media (min-width: 640px) {
+            .checkout-form-section { padding: 32px; }
+        }
+        
+        .checkout-form-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        @media (min-width: 640px) {
+            .form-row { grid-template-columns: 1fr 1fr; }
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+        }
+        
+        .form-group label i { color: var(--primary); width: 20px; }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #F0E6DC;
+            border-radius: 16px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
+        }
+        
+        .form-group input[readonly] {
+            background: #F8F2EC;
+            color: var(--text-dark);
+            cursor: default;
+            border-color: #E8DCD2;
+        }
+        
+        .readonly-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+        
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        
+        .delivery-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        @media (min-width: 480px) {
+            .delivery-options { grid-template-columns: 1fr 1fr; }
+        }
+        
+        .delivery-option {
+            padding: 20px;
+            border: 2px solid #F0E6DC;
+            border-radius: 16px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .delivery-option i { font-size: 32px; margin-bottom: 8px; color: var(--primary); }
+        .delivery-option h3 { font-size: 16px; margin-bottom: 4px; }
+        .delivery-option p { font-size: 12px; color: var(--text-light); }
+        .delivery-option.active { border-color: var(--primary); background: #FDF8F4; }
+        .delivery-option.active i { color: var(--primary-dark); }
+        
+        .order-summary {
+            background: var(--bg-white);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+        }
+        
+        .order-summary h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .summary-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 8px;
+        }
+        
+        .summary-items::-webkit-scrollbar { width: 4px; }
+        .summary-items::-webkit-scrollbar-thumb { background: #E0D6CE; border-radius: 4px; }
+        
+        .summary-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F0E6DC;
+        }
+        
+        .summary-item:last-child { border-bottom: none; }
+        .summary-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; background: #F5EDE6; }
+        .summary-item-info { flex: 1; }
+        .summary-item-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .summary-item-info p { font-size: 11px; color: var(--text-light); }
+        .summary-item-price { font-weight: 700; color: var(--primary); font-size: 14px; text-align: right; }
+        
+        .mayorista-badge-small {
+            display: inline-block;
+            background: #FF8F00;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        
+        .summary-total {
+            padding-top: 16px;
+            border-top: 2px solid #F0E6DC;
+        }
+        
+        .summary-total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .summary-total-row.final {
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #F0E6DC;
+            color: var(--primary);
+        }
+        
+        .mayorista-info {
+            background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #FFE0B2;
+        }
+        
+        .mayorista-info p { font-size: 12px; color: #B45309; }
+        .mayorista-info i { color: #FF8F00; margin-right: 6px; }
+        
+        .payment-info-box {
+            background: #F0FDF4;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #BBF7D0;
+        }
+        
+        .payment-info-box h4 {
+            color: #166534;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+        
+        .payment-details {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        
+        .payment-details p {
+            margin-bottom: 10px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .payment-details p i { color: var(--primary); width: 24px; }
+        
+        .payment-details .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            margin-left: 8px;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+        
+        .payment-details .copy-btn:hover { background: #F0E6DC; border-radius: 20px; }
+        
+        .whatsapp-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+        
+        .whatsapp-link:hover { background: #20b859; transform: scale(1.02); }
+        
+        .btn-confirm {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-confirm:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 94, 60, 0.3);
+        }
+        
+        .btn-confirm:disabled {
+            background: #CCC;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .redirect-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        
+        .redirect-message i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.4;
+            color: var(--primary);
+        }
+        
+        .redirect-message h2 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: var(--text-dark);
+        }
+        
+        .redirect-message p {
+            margin-bottom: 20px;
+        }
+        
+        .redirect-message .btn-login {
+            display: inline-block;
+            padding: 14px 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-header">
+        <button class="back-btn" onclick="window.location.href='/tienda'">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1><i class="fas fa-shopping-cart"></i> Finalizar Compra</h1>
+    </div>
+    
+    <div class="checkout-container" id="checkout-container">
+        <!-- El contenido se cargará dinámicamente -->
+    </div>
+    
+    <div id="toast-container"></div>
+
+    <script>
+        // Variables
+        let carrito = [];
+        let configuracion = { 
+            pagos: {}, redes: {}, empresa: {},
+            mayorista: { habilitado: false, modo: 'cantidad', valorCantidad: 3, valorMonto: 80000 },
+            registroObligatorio: true
+        };
+        let metodosEnvio = [];
+        let tipoEntregaSeleccionado = 'local';
+        let productos = [];
+        let usuarioActual = null;
+        
+        const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
+        
+        // ========== MOSTRAR MENSAJE DE REDIRECCIÓN ==========
+        function mostrarRedireccionLogin() {
+            const container = document.getElementById('checkout-container');
+            container.innerHTML = `
+                <div class="checkout-form-section" style="grid-column: 1/-1;">
+                    <div class="redirect-message">
+                        <i class="fas fa-user-lock"></i>
+                        <h2>Debés iniciar sesión para continuar</h2>
+                        <p>Serás redirigido automáticamente en <span id="countdown">3</span> segundos...</p>
+                        <a href="/login" class="btn-login">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión Ahora
+                        </a>
+                        <p style="margin-top: 20px; font-size: 14px;">
+                            ¿No tenés cuenta? <a href="/registro" style="color: var(--primary);">Registrate aquí</a>
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Cuenta regresiva y redirección
+            let seconds = 3;
+            const countdownEl = document.getElementById('countdown');
+            const interval = setInterval(() => {
+                seconds--;
+                if (countdownEl) countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = '/login';
+                }
+            }, 1000);
+        }
+        
+        function mostrarCarritoVacio() {
+            const container = document.getElementById('checkout-container');
+            container.innerHTML = `
+                <div class="checkout-form-section" style="grid-column: 1/-1;">
+                    <div class="redirect-message">
+                        <i class="fas fa-shopping-bag"></i>
+                        <h2>Tu carrito está vacío</h2>
+                        <p>Agregá productos desde la tienda para continuar</p>
+                        <button class="btn-login" onclick="window.location.href='/tienda'">
+                            <i class="fas fa-store"></i> Ir a la Tienda
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ========== CARGAR DATOS ==========
+        async function cargarDatos() {
+            const token = localStorage.getItem('token');
+            
+            // PRIMERO: Verificar si hay token
+            if (!token) {
+                mostrarRedireccionLogin();
+                return;
+            }
+            
+            try {
+                // Cargar perfil del usuario
+                const userRes = await fetch('/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!userRes.ok) {
+                    // Token inválido o expirado
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('usuario');
+                    mostrarRedireccionLogin();
+                    return;
+                }
+                
+                usuarioActual = await userRes.json();
+                
+                // Cargar configuración y productos
+                const res = await fetch('/tienda/listar-productos', { method: 'POST' });
+                const data = await res.json();
+                configuracion = data.configuracion || configuracion;
+                metodosEnvio = data.metodosEnvio || [];
+                productos = data.productos || [];
+                
+                cargarCarrito();
+                
+                if (carrito.length === 0) {
+                    mostrarCarritoVacio();
+                    return;
+                }
+                
+                // Todo bien: renderizar checkout
+                renderizarCheckout();
+                actualizarMetodosEnvio();
+                
+            } catch(e) { 
+                console.error(e); 
+                mostrarToast('Error al cargar los datos', 'error');
+            }
+        }
+        
+        function cargarCarrito() {
+            const guardado = localStorage.getItem('tienda_carrito');
+            if (guardado) {
+                try { 
+                    carrito = JSON.parse(guardado);
+                    recalcularPreciosMayoristas();
+                } catch(e) { carrito = []; }
+            }
+        }
+        
+        function recalcularPreciosMayoristas() {
+            if (!configuracion.mayorista?.habilitado) {
+                carrito.forEach(i => { if (i.precioOriginal) { i.precio = i.precioOriginal; delete i.precioOriginal; } });
+                return;
+            }
+            
+            const cant = carrito.reduce((s,i) => s + i.cant, 0);
+            const monto = carrito.reduce((s,i) => s + (i.precioOriginal || i.precio) * i.cant, 0);
+            const { modo, valorCantidad = 3, valorMonto = 80000 } = configuracion.mayorista;
+            
+            let cumple = false;
+            if (modo === 'cantidad') cumple = cant >= valorCantidad;
+            else if (modo === 'monto') cumple = monto >= valorMonto;
+            else cumple = cant >= valorCantidad && monto >= valorMonto;
+            
+            carrito.forEach(i => {
+                const p = productos.find(x => x.id == i.pId);
+                if (!p) return;
+                
+                if (cumple && p.precioMayor > 0) {
+                    if (!i.precioOriginal) i.precioOriginal = i.precio;
+                    i.precio = p.precioMayor;
+                } else if (i.precioOriginal) {
+                    i.precio = i.precioOriginal;
+                    delete i.precioOriginal;
+                }
+            });
+        }
+        
+        function renderizarCheckout() {
+            const container = document.getElementById('checkout-container');
+            const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
+            const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
+            
+            container.innerHTML = `
+                <div class="checkout-form-section">
+                    <h2><i class="fas fa-user"></i> Datos del Cliente <span class="readonly-badge"><i class="fas fa-lock"></i> Datos verificados</span></h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Nombre *</label>
+                            <input type="text" id="cliente-nombre" value="${usuarioActual?.nombre || ''}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Apellido *</label>
+                            <input type="text" id="cliente-apellido" value="${usuarioActual?.apellido || ''}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-id-card"></i> DNI *</label>
+                            <input type="text" id="cliente-dni" placeholder="Ingresá tu DNI" value="${usuarioActual?.dni || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-phone"></i> Teléfono *</label>
+                            <input type="tel" id="cliente-telefono" value="${usuarioActual?.telefono || ''}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email *</label>
+                        <input type="email" id="cliente-email" value="${usuarioActual?.email || ''}" readonly>
+                    </div>
+                    
+                    <h2 style="margin-top: 32px;"><i class="fas fa-truck"></i> Tipo de Entrega</h2>
+                    
+                    <div class="delivery-options">
+                        <div class="delivery-option active" data-type="local" onclick="seleccionarTipoEntrega('local')">
+                            <i class="fas fa-store"></i>
+                            <h3>Retiro en Local</h3>
+                            <p>Retirá tu pedido sin costo</p>
+                        </div>
+                        <div class="delivery-option" data-type="envio" onclick="seleccionarTipoEntrega('envio')">
+                            <i class="fas fa-shipping-fast"></i>
+                            <h3>Envío a Domicilio</h3>
+                            <p>Recibilo en tu casa</p>
+                        </div>
+                    </div>
+                    
+                    <div id="envio-fields" style="display: none;">
+                        <div class="form-group">
+                            <label><i class="fas fa-truck"></i> Método de envío *</label>
+                            <select id="metodo-envio">
+                                <option value="">Seleccionar método</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-map"></i> Provincia *</label>
+                                <select id="cliente-provincia">
+                                    <option value="">Seleccionar</option>
+                                    <option>Buenos Aires</option><option>CABA</option><option>Catamarca</option><option>Chaco</option>
+                                    <option>Chubut</option><option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option>
+                                    <option>Formosa</option><option>Jujuy</option><option>La Pampa</option><option>La Rioja</option>
+                                    <option>Mendoza</option><option>Misiones</option><option>Neuquén</option><option>Río Negro</option>
+                                    <option>Salta</option><option>San Juan</option><option>San Luis</option><option>Santa Cruz</option>
+                                    <option>Santa Fe</option><option>Santiago del Estero</option><option>Tierra del Fuego</option><option>Tucumán</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-city"></i> Localidad *</label>
+                                <input type="text" id="cliente-localidad" placeholder="San Miguel">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-mail-bulk"></i> Código Postal *</label>
+                            <input type="text" id="cliente-cp" placeholder="4000">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-road"></i> Dirección *</label>
+                                <input type="text" id="cliente-direccion" placeholder="Av. Independencia">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-hashtag"></i> Altura *</label>
+                                <input type="text" id="cliente-altura" placeholder="1234 o S/N">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-info-circle"></i> Referencias</label>
+                            <textarea id="cliente-referencias" rows="2" placeholder="Entre calles, timbre, color de casa..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-pencil-alt"></i> Notas adicionales</label>
+                        <textarea id="cliente-notas" rows="2" placeholder="Horario de entrega preferido, etc..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="order-summary">
+                    <h3><i class="fas fa-receipt"></i> Resumen del Pedido</h3>
+                    <div class="summary-items" id="summary-items"></div>
+                    
+                    ${esMayorista ? `
+                        <div class="mayorista-info">
+                            <p><i class="fas fa-tags"></i> ¡Precio mayorista aplicado! Ahorro: ${fmt.format(carrito.reduce((s,i) => s + ((i.precioOriginal || i.precio) - i.precio) * i.cant, 0))}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="summary-total">
+                        <div class="summary-total-row">
+                            <span>Subtotal:</span>
+                            <span id="summary-subtotal">$0</span>
+                        </div>
+                        <div class="summary-total-row final">
+                            <span>Total:</span>
+                            <span id="summary-total">$0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info-box">
+                        <h4><i class="fas fa-credit-card"></i> Datos para Transferencia</h4>
+                        <div class="payment-details" id="payment-details"></div>
+                        <p style="font-size: 12px; margin-top: 12px; color: #166534;">
+                            <i class="fas fa-info-circle"></i> Una vez realizada la transferencia, enviá el comprobante al WhatsApp.
+                        </p>
+                    </div>
+                    
+                    <button class="btn-confirm" id="confirm-btn" onclick="confirmarPedido()">
+                        <i class="fas fa-check-circle"></i> Confirmar Pedido
+                    </button>
+                </div>
+            `;
+            
+            renderizarResumen();
+            mostrarDatosPago();
+        }
+        
+        function actualizarMetodosEnvio() {
+            const select = document.getElementById('metodo-envio');
+            if (select) {
+                select.innerHTML = '<option value="">Seleccionar método</option>';
+                metodosEnvio.forEach(m => { select.innerHTML += `<option value="${m}">${m}</option>`; });
+            }
+        }
+        
+        function renderizarResumen() {
+            const container = document.getElementById('summary-items');
+            if (!container) return;
+            
+            let html = '', total = 0;
+            carrito.forEach(it => {
+                total += it.precio * it.cant;
+                const esMayorista = it.precioOriginal && it.precio < it.precioOriginal;
+                const imagen = it.vFoto || 'https://via.placeholder.com/60';
+                
+                html += `<div class="summary-item">
+                    <img src="${imagen}" onerror="this.src='https://via.placeholder.com/60/F5EDE6/8B5E3C?text=Producto'">
+                    <div class="summary-item-info">
+                        <h4>${it.pNom} ${esMayorista ? '<span class="mayorista-badge-small"><i class="fas fa-tag"></i> MAY</span>' : ''}</h4>
+                        <p>${it.vNom} x ${it.cant}</p>
+                    </div>
+                    <div class="summary-item-price">${fmt.format(it.precio * it.cant)}</div>
+                </div>`;
+            });
+            
+            container.innerHTML = html || '<p>No hay productos</p>';
+            document.getElementById('summary-subtotal').textContent = fmt.format(total);
+            document.getElementById('summary-total').textContent = fmt.format(total);
+        }
+        
+        function mostrarDatosPago() {
+            const p = configuracion.pagos || {};
+            const w = configuracion.redes?.whatsapp || configuracion.empresa?.telefono || '';
+            const detailsDiv = document.getElementById('payment-details');
+            
+            let html = '';
+            if (p.titular) html += `<p><i class="fas fa-user"></i> <strong>Titular:</strong> ${p.titular}</p>`;
+            if (p.banco) html += `<p><i class="fas fa-university"></i> <strong>Banco:</strong> ${p.banco}</p>`;
+            if (p.alias) html += `<p><i class="fas fa-tag"></i> <strong>Alias:</strong> ${p.alias} <button class="copy-btn" onclick="copiar('${p.alias}')"><i class="far fa-copy"></i> Copiar</button></p>`;
+            if (p.cbu) html += `<p><i class="fas fa-barcode"></i> <strong>CBU:</strong> ${p.cbu} <button class="copy-btn" onclick="copiar('${p.cbu}')"><i class="far fa-copy"></i> Copiar</button></p>`;
+            if (w) html += `<a href="https://wa.me/${w.replace(/\D/g,'')}" target="_blank" class="whatsapp-link"><i class="fab fa-whatsapp"></i> Enviar comprobante</a>`;
+            
+            detailsDiv.innerHTML = html || '<p style="color: var(--text-light);">Configurá los datos de pago en el panel de administración.</p>';
+        }
+        
+        function seleccionarTipoEntrega(t) {
+            tipoEntregaSeleccionado = t;
+            document.querySelectorAll('.delivery-option').forEach(o => o.classList.toggle('active', o.dataset.type === t));
+            document.getElementById('envio-fields').style.display = t === 'envio' ? 'block' : 'none';
+        }
+        
+        function copiar(texto) { navigator.clipboard?.writeText(texto).then(() => mostrarToast('✅ Copiado')); }
+        
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            toast.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${mensaje}`;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+        
+        function validarFormulario() {
+            const nombre = document.getElementById('cliente-nombre')?.value.trim();
+            const apellido = document.getElementById('cliente-apellido')?.value.trim();
+            const dni = document.getElementById('cliente-dni')?.value.trim();
+            const telefono = document.getElementById('cliente-telefono')?.value.trim();
+            const email = document.getElementById('cliente-email')?.value.trim();
+            
+            if (!nombre || !apellido || !dni || !telefono || !email) {
+                mostrarToast('Completá todos los campos obligatorios (*)', 'error');
+                return false;
+            }
+            if (!/^\d+$/.test(dni)) { mostrarToast('DNI solo números', 'error'); return false; }
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { mostrarToast('Email inválido', 'error'); return false; }
+            
+            if (tipoEntregaSeleccionado === 'envio') {
+                const metodo = document.getElementById('metodo-envio')?.value;
+                const provincia = document.getElementById('cliente-provincia')?.value;
+                const localidad = document.getElementById('cliente-localidad')?.value.trim();
+                const cp = document.getElementById('cliente-cp')?.value.trim();
+                const direccion = document.getElementById('cliente-direccion')?.value.trim();
+                const altura = document.getElementById('cliente-altura')?.value.trim();
+                if (!metodo || !provincia || !localidad || !cp || !direccion || !altura) {
+                    mostrarToast('Completá todos los datos de envío', 'error');
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        async function confirmarPedido() {
+            if (!validarFormulario()) return;
+            
+            const btn = document.getElementById('confirm-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Procesando...';
+            
+            const cliente = {
+                nombre: document.getElementById('cliente-nombre').value.trim(),
+                apellido: document.getElementById('cliente-apellido').value.trim(),
+                dni: document.getElementById('cliente-dni').value.trim(),
+                telefono: document.getElementById('cliente-telefono').value.trim(),
+                email: document.getElementById('cliente-email').value.trim(),
+                notas: document.getElementById('cliente-notas')?.value.trim() || ''
+            };
+            
+            if (tipoEntregaSeleccionado === 'envio') {
+                cliente.provincia = document.getElementById('cliente-provincia').value;
+                cliente.localidad = document.getElementById('cliente-localidad').value.trim();
+                cliente.cp = document.getElementById('cliente-cp').value.trim();
+                cliente.direccion = document.getElementById('cliente-direccion').value.trim();
+                cliente.altura = document.getElementById('cliente-altura').value.trim();
+                cliente.referencias = document.getElementById('cliente-referencias')?.value.trim() || '';
+            }
+            
+            const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
+            const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
+            
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/tienda/crear-pedido', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        carrito, cliente, total, esMayorista,
+                        razonMayorista: esMayorista ? 'Pedido mayorista' : '',
+                        tipoEntrega: tipoEntregaSeleccionado,
+                        metodoEnvio: tipoEntregaSeleccionado === 'envio' ? document.getElementById('metodo-envio').value : ''
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    localStorage.removeItem('tienda_carrito');
+                    mostrarToast(`✅ ¡Pedido #${data.pedidoId} confirmado! Te contactaremos pronto.`);
+                    setTimeout(() => window.location.href = '/tienda', 3000);
+                } else {
+                    throw new Error(data.error || 'Error al procesar');
+                }
+            } catch(e) {
+                mostrarToast('Error: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar Pedido';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', cargarDatos);
+    </script>
+</body>
+</html>

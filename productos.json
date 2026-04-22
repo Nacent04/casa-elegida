@@ -1,0 +1,192 @@
+{
+  "lista": [
+    {
+      "id": 1775493104614,
+      "nombre": "MANTA ESCOCESA",
+      "precio": 15500,
+      "precioMayor": 12500,
+      "variantes": [
+        {
+          "nombre": "1",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493154924.jpg"
+        },
+        {
+          "nombre": "2",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493156626.jpg"
+        },
+        {
+          "nombre": "3",
+          "stock": 10,
+          "foto": "/uploads/logo-1775493158857.jpg"
+        },
+        {
+          "nombre": "4",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493161182.jpg"
+        },
+        {
+          "nombre": "5",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493163816.jpg"
+        },
+        {
+          "nombre": "6",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493165774.jpg"
+        },
+        {
+          "nombre": "7",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493168333.jpg"
+        },
+        {
+          "nombre": "8",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493170642.jpg"
+        },
+        {
+          "nombre": "9",
+          "stock": 10,
+          "foto": "/uploads/logo-1775493173033.jpg"
+        },
+        {
+          "nombre": "10",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493175620.jpg"
+        },
+        {
+          "nombre": "11",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493177731.jpg"
+        },
+        {
+          "nombre": "12",
+          "stock": 5,
+          "foto": "/uploads/logo-1775493180625.jpg"
+        }
+      ],
+      "descripcion": "",
+      "categoriaId": 1775184084827,
+      "subcategoria": null
+    },
+    {
+      "id": 1775187307897,
+      "nombre": "MANTA CON CORDERO ANIMAL PRINT",
+      "precio": 23000,
+      "precioMayor": 19500,
+      "variantes": [
+        {
+          "nombre": "1",
+          "stock": 0,
+          "foto": "/uploads/logo-1775187346058.jpg"
+        },
+        {
+          "nombre": "2",
+          "stock": 0,
+          "foto": "/uploads/logo-1775187344070.jpg"
+        },
+        {
+          "nombre": "3",
+          "stock": 0,
+          "foto": "/uploads/logo-1775483108287.jpg"
+        },
+        {
+          "nombre": "4",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483115573.jpg"
+        },
+        {
+          "nombre": "5",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483120151.jpg"
+        },
+        {
+          "nombre": "6",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483124956.jpg"
+        },
+        {
+          "nombre": "7",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483129220.jpg"
+        },
+        {
+          "nombre": "8",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483134179.jpg"
+        },
+        {
+          "nombre": "9",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483139634.jpg"
+        },
+        {
+          "nombre": "10",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483145037.jpg"
+        },
+        {
+          "nombre": "11",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483155936.jpg"
+        },
+        {
+          "nombre": "12",
+          "stock": 3,
+          "foto": "/uploads/logo-1775483158670.jpg"
+        },
+        {
+          "nombre": "13",
+          "stock": 0,
+          "foto": "/uploads/logo-1775483161974.jpg"
+        },
+        {
+          "nombre": "14",
+          "stock": 0,
+          "foto": "/uploads/logo-1775483169641.jpg"
+        }
+      ],
+      "descripcion": "",
+      "categoriaId": 1775184084827,
+      "subcategoria": null
+    },
+    {
+      "id": 1774585489808,
+      "nombre": "TOALLON GOLDSUN",
+      "precio": 7000,
+      "precioMayor": 6000,
+      "variantes": [
+        {
+          "nombre": "AZUL",
+          "stock": 33,
+          "foto": "/uploads/logo-1774585551248.jpg"
+        },
+        {
+          "nombre": "VERDE",
+          "stock": 45,
+          "foto": "/uploads/logo-1774585554777.jpg"
+        },
+        {
+          "nombre": "BEIGE",
+          "stock": 5,
+          "foto": "/uploads/logo-1774585558590.jpg"
+        },
+        {
+          "nombre": "ROSA VIEJO",
+          "stock": 12,
+          "foto": "/uploads/logo-1774836246194.jpg"
+        },
+        {
+          "nombre": "CELESTE",
+          "stock": 34,
+          "foto": "/uploads/logo-1774836254757.jpg"
+        }
+      ],
+      "descripcion": "",
+      "categoriaId": 1776050965417,
+      "subcategoria": null
+    }
+  ]
+}

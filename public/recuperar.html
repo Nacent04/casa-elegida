@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña | Blanquería Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #8B5E3C; --primary-dark: #6B4423; --bg-light: #FDF8F4; --success: #4CAF50; --danger: #F44336; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .recover-container { max-width: 420px; width: 100%; }
+        .recover-card { background: white; border-radius: 28px; padding: 40px 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo-icon { width: 64px; height: 64px; background: linear-gradient(135deg, var(--primary), #A0714F); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; margin: 0 auto 16px; }
+        .logo h2 { color: var(--primary); font-size: 24px; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #3E2A1E; }
+        .form-group input { width: 100%; padding: 14px 16px; border: 2px solid #F0E6DC; border-radius: 16px; font-size: 14px; transition: all 0.3s; text-align: center; letter-spacing: 8px; }
+        .form-group input:focus { outline: none; border-color: var(--primary); }
+        .btn-primary { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { color: var(--primary); text-decoration: none; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 14px 20px; border-radius: 40px; font-weight: 600; z-index: 2000; animation: slideIn 0.3s; }
+        .toast.error { background: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="recover-container">
+        <div class="recover-card">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-bed"></i></div>
+                <h2>Recuperar Contraseña</h2>
+            </div>
+            
+            <div id="step1" class="step active">
+                <p style="text-align:center; color:#7B6B5A; margin-bottom:24px;">Ingresá tu email y te enviaremos un PIN de recuperación</p>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email-input" placeholder="tu@email.com">
+                </div>
+                <button class="btn-primary" onclick="solicitarPIN()"><i class="fas fa-paper-plane"></i> Enviar PIN</button>
+            </div>
+            
+            <div id="step2" class="step">
+                <p style="text-align:center; color:#7B6B5A; margin-bottom:24px;">Ingresá el PIN de 6 dígitos enviado a tu email</p>
+                <div class="form-group">
+                    <label>PIN de recuperación</label>
+                    <input type="text" id="pin-input" maxlength="6" placeholder="000000">
+                </div>
+                <div class="form-group">
+                    <label>Nueva contraseña</label>
+                    <input type="password" id="new-password" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar contraseña</label>
+                    <input type="password" id="confirm-password" placeholder="••••••••">
+                </div>
+                <button class="btn-primary" onclick="resetearPassword()"><i class="fas fa-check"></i> Cambiar Contraseña</button>
+            </div>
+            
+            <div class="back-link">
+                <a href="/login"><i class="fas fa-arrow-left"></i> Volver al inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+    <div id="toast-container"></div>
+    <script>
+        let userEmail = '';
+        
+        function mostrarToast(msg, error = false) {
+            const t = document.createElement('div'); t.className = `toast ${error ? 'error' : ''}`;
+            t.innerHTML = msg; document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+        
+        async function solicitarPIN() {
+            const email = document.getElementById('email-input').value;
+            if (!email) return mostrarToast('Ingresá tu email', true);
+            
+            try {
+                const res = await fetch('/auth/recuperar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    userEmail = email;
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step2').classList.add('active');
+                    mostrarToast('✅ PIN enviado (revisá la consola del servidor)');
+                } else {
+                    mostrarToast(data.error || 'Error', true);
+                }
+            } catch (e) {
+                mostrarToast('Error de conexión', true);
+            }
+        }
+        
+        async function resetearPassword() {
+            const pin = document.getElementById('pin-input').value;
+            const newPass = document.getElementById('new-password').value;
+            const confirm = document.getElementById('confirm-password').value;
+            
+            if (pin.length !== 6) return mostrarToast('El PIN debe tener 6 dígitos', true);
+            if (newPass.length < 6) return mostrarToast('La contraseña debe tener al menos 6 caracteres', true);
+            if (newPass !== confirm) return mostrarToast('Las contraseñas no coinciden', true);
+            
+            try {
+                const res = await fetch('/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, pin, newPassword: newPass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    mostrarToast('✅ Contraseña cambiada. Redirigiendo...');
+                    setTimeout(() => window.location.href = '/login', 2000);
+                } else {
+                    mostrarToast(data.error || 'Error', true);
+                }
+            } catch (e) {
+                mostrarToast('Error de conexión', true);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "lista": [
+    {
+      "id": "USR-1776521061876",
+      "nombre": "Kevin Apolinar",
+      "apellido": "Pacheco Ferreyra",
+      "email": "kapachecoferreyra@gmail.com",
+      "telefono": "3816569211",
+      "password": "$2b$10$xkzA6osIdvYx.oZXVj2HGuGxnAkFPBUt17C0IzWhC/Fjtk3McsxoO",
+      "fechaRegistro": "2026-04-18T14:04:21.876Z",
+      "rol": "cliente",
+      "resetPin": "618732",
+      "resetPinExpires": 1776872661866
+    },
+    {
+      "id": "USR-1776813567148",
+      "nombre": "Kevin",
+      "apellido": "Pacheco",
+      "email": "pachecoferreyrakevinapolinar@gmail.com",
+      "googleId": "108033568494125096762",
+      "foto": "https://lh3.googleusercontent.com/a/ACg8ocKb8MhdZMIgktbO6dGdzfMxkuboSPnS2qkmNe6O0BY52jQG0Vk_=s96-c",
+      "fechaRegistro": "2026-04-21T23:19:27.148Z",
+      "rol": "cliente"
+    }
+  ]
+}

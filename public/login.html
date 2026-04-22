@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | Blanquería Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #8B5E3C; --primary-dark: #6B4423; --bg-light: #FDF8F4; --success: #4CAF50; --danger: #F44336; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-container { max-width: 420px; width: 100%; }
+        .login-card { background: white; border-radius: 28px; padding: 40px 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo-icon { width: 64px; height: 64px; background: linear-gradient(135deg, var(--primary), #A0714F); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; margin: 0 auto 16px; }
+        .logo h2 { color: var(--primary); font-size: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #3E2A1E; }
+        .form-group input { width: 100%; padding: 14px 16px; border: 2px solid #F0E6DC; border-radius: 16px; font-size: 14px; transition: all 0.3s; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139,94,60,0.1); }
+        .password-header { display: flex; justify-content: space-between; align-items: center; }
+        .forgot-link { font-size: 12px; color: var(--primary); text-decoration: none; }
+        .btn-login { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-bottom: 20px; }
+        .btn-login:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-google { width: 100%; padding: 14px; background: white; color: #3E2A1E; border: 2px solid #F0E6DC; border-radius: 50px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s; margin-bottom: 20px; }
+        .btn-google:hover { background: #f8fafc; border-color: var(--primary); }
+        .btn-google i { color: #DB4437; font-size: 18px; }
+        .register-link { text-align: center; font-size: 14px; color: #7B6B5A; }
+        .register-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 14px 20px; border-radius: 40px; font-weight: 600; z-index: 2000; animation: slideIn 0.3s; }
+        .toast.error { background: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-bed"></i></div>
+                <h2>Bienvenido</h2>
+                <p style="color: #7B6B5A; margin-top: 8px;">Iniciá sesión para continuar</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <div class="password-header">
+                        <label>Contraseña</label>
+                        <a href="/recuperar" class="forgot-link">¿Olvidaste tu contraseña?</a>
+                    </div>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
+            </form>
+            
+            <a href="/auth/google" class="btn-google">
+                <i class="fab fa-google"></i> Continuar con Google
+            </a>
+            
+            <p class="register-link">¿No tenés cuenta? <a href="/registro">Registrate aquí</a></p>
+        </div>
+    </div>
+    <div id="toast-container"></div>
+    <script>
+        function mostrarToast(msg, error = false) {
+            const t = document.createElement('div'); t.className = `toast ${error ? 'error' : ''}`;
+            t.innerHTML = msg; document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+        
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                    mostrarToast('✅ ¡Bienvenido! Redirigiendo...');
+                    setTimeout(() => window.location.href = '/tienda', 1000);
+                } else {
+                    mostrarToast(data.error || 'Error al iniciar sesión', true);
+                }
+            } catch (e) {
+                mostrarToast('Error de conexión', true);
+            }
+        });
+        
+        // Verificar si viene token de Google
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (token) {
+            localStorage.setItem('token', token);
+            window.location.href = '/tienda';
+        }
+    </script>
+</body>
+</html>

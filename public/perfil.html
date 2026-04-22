@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil | Blanquería Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #8B5E3C; --primary-dark: #6B4423; --bg-light: #FDF8F4; --success: #4CAF50; --danger: #F44336; --warning: #FF9800; --info: #3B82F6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); min-height: 100vh; }
+        
+        .header {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), #A0714F);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .logo h1 { font-size: 20px; color: var(--primary); }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-dark);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn:hover { background: #F0E6DC; }
+        
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #F0E6DC;
+            padding-bottom: 8px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #7B6B5A;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+        
+        .tab i { margin-right: 8px; }
+        .tab:hover { background: #F0E6DC; }
+        .tab.active { background: var(--primary); color: white; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .profile-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), #A0714F);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+        }
+        
+        .profile-info h2 { font-size: 24px; margin-bottom: 4px; }
+        .profile-info p { color: #7B6B5A; }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #3E2A1E;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #F0E6DC;
+            border-radius: 16px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .form-group input:disabled {
+            background: #F8F2EC;
+            color: #7B6B5A;
+        }
+        
+        .btn-save {
+            padding: 14px 32px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-save:hover { background: var(--primary-dark); }
+        
+        .pedidos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .pedido-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #F0E6DC;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pedido-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        
+        .pedido-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .pedido-id {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .pedido-fecha {
+            font-size: 13px;
+            color: #7B6B5A;
+        }
+        
+        .estado-badge {
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .estado-pendiente { background: #fef3c7; color: #b45309; }
+        .estado-confirmado { background: #d1fae5; color: #065f46; }
+        .estado-abonado { background: #dbeafe; color: #1e40af; }
+        .estado-enviado { background: #e0e7ff; color: #3730a3; }
+        .estado-entregado { background: #dcfce7; color: #166534; }
+        .estado-cancelado { background: #fee2e2; color: #991b1b; }
+        
+        .pedido-body {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .pedido-items {
+            flex: 2;
+        }
+        
+        .pedido-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F0E6DC;
+        }
+        
+        .pedido-item:last-child { border-bottom: none; }
+        
+        .pedido-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        
+        .pedido-item-info h4 { font-size: 14px; margin-bottom: 2px; }
+        .pedido-item-info p { font-size: 12px; color: #7B6B5A; }
+        
+        .pedido-resumen {
+            flex: 1;
+            text-align: right;
+            padding-top: 10px;
+        }
+        
+        .pedido-total {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .pedido-pin {
+            margin-top: 12px;
+            padding: 12px;
+            background: #F0FDF4;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .pedido-pin .pin-code {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 8px;
+            color: var(--primary);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #F0E6DC;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 { color: var(--primary); }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7B6B5A;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s;
+        }
+        
+        .toast.error { background: var(--danger); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .profile-header { flex-direction: column; text-align: center; }
+            .pedido-body { flex-direction: column; }
+            .pedido-resumen { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-bed"></i></div>
+            <h1>Blanquería Premium</h1>
+        </div>
+        <button class="back-btn" onclick="window.location.href='/tienda'">
+            <i class="fas fa-arrow-left"></i> Volver a la tienda
+        </button>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('perfil')"><i class="fas fa-user"></i> Mi Perfil</button>
+            <button class="tab" onclick="switchTab('pedidos')"><i class="fas fa-shopping-bag"></i> Mis Pedidos</button>
+        </div>
+        
+        <!-- Perfil -->
+        <div id="tab-perfil" class="tab-content active">
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profile-name">Cargando...</h2>
+                        <p id="profile-email"></p>
+                    </div>
+                </div>
+                
+                <form id="profile-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="nombre" placeholder="Tu nombre">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <input type="text" id="apellido" placeholder="Tu apellido">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="telefono" placeholder="3811234567">
+                    </div>
+                    <button type="submit" class="btn-save"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Pedidos -->
+        <div id="tab-pedidos" class="tab-content">
+            <div class="pedidos-list" id="pedidos-list">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando pedidos...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Detalle Pedido -->
+    <div class="modal" id="pedido-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-pedido-id">Pedido #</h3>
+                <button class="modal-close" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-pedido-body"></div>
+        </div>
+    </div>
+    
+    <div id="toast-container"></div>
+
+    <script>
+        const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
+        let usuarioActual = null;
+        let pedidosUsuario = [];
+        
+        function mostrarToast(msg, error = false) {
+            const t = document.createElement('div'); t.className = `toast ${error ? 'error' : ''}`;
+            t.innerHTML = msg; document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+        
+        async function safeFetch(url, options = {}) {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login'; return; }
+            options.headers = { ...options.headers, 'Authorization': `Bearer ${token}` };
+            const res = await fetch(url, options);
+            if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+            if (!res.ok) throw new Error((await res.json().catch(()=>{})).error || 'Error');
+            return res.json();
+        }
+        
+        async function cargarPerfil() {
+            try {
+                const data = await safeFetch('/auth/me');
+                usuarioActual = data;
+                document.getElementById('profile-name').textContent = `${data.nombre} ${data.apellido}`;
+                document.getElementById('profile-email').textContent = data.email;
+                document.getElementById('profile-avatar').innerHTML = data.nombre.charAt(0).toUpperCase();
+                document.getElementById('nombre').value = data.nombre || '';
+                document.getElementById('apellido').value = data.apellido || '';
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('telefono').value = data.telefono || '';
+            } catch(e) { console.error(e); }
+        }
+        
+        async function cargarPedidos() {
+            try {
+                const data = await safeFetch('/api/mis-pedidos');
+                pedidosUsuario = data.lista || [];
+                renderizarPedidos();
+            } catch(e) { console.error(e); }
+        }
+        
+        function renderizarPedidos() {
+            const container = document.getElementById('pedidos-list');
+            if (!pedidosUsuario.length) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-shopping-bag"></i><h3>No tenés pedidos</h3><p>¡Hacé tu primer pedido!</p></div>`;
+                return;
+            }
+            
+            let html = '';
+            pedidosUsuario.forEach(p => {
+                const estadoClass = `estado-${p.estado}`;
+                const estadoTexto = p.estado.charAt(0).toUpperCase() + p.estado.slice(1);
+                const tienePIN = p.pin && (p.estado === 'confirmado' || p.estado === 'abonado');
+                
+                html += `<div class="pedido-card" onclick="verDetallePedido('${p.id}')">
+                    <div class="pedido-header">
+                        <span class="pedido-id">${p.id}</span>
+                        <span class="pedido-fecha">${p.fecha}</span>
+                        <span class="estado-badge ${estadoClass}">${estadoTexto}</span>
+                    </div>
+                    <div class="pedido-body">
+                        <div class="pedido-items">
+                            ${p.items.slice(0, 2).map(it => `
+                                <div class="pedido-item">
+                                    <img src="${it.vFoto || 'https://via.placeholder.com/50'}" onerror="this.src='https://via.placeholder.com/50'">
+                                    <div class="pedido-item-info">
+                                        <h4>${it.pNom}</h4>
+                                        <p>${it.vNom} x ${it.cant}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${p.items.length > 2 ? `<p style="margin-top:8px;color:#7B6B5A">+${p.items.length - 2} productos más</p>` : ''}
+                        </div>
+                        <div class="pedido-resumen">
+                            <div class="pedido-total">${fmt.format(p.total)}</div>
+                            ${p.tipoEntrega === 'envio' ? '<p><i class="fas fa-truck"></i> Envío a domicilio</p>' : '<p><i class="fas fa-store"></i> Retiro en local</p>'}
+                        </div>
+                    </div>
+                    ${tienePIN ? `
+                        <div class="pedido-pin" onclick="event.stopPropagation()">
+                            <p style="font-size:12px;margin-bottom:4px"><i class="fas fa-key"></i> Tu PIN de retiro</p>
+                            <div class="pin-code">${p.pin}</div>
+                            <p style="font-size:11px;margin-top:4px">Presentá este código al retirar</p>
+                        </div>
+                    ` : ''}
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+        
+        function verDetallePedido(id) {
+            const pedido = pedidosUsuario.find(p => p.id === id);
+            if (!pedido) return;
+            
+            const estadoClass = `estado-${pedido.estado}`;
+            const estadoTexto = pedido.estado.charAt(0).toUpperCase() + pedido.estado.slice(1);
+            const tienePIN = pedido.pin && (pedido.estado === 'confirmado' || pedido.estado === 'abonado');
+            
+            document.getElementById('modal-pedido-id').textContent = pedido.id;
+            document.getElementById('modal-pedido-body').innerHTML = `
+                <p><strong>Fecha:</strong> ${pedido.fecha}</p>
+                <p><strong>Estado:</strong> <span class="estado-badge ${estadoClass}">${estadoTexto}</span></p>
+                <p><strong>Entrega:</strong> ${pedido.tipoEntrega === 'envio' ? 'Envío a domicilio' : 'Retiro en local'}</p>
+                ${pedido.tipoEntrega === 'envio' ? `<p><strong>Dirección:</strong> ${pedido.cliente?.direccion} ${pedido.cliente?.altura}, ${pedido.cliente?.localidad}, ${pedido.cliente?.provincia}</p>` : ''}
+                <h4 style="margin:20px 0 12px">Productos:</h4>
+                ${pedido.items.map(it => `
+                    <div class="pedido-item">
+                        <img src="${it.vFoto || 'https://via.placeholder.com/50'}" onerror="this.src='https://via.placeholder.com/50'">
+                        <div class="pedido-item-info">
+                            <h4>${it.pNom}</h4>
+                            <p>${it.vNom} x ${it.cant} | ${fmt.format(it.precio)} c/u</p>
+                            <p><strong>Subtotal: ${fmt.format(it.precio * it.cant)}</strong></p>
+                        </div>
+                    </div>
+                `).join('')}
+                <div style="text-align:right;margin-top:20px;padding-top:16px;border-top:2px solid #F0E6DC">
+                    <span style="font-size:20px;font-weight:700;color:var(--primary)">Total: ${fmt.format(pedido.total)}</span>
+                </div>
+                ${tienePIN ? `
+                    <div style="margin-top:20px;padding:16px;background:#F0FDF4;border-radius:12px;text-align:center">
+                        <p><i class="fas fa-key"></i> <strong>Tu PIN de retiro</strong></p>
+                        <div style="font-size:32px;font-weight:800;letter-spacing:12px;color:var(--primary)">${pedido.pin}</div>
+                        <p style="font-size:12px;margin-top:8px">Presentá este código al retirar tu pedido</p>
+                    </div>
+                ` : ''}
+            `;
+            document.getElementById('pedido-modal').classList.add('active');
+        }
+        
+        function cerrarModal() {
+            document.getElementById('pedido-modal').classList.remove('active');
+        }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'perfil') {
+                document.querySelector('.tab:first-child').classList.add('active');
+                document.getElementById('tab-perfil').classList.add('active');
+            } else {
+                document.querySelector('.tab:last-child').classList.add('active');
+                document.getElementById('tab-pedidos').classList.add('active');
+                cargarPedidos();
+            }
+        }
+        
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await safeFetch('/auth/update-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: document.getElementById('nombre').value,
+                        apellido: document.getElementById('apellido').value,
+                        telefono: document.getElementById('telefono').value
+                    })
+                });
+                mostrarToast('✅ Perfil actualizado');
+                cargarPerfil();
+            } catch(e) {
+                mostrarToast('Error al guardar', true);
+            }
+        });
+        
+        // Verificar token al cargar
+        if (!localStorage.getItem('token')) {
+            window.location.href = '/login';
+        } else {
+            cargarPerfil();
+        }
+        
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') cerrarModal();
+        });
+    </script>
+</body>
+</html>

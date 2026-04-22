@@ -1,0 +1,31 @@
+{
+  "lista": [
+    {
+      "id": "NOTIF-1776814432416",
+      "tipo": "pedido",
+      "titulo": "🛍️ Nuevo pedido web",
+      "descripcion": "Pedido #PED-1776814432414 - Kevin Apolinar - $ 125.000",
+      "fecha": "2026-04-21T23:33:52.416Z",
+      "tiempo": "Ahora mismo",
+      "leida": true
+    },
+    {
+      "id": "NOTIF-1776814001702",
+      "tipo": "pedido",
+      "titulo": "🛍️ Nuevo pedido web",
+      "descripcion": "Pedido #PED-1776814001695 - Kevin Apolinar - $ 125.000",
+      "fecha": "2026-04-21T23:26:41.702Z",
+      "tiempo": "Ahora mismo",
+      "leida": true
+    },
+    {
+      "id": "NOTIF-1776813103174",
+      "tipo": "pedido",
+      "titulo": "🛍️ Nuevo pedido web",
+      "descripcion": "Pedido #PED-1776813103173 - Kevin Apolinar - $ 117.000",
+      "fecha": "2026-04-21T23:11:43.174Z",
+      "tiempo": "Ahora mismo",
+      "leida": true
+    }
+  ]
+}
