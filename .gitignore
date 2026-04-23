@@ -1,9 +1,10 @@
 node_modules/
-uploads/
-*.log
 .env
+uploads/*
+!uploads/.gitkeep
+config/config.json
+pedidos/
 backups/
 logs/
-pedidos/
-config/
+*.log
 .DS_Store
