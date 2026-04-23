@@ -10,11 +10,28 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const nodemailer = require('nodemailer');
+const cloudinary = require('cloudinary').v2;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pos_master_secret_key_2024';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'session_secret_2024';
+// ==================== CONFIGURACIÓN DE CLOUDINARY ====================
+cloudinary.config({
+    cloud_name: 'moderación',
+    api_key: '377248539856496',
+    api_secret: 'knb9Jgq3Rw0ZBcj75CVfHiTGMAI'
+});
+
+// ==================== CONFIGURACIÓN DE EMAIL ====================
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'casaelegida20@gmail.com',
+        pass: 'NacentLion03-04-04'
+    }
+});
+
+const JWT_SECRET = process.env.JWT_SECRET || 'pos_master_super_secret_key_2024';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'session_secret_key_2024';
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 // Crear directorios necesarios
@@ -56,21 +73,21 @@ initJsonFile('./logs/admin-activity.json', { lista: [] });
 if (!fs.existsSync('./config/config.json')) {
     fs.writeFileSync('./config/config.json', JSON.stringify({ 
         logo: null,
-        empresa: { nombre: "Blanquería Premium", telefono: "", email: "", direccion: "" },
+        empresa: { nombre: "Casa Elegida", telefono: "", email: "casaelegida20@gmail.com", direccion: "" },
         horarios: { lunesViernes: "9:00 - 13:00 y 17:00 - 20:00", sabados: "9:00 - 13:00", domingos: "Cerrado" },
         redes: { instagram: "", instagramUrl: "", facebook: "", facebookUrl: "", tiktok: "", tiktokUrl: "", whatsapp: "", whatsappUrl: "" },
         pagos: { alias: "", cbu: "", banco: "", titular: "" },
         mayorista: { habilitado: false, modo: "cantidad", valorCantidad: 3, valorMonto: 80000 },
-        tienda: { habilitada: true, titulo: "Blanquería Premium", mensajeBienvenida: "Calidad y confort para tu hogar", retiroLocal: true },
+        tienda: { habilitada: true, titulo: "Casa Elegida", mensajeBienvenida: "Calidad y confort para tu hogar", retiroLocal: true },
         diseno: { colorPrimario: "#8B5E3C", colorSecundario: "#D4A574", colorFondo: "#FDF8F4", colorTexto: "#3E2A1E" },
         registroObligatorio: true,
-        heroConfig: { titulo: "Blanquería de Alta Calidad", subtitulo: "Toallones, sábanas, mantas y más", badge: "¡Precios especiales por cantidad!" },
+        heroConfig: { titulo: "Casa Elegida", subtitulo: "Toallones, sábanas, mantas y más", badge: "¡Precios especiales por cantidad!" },
         seccionesDestacadas: [{ id: "dest-1", titulo: "Novedades", tipo: "categoria", valor: "Toallones", limite: 4 }]
     }, null, 2));
     console.log('✅ Configuración inicial creada');
 }
 
-// Configuración de multer
+// Configuración de multer (archivos temporales)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, './uploads/'),
     filename: (req, file, cb) => {
@@ -91,12 +108,6 @@ const upload = multer({
     }
 });
 
-// Configuración de email
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER || '', pass: process.env.EMAIL_PASS || '' }
-});
-
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -106,17 +117,26 @@ app.use(passport.session());
 app.use('/uploads', express.static('uploads'));
 app.use(express.static('public'));
 
-// Configuración de Passport
+// Configuración de Passport (Google OAuth)
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    clientID: process.env.GOOGLE_CLIENT_ID || '872603856524-vk82ud0n4v2v0o2av1rmpvplrp8jt7pa.apps.googleusercontent.com',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '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',
     callbackURL: '/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         let usuarios = readData('./usuarios.json');
         let usuario = usuarios.lista.find(u => u.email === profile.emails[0].value);
         if (!usuario) {
-            usuario = { id: 'USR-' + Date.now(), nombre: profile.name.givenName || '', apellido: profile.name.familyName || '', email: profile.emails[0].value, googleId: profile.id, foto: profile.photos?.[0]?.value || '', fechaRegistro: new Date().toISOString(), rol: 'cliente' };
+            usuario = { 
+                id: 'USR-' + Date.now(), 
+                nombre: profile.name.givenName || '', 
+                apellido: profile.name.familyName || '', 
+                email: profile.emails[0].value, 
+                googleId: profile.id, 
+                foto: profile.photos?.[0]?.value || '', 
+                fechaRegistro: new Date().toISOString(), 
+                rol: 'cliente' 
+            };
             usuarios.lista.push(usuario);
             writeData('./usuarios.json', usuarios);
         }
@@ -173,35 +193,91 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 });
 
 // ==================== FUNCIONES AUXILIARES ====================
-const readData = (file) => { try { const content = fs.readFileSync(file, 'utf-8'); const data = JSON.parse(content); if (!data.lista) data.lista = []; return data; } catch (e) { return { lista: [] }; } };
-const writeData = (file, data) => { try { fs.writeFileSync(file, JSON.stringify(data, null, 2)); return true; } catch (e) { return false; } };
-const readConfig = () => { try { return JSON.parse(fs.readFileSync('./config/config.json', 'utf-8')); } catch (e) { return { registroObligatorio: true }; } };
-const writeConfig = (data) => { try { fs.writeFileSync('./config/config.json', JSON.stringify(data, null, 2)); return true; } catch (e) { return false; } };
+const readData = (file) => { 
+    try { 
+        const content = fs.readFileSync(file, 'utf-8'); 
+        const data = JSON.parse(content); 
+        if (!data.lista) data.lista = []; 
+        return data; 
+    } catch (e) { 
+        return { lista: [] }; 
+    } 
+};
+
+const writeData = (file, data) => { 
+    try { 
+        fs.writeFileSync(file, JSON.stringify(data, null, 2)); 
+        return true; 
+    } catch (e) { 
+        return false; 
+    } 
+};
+
+const readConfig = () => { 
+    try { 
+        return JSON.parse(fs.readFileSync('./config/config.json', 'utf-8')); 
+    } catch (e) { 
+        return { registroObligatorio: true }; 
+    } 
+};
+
+const writeConfig = (data) => { 
+    try { 
+        fs.writeFileSync('./config/config.json', JSON.stringify(data, null, 2)); 
+        return true; 
+    } catch (e) { 
+        return false; 
+    } 
+};
+
 const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 // Funciones de notificación y logs
 function crearNotificacion(tipo, titulo, descripcion) {
     const notifData = readData('./notificaciones.json');
-    notifData.lista.unshift({ id: 'NOTIF-' + Date.now(), tipo, titulo, descripcion, fecha: new Date().toISOString(), tiempo: 'Ahora mismo', leida: false });
+    notifData.lista.unshift({ 
+        id: 'NOTIF-' + Date.now(), 
+        tipo, 
+        titulo, 
+        descripcion, 
+        fecha: new Date().toISOString(), 
+        tiempo: 'Ahora mismo', 
+        leida: false 
+    });
     if (notifData.lista.length > 100) notifData.lista = notifData.lista.slice(0, 100);
     writeData('./notificaciones.json', notifData);
 }
 
 function logActividad(admin, accion, detalles, req) {
     const logData = readData('./logs/admin-activity.json');
-    logData.lista.unshift({ id: 'LOG-' + Date.now(), admin: admin || 'Sistema', accion, detalles: typeof detalles === 'string' ? detalles : JSON.stringify(detalles).substring(0, 200), ip: req?.ip || req?.connection?.remoteAddress || 'localhost', fecha: new Date().toISOString(), fechaLocal: new Date().toLocaleString('es-AR') });
+    logData.lista.unshift({ 
+        id: 'LOG-' + Date.now(), 
+        admin: admin || 'Sistema', 
+        accion, 
+        detalles: typeof detalles === 'string' ? detalles : JSON.stringify(detalles).substring(0, 200), 
+        ip: req?.ip || req?.connection?.remoteAddress || 'localhost', 
+        fecha: new Date().toISOString(), 
+        fechaLocal: new Date().toLocaleString('es-AR') 
+    });
     if (logData.lista.length > 1000) logData.lista = logData.lista.slice(0, 1000);
     writeData('./logs/admin-activity.json', logData);
 }
 
 async function enviarEmail(destinatario, asunto, html) {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
     try {
         const config = readConfig();
-        await transporter.sendMail({ from: `"${config.empresa.nombre}" <${process.env.EMAIL_USER}>`, to: destinatario, subject: asunto, html });
+        await transporter.sendMail({ 
+            from: `"${config.empresa.nombre}" <casaelegida20@gmail.com>`, 
+            to: destinatario, 
+            subject: asunto, 
+            html 
+        });
         console.log(`📧 Email enviado a ${destinatario}`);
         return true;
-    } catch (e) { console.error('Error enviando email:', e); return false; }
+    } catch (e) { 
+        console.error('Error enviando email:', e); 
+        return false; 
+    }
 }
 
 // Plantillas de email
@@ -219,7 +295,28 @@ const emailTemplates = {
         <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
             <h1 style="color:#8B5E3C">${config.empresa.nombre}</h1>
             <h2>¡Pedido confirmado!</h2>
-            ${pedido.tipoEntrega === 'local' ? `<div style="background:#F0FDF4;padding:20px;text-align:center"><p>🔐 Tu PIN de retiro</p><div style="font-size:36px;font-weight:800;letter-spacing:12px;color:#8B5E3C">${pedido.pin}</div></div>` : '<p>Tu pedido será enviado pronto.</p>'}
+            ${pedido.tipoEntrega === 'local' ? `
+                <div style="background:#F0FDF4;padding:20px;text-align:center">
+                    <p>🔐 Tu PIN de retiro</p>
+                    <div style="font-size:36px;font-weight:800;letter-spacing:12px;color:#8B5E3C">${pedido.pin}</div>
+                </div>` : '<p>Tu pedido será enviado pronto.</p>'}
+        </div>
+    `,
+    pedidoAbonado: (pedido, config) => `
+        <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
+            <h1 style="color:#8B5E3C">${config.empresa.nombre}</h1>
+            <h2>¡Pago recibido!</h2>
+            <p>Hemos recibido tu pago correctamente.</p>
+            ${pedido.tipoEntrega === 'local' ? '<p>Ya podés pasar a retirar tu pedido con el PIN proporcionado.</p>' : '<p>Pronto despacharemos tu pedido.</p>'}
+        </div>
+    `,
+    pedidoEnviado: (pedido, config) => `
+        <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
+            <h1 style="color:#8B5E3C">${config.empresa.nombre}</h1>
+            <h2>¡Tu pedido está en camino!</h2>
+            <p>Tu pedido ha sido despachado y pronto llegará a tu domicilio.</p>
+            <p><strong>Método de envío:</strong> ${pedido.metodoEnvio}</p>
+            <p><strong>Dirección:</strong> ${pedido.cliente.direccion} ${pedido.cliente.altura}, ${pedido.cliente.localidad}, ${pedido.cliente.provincia}</p>
         </div>
     `
 };
@@ -228,7 +325,9 @@ const emailTemplates = {
 const realizarBackupAutomatico = () => {
     try {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        ['productos.json', 'ventas.json', 'pedidos.json', 'categorias.json', 'usuarios.json', 'config/config.json'].forEach(file => { if (fs.existsSync(file)) fs.copyFileSync(file, path.join('./backups', `${path.basename(file)}.${timestamp}.backup`)); });
+        ['productos.json', 'ventas.json', 'pedidos.json', 'categorias.json', 'usuarios.json', 'config/config.json'].forEach(file => { 
+            if (fs.existsSync(file)) fs.copyFileSync(file, path.join('./backups', `${path.basename(file)}.${timestamp}.backup`)); 
+        });
         console.log(`✅ Backup: ${timestamp}`);
     } catch (e) {}
 };
@@ -275,7 +374,18 @@ app.post('/auth/recuperar', async (req, res) => {
         usuario.resetPin = pin;
         usuario.resetPinExpires = Date.now() + 3600000;
         writeData('./usuarios.json', usuarios);
-        console.log(`🔐 PIN de recuperación para ${email}: ${pin}`);
+        
+        // Enviar PIN por email
+        await enviarEmail(email, 'Recuperación de contraseña - Casa Elegida', `
+            <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
+                <h1 style="color:#8B5E3C">Casa Elegida</h1>
+                <h2>Recuperación de contraseña</h2>
+                <p>Tu PIN de recuperación es:</p>
+                <div style="font-size:36px;font-weight:800;letter-spacing:12px;color:#8B5E3C;text-align:center;padding:20px">${pin}</div>
+                <p>Este código expirará en 1 hora.</p>
+            </div>
+        `);
+        
         res.json({ success: true, message: 'Se ha enviado un PIN a tu email' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -345,15 +455,42 @@ app.post('/guardar-producto', (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/subir-imagen', upload.single('foto'), (req, res) => { try { if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' }); res.json({ url: `/uploads/${req.file.filename}` }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/subir-logo', upload.single('logo'), (req, res) => { try { if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' }); const config = readConfig(); if (config.logo && fs.existsSync(path.join(__dirname, config.logo))) fs.unlinkSync(path.join(__dirname, config.logo)); config.logo = `/uploads/${req.file.filename}`; writeConfig(config); res.json({ success: true, url: config.logo }); } catch (e) { res.status(500).json({ error: e.message }); } });
+// ==================== SUBIR IMAGEN A CLOUDINARY ====================
+app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' });
+        fs.unlinkSync(req.file.path);
+        res.json({ url: result.secure_url });
+    } catch (e) {
+        console.error('Error subiendo imagen:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ==================== SUBIR LOGO A CLOUDINARY ====================
+app.post('/subir-logo', upload.single('logo'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' });
+        fs.unlinkSync(req.file.path);
+        const config = readConfig();
+        config.logo = result.secure_url;
+        writeConfig(config);
+        res.json({ success: true, url: result.secure_url });
+    } catch (e) {
+        console.error('Error subiendo logo:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.post('/get-config', (req, res) => { try { res.json(readConfig()); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/save-config', (req, res) => { try { const { empresa, horarios, redes, pagos } = req.body; const config = readConfig(); if (empresa) config.empresa = empresa; if (horarios) config.horarios = horarios; if (redes) config.redes = redes; if (pagos) config.pagos = pagos; writeConfig(config); logActividad('Admin', 'SAVE_CONFIG', 'Configuración guardada', req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/save-tienda-config', (req, res) => { try { const { tienda } = req.body; const config = readConfig(); config.tienda = { ...config.tienda, ...tienda }; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/save-mayorista-config', (req, res) => { try { const { habilitado, modo, valorCantidad, valorMonto } = req.body; const config = readConfig(); config.mayorista = { habilitado, modo, valorCantidad, valorMonto }; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/save-diseno-config', (req, res) => { try { const { diseno } = req.body; const config = readConfig(); config.diseno = { ...config.diseno, ...diseno }; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/save-home-config', (req, res) => { try { const { heroConfig, seccionesDestacadas } = req.body; const config = readConfig(); config.heroConfig = heroConfig; config.seccionesDestacadas = seccionesDestacadas; writeConfig(config); logActividad('Admin', 'SAVE_HOME_CONFIG', 'Página de inicio actualizada', req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/eliminar-logo', (req, res) => { try { const config = readConfig(); if (config.logo && fs.existsSync(path.join(__dirname, config.logo))) fs.unlinkSync(path.join(__dirname, config.logo)); config.logo = null; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/eliminar-logo', (req, res) => { try { const config = readConfig(); config.logo = null; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 
 // ==================== CATEGORÍAS ====================
 app.post('/listar-categorias', (req, res) => { try { res.json(readData('./categorias.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
@@ -400,7 +537,7 @@ app.post('/confirmar-venta', (req, res) => {
 app.post('/listar-ventas', (req, res) => { try { res.json(readData('./ventas.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/corte-caja', (req, res) => { try { const ventas = readData('./ventas.json').lista; const hoy = new Date().toLocaleDateString('es-AR'); const ventasHoy = ventas.filter(v => new Date(v.fechaTimestamp).toLocaleDateString('es-AR') === hoy); res.json({ fecha: hoy, total: ventasHoy.reduce((s,v)=>s+v.pago.total,0), cantidad: ventasHoy.length, porMetodo: { efectivo: ventasHoy.filter(v=>v.pago.metodo==='efectivo').reduce((s,v)=>s+v.pago.total,0), transferencia: ventasHoy.filter(v=>v.pago.metodo==='transferencia').reduce((s,v)=>s+v.pago.total,0), mixto: ventasHoy.filter(v=>v.pago.metodo==='mixto').reduce((s,v)=>s+v.pago.total,0), pedido_online: ventasHoy.filter(v=>v.pago.metodo==='pedido_online').reduce((s,v)=>s+v.pago.total,0) } }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/reordenar-productos', (req, res) => { try { writeData('./productos.json', req.body); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/eliminar-producto', (req, res) => { try { let data = readData('./productos.json'); const prod = data.lista.find(x => x.id == req.body.id); data.lista = data.lista.filter(x => x.id != req.body.id); writeData('./productos.json', data); if (prod?.variantes) prod.variantes.forEach(v => { if (v.foto && fs.existsSync(path.join(__dirname, v.foto))) fs.unlinkSync(path.join(__dirname, v.foto)); }); logActividad('Admin', 'ELIMINAR_PRODUCTO', `Producto: ${prod?.nombre}`, req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/eliminar-producto', (req, res) => { try { let data = readData('./productos.json'); const prod = data.lista.find(x => x.id == req.body.id); data.lista = data.lista.filter(x => x.id != req.body.id); writeData('./productos.json', data); logActividad('Admin', 'ELIMINAR_PRODUCTO', `Producto: ${prod?.nombre}`, req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/stock-bajo', (req, res) => { try { const { minimo=5 } = req.body; const data = readData('./productos.json'); const bajo = data.lista.filter(p=>p.variantes.some(v=>v.stock<=minimo)).map(p=>({ id:p.id, nombre:p.nombre, variantes:p.variantes.filter(v=>v.stock<=minimo).map(v=>({ nombre:v.nombre, stock:v.stock })) })); res.json({ stockBajo: bajo }); } catch (e) { res.status(500).json({ error: e.message }); } });
 
 // ==================== TIENDA ====================
@@ -425,7 +562,6 @@ app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
         const usuario = usuarios.lista.find(u => u.id === req.usuario.id);
         if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado' });
         
-        // FORZAR datos del cliente desde el perfil
         cliente.nombre = usuario.nombre;
         cliente.apellido = usuario.apellido;
         cliente.email = usuario.email;
@@ -501,14 +637,88 @@ app.post('/tienda/cancelar-pedido', authMiddleware, (req, res) => {
 });
 
 // ==================== GESTIÓN DE PEDIDOS WEB (ADMIN) ====================
-app.post('/tienda/marcar-abonado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); if (pedido.estado==='cancelado') return res.status(400).json({ error: 'Pedido cancelado' }); pedido.estado = 'abonado'; pedido.fechaAbonado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ABONADO', `Pedido ${pedido.id} abonado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/marcar-enviado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); if (pedido.estado!=='abonado' && pedido.estado!=='confirmado') return res.status(400).json({ error: 'Debe estar abonado o confirmado' }); pedido.estado = 'enviado'; pedido.fechaEnviado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ENVIADO', `Pedido ${pedido.id} enviado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/marcar-entregado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); if (pedido.estado !== 'abonado' && pedido.estado !== 'confirmado') return res.status(400).json({ error: 'El pedido debe estar abonado o confirmado' }); pedido.estado = 'entregado'; pedido.fechaEntregado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ENTREGADO', `Pedido ${pedido.id} entregado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/cancelar-pedido-admin', (req, res) => { try { let pedidosData = readData('./pedidos.json'), pData = readData('./productos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); if (pedido.estado==='entregado') return res.status(400).json({ error: 'No se puede cancelar entregado' }); if (pedido.estado==='cancelado') return res.status(400).json({ error: 'Ya está cancelado' }); if (pedido.estado==='confirmado' || pedido.estado==='abonado' || pedido.estado==='enviado') { for (let item of pedido.items) { if (item.esManual) continue; const prod = pData.lista.find(x=>x.id==item.pId); if (prod) { const v = prod.variantes.find(v=>v.nombre===item.vNom); if (v) v.stock += item.cant; } } writeData('./productos.json', pData); } pedido.estado = 'cancelado'; pedido.fechaCancelado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'CANCELAR_PEDIDO', `Pedido ${pedido.id} cancelado - Stock devuelto`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/tienda/marcar-abonado', (req, res) => { 
+    try { 
+        let pedidosData = readData('./pedidos.json'); 
+        const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); 
+        if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); 
+        if (pedido.estado==='cancelado') return res.status(400).json({ error: 'Pedido cancelado' }); 
+        pedido.estado = 'abonado'; pedido.fechaAbonado = new Date().toISOString(); 
+        writeData('./pedidos.json', pedidosData); 
+        logActividad('Admin', 'MARCAR_ABONADO', `Pedido ${pedido.id} abonado`, req);
+        const config = readConfig();
+        if (pedido.cliente?.email) enviarEmail(pedido.cliente.email, `Pago recibido - Pedido #${pedido.id} - ${config.empresa.nombre}`, emailTemplates.pedidoAbonado(pedido, config));
+        res.json({ success: true, pedido }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
+
+app.post('/tienda/marcar-enviado', (req, res) => { 
+    try { 
+        let pedidosData = readData('./pedidos.json'); 
+        const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); 
+        if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); 
+        if (pedido.estado!=='abonado' && pedido.estado!=='confirmado') return res.status(400).json({ error: 'Debe estar abonado o confirmado' }); 
+        pedido.estado = 'enviado'; pedido.fechaEnviado = new Date().toISOString(); 
+        writeData('./pedidos.json', pedidosData); 
+        logActividad('Admin', 'MARCAR_ENVIADO', `Pedido ${pedido.id} enviado`, req);
+        const config = readConfig();
+        if (pedido.cliente?.email) enviarEmail(pedido.cliente.email, `Pedido #${pedido.id} enviado - ${config.empresa.nombre}`, emailTemplates.pedidoEnviado(pedido, config));
+        res.json({ success: true, pedido }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
+
+app.post('/tienda/marcar-entregado', (req, res) => { 
+    try { 
+        let pedidosData = readData('./pedidos.json'); 
+        const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); 
+        if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); 
+        if (pedido.estado !== 'abonado' && pedido.estado !== 'confirmado') return res.status(400).json({ error: 'El pedido debe estar abonado o confirmado' }); 
+        pedido.estado = 'entregado'; pedido.fechaEntregado = new Date().toISOString(); 
+        writeData('./pedidos.json', pedidosData); 
+        logActividad('Admin', 'MARCAR_ENTREGADO', `Pedido ${pedido.id} entregado`, req); 
+        res.json({ success: true, pedido }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
+
+app.post('/tienda/cancelar-pedido-admin', (req, res) => { 
+    try { 
+        let pedidosData = readData('./pedidos.json'), pData = readData('./productos.json'); 
+        const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); 
+        if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); 
+        if (pedido.estado==='entregado') return res.status(400).json({ error: 'No se puede cancelar entregado' }); 
+        if (pedido.estado==='cancelado') return res.status(400).json({ error: 'Ya está cancelado' }); 
+        if (pedido.estado==='confirmado' || pedido.estado==='abonado' || pedido.estado==='enviado') { 
+            for (let item of pedido.items) { if (item.esManual) continue; const prod = pData.lista.find(x=>x.id==item.pId); if (prod) { const v = prod.variantes.find(v=>v.nombre===item.vNom); if (v) v.stock += item.cant; } } 
+            writeData('./productos.json', pData); 
+        } 
+        pedido.estado = 'cancelado'; pedido.fechaCancelado = new Date().toISOString(); 
+        writeData('./pedidos.json', pedidosData); 
+        logActividad('Admin', 'CANCELAR_PEDIDO', `Pedido ${pedido.id} cancelado - Stock devuelto`, req); 
+        res.json({ success: true, pedido }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
 
 // ==================== RETIRAR CON PIN ====================
-app.post('/tienda/retirar-pedido', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); if (!pedido || (pedido.estado !== 'confirmado' && pedido.estado !== 'abonado') || pedido.pin !== req.body.pin) return res.status(400).json({ error: 'PIN incorrecto o pedido no válido' }); pedido.estado = 'entregado'; pedido.fechaEntrega = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'RETIRAR_PEDIDO', `Pedido ${pedido.id} retirado con PIN`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/verificar-pin', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.pin === req.body.pin && (p.estado === 'confirmado' || p.estado === 'abonado')); if (!pedido) return res.status(400).json({ error: 'PIN no encontrado o pedido no está listo' }); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/tienda/retirar-pedido', (req, res) => { 
+    try { 
+        let pedidosData = readData('./pedidos.json'); 
+        const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); 
+        if (!pedido || (pedido.estado !== 'confirmado' && pedido.estado !== 'abonado') || pedido.pin !== req.body.pin) return res.status(400).json({ error: 'PIN incorrecto o pedido no válido' }); 
+        pedido.estado = 'entregado'; pedido.fechaEntrega = new Date().toISOString(); 
+        writeData('./pedidos.json', pedidosData); 
+        logActividad('Admin', 'RETIRAR_PEDIDO', `Pedido ${pedido.id} retirado con PIN`, req); 
+        res.json({ success: true, pedido }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
+
+app.post('/tienda/verificar-pin', (req, res) => { 
+    try { 
+        let pedidosData = readData('./pedidos.json'); 
+        const pedido = pedidosData.lista.find(p => p.pin === req.body.pin && (p.estado === 'confirmado' || p.estado === 'abonado')); 
+        if (!pedido) return res.status(400).json({ error: 'PIN no encontrado o pedido no está listo' }); 
+        res.json({ success: true, pedido }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
 
 // ==================== DASHBOARD ====================
 app.post('/dashboard/stats', (req, res) => {
@@ -546,7 +756,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).json({ er
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
-    console.log(`║              🏪 POS MASTER - SISTEMA ACTIVO                  ║`);
+    console.log(`║              🏪 CASA ELEGIDA - SISTEMA ACTIVO                ║`);
     console.log(`╠══════════════════════════════════════════════════════════════╣`);
     console.log(`║  📊 Panel: http://localhost:${PORT}/admin                      ║`);
     console.log(`║  🛒 Tienda: http://localhost:${PORT}/tienda                    ║`);
