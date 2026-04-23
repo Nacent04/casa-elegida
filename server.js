@@ -10,22 +10,30 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const nodemailer = require('nodemailer');
+const cloudinary = require('cloudinary').v2;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==================== CONFIGURACIÓN DE EMAIL (USA VARIABLES DE ENTORNO) ====================
+// ==================== CONFIGURACIÓN DE CLOUDINARY ====================
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// ==================== CONFIGURACIÓN DE EMAIL ====================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'casaelegida20@gmail.com',
-        pass: process.env.EMAIL_PASS || ''
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pos_master_super_secret_key_2024';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'session_secret_key_2024';
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const JWT_SECRET = process.env.JWT_SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 // Crear directorios necesarios
@@ -81,7 +89,7 @@ if (!fs.existsSync('./config/config.json')) {
     console.log('✅ Configuración inicial creada');
 }
 
-// Configuración de multer (archivos locales)
+// Configuración de multer (archivos temporales)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, './uploads/'),
     filename: (req, file, cb) => {
@@ -116,37 +124,32 @@ app.use(passport.session());
 app.use('/uploads', express.static('uploads'));
 app.use(express.static('public'));
 
-// Configuración de Passport (Google OAuth) - SOLO si hay credenciales
-if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
-    passport.use(new GoogleStrategy({
-        clientID: GOOGLE_CLIENT_ID,
-        clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: '/auth/google/callback'
-    }, async (accessToken, refreshToken, profile, done) => {
-        try {
-            let usuarios = readData('./usuarios.json');
-            let usuario = usuarios.lista.find(u => u.email === profile.emails[0].value);
-            if (!usuario) {
-                usuario = { 
-                    id: 'USR-' + Date.now(), 
-                    nombre: profile.name.givenName || '', 
-                    apellido: profile.name.familyName || '', 
-                    email: profile.emails[0].value, 
-                    googleId: profile.id, 
-                    foto: profile.photos?.[0]?.value || '', 
-                    fechaRegistro: new Date().toISOString(), 
-                    rol: 'cliente' 
-                };
-                usuarios.lista.push(usuario);
-                writeData('./usuarios.json', usuarios);
-            }
-            return done(null, usuario);
-        } catch (e) { return done(e, null); }
-    }));
-    console.log('✅ Google OAuth configurado');
-} else {
-    console.log('⚠️ Google OAuth NO configurado - faltan GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET');
-}
+// Configuración de Passport (Google OAuth)
+passport.use(new GoogleStrategy({
+    clientID: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        let usuarios = readData('./usuarios.json');
+        let usuario = usuarios.lista.find(u => u.email === profile.emails[0].value);
+        if (!usuario) {
+            usuario = { 
+                id: 'USR-' + Date.now(), 
+                nombre: profile.name.givenName || '', 
+                apellido: profile.name.familyName || '', 
+                email: profile.emails[0].value, 
+                googleId: profile.id, 
+                foto: profile.photos?.[0]?.value || '', 
+                fechaRegistro: new Date().toISOString(), 
+                rol: 'cliente' 
+            };
+            usuarios.lista.push(usuario);
+            writeData('./usuarios.json', usuarios);
+        }
+        return done(null, usuario);
+    } catch (e) { return done(e, null); }
+}));
 
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => {
@@ -189,14 +192,12 @@ app.get('/recuperar', (req, res) => res.sendFile(path.join(__dirname, 'public', 
 app.get('/mis-pedidos', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mis-pedidos.html')));
 app.get('/', (req, res) => res.redirect('/tienda'));
 
-// Auth con Google (solo si está configurado)
-if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
-    app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-    app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
-        const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
-        res.redirect(`/tienda?token=${token}`);
-    });
-}
+// Auth con Google
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
+    const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
+    res.redirect(`/tienda?token=${token}`);
+});
 
 // ==================== FUNCIONES AUXILIARES ====================
 const readData = (file) => { 
@@ -262,7 +263,7 @@ function logActividad(admin, accion, detalles, req) {
 
 async function enviarEmail(destinatario, asunto, html) {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.log('⚠️ Email no configurado - omitiendo envío');
+        console.log('⚠️ Email no configurado');
         return false;
     }
     try {
@@ -279,7 +280,6 @@ async function enviarEmail(destinatario, asunto, html) {
     }
 }
 
-// Plantillas de email
 const emailTemplates = {
     pedidoCreado: (pedido, config) => `
         <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
@@ -303,7 +303,6 @@ const emailTemplates = {
     `
 };
 
-// Backup automático
 const realizarBackupAutomatico = () => {
     try {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -357,7 +356,7 @@ app.post('/auth/recuperar', async (req, res) => {
         usuario.resetPinExpires = Date.now() + 3600000;
         writeData('./usuarios.json', usuarios);
         
-        await enviarEmail(email, 'Recuperación de contraseña - Casa Elegida', `
+        await enviarEmail(email, 'Recuperación de contraseña', `
             <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
                 <h1 style="color:#8B5E3C">Casa Elegida</h1>
                 <h2>Recuperación de contraseña</h2>
@@ -418,10 +417,7 @@ app.get('/api/mis-pedidos', authMiddleware, (req, res) => {
 });
 
 // ==================== RUTAS ADMIN ====================
-app.post('/listar', (req, res) => { 
-    try { res.json(readData('./productos.json')); } 
-    catch (e) { res.status(500).json({ error: e.message }); } 
-});
+app.post('/listar', (req, res) => { try { res.json(readData('./productos.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
 
 app.post('/guardar-producto', (req, res) => {
     try {
@@ -440,23 +436,37 @@ app.post('/guardar-producto', (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Subir imagen (local)
-app.post('/subir-imagen', upload.single('foto'), (req, res) => {
+// Subir imagen a Cloudinary
+app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
-        res.json({ url: `/uploads/${req.file.filename}` });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        const result = await cloudinary.uploader.upload(req.file.path, { 
+            folder: 'casa-elegida/productos' 
+        });
+        fs.unlinkSync(req.file.path);
+        res.json({ url: result.secure_url });
+    } catch (e) {
+        console.error('Error subiendo a Cloudinary:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// Subir logo (local)
-app.post('/subir-logo', upload.single('logo'), (req, res) => {
+// Subir logo a Cloudinary
+app.post('/subir-logo', upload.single('logo'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
+        const result = await cloudinary.uploader.upload(req.file.path, { 
+            folder: 'casa-elegida/logo' 
+        });
+        fs.unlinkSync(req.file.path);
         const config = readConfig();
-        config.logo = `/uploads/${req.file.filename}`;
+        config.logo = result.secure_url;
         writeConfig(config);
-        res.json({ success: true, url: config.logo });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        res.json({ success: true, url: result.secure_url });
+    } catch (e) {
+        console.error('Error subiendo logo:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.post('/get-config', (req, res) => { try { res.json(readConfig()); } catch (e) { res.status(500).json({ error: e.message }); } });
@@ -571,7 +581,7 @@ app.post('/tienda/listar-productos', (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Crear pedido
+// Crear pedido desde la tienda
 app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
     try {
         const { carrito, cliente, total, esMayorista, razonMayorista, tipoEntrega, metodoEnvio } = req.body;
@@ -620,7 +630,7 @@ app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
         logActividad(cliente.nombre, 'PEDIDO_WEB', `Pedido ${nuevo.id} - ${cliente.email}`, req);
         
         const config = readConfig();
-        if (cliente.email) enviarEmail(cliente.email, `Pedido #${nuevo.id} recibido - ${config.empresa.nombre}`, emailTemplates.pedidoCreado(nuevo, config));
+        if (cliente.email) enviarEmail(cliente.email, `Pedido #${nuevo.id} recibido`, emailTemplates.pedidoCreado(nuevo, config));
         res.json({ success: true, pedidoId: nuevo.id });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -650,7 +660,7 @@ app.post('/tienda/confirmar-pedido', (req, res) => {
         logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${pedido.id} confirmado - PIN: ${pin}`, req);
         
         const config = readConfig();
-        if (pedido.cliente?.email) enviarEmail(pedido.cliente.email, `Pedido #${pedido.id} confirmado - ${config.empresa.nombre}`, emailTemplates.pedidoConfirmado(pedido, config));
+        if (pedido.cliente?.email) enviarEmail(pedido.cliente.email, `Pedido #${pedido.id} confirmado`, emailTemplates.pedidoConfirmado(pedido, config));
         res.json({ success: true, ventaId: nuevaVenta.id, pin });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -672,25 +682,41 @@ app.post('/tienda/cancelar-pedido', authMiddleware, (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Gestión de pedidos (admin)
 app.post('/tienda/marcar-abonado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); pedido.estado = 'abonado'; pedido.fechaAbonado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ABONADO', `Pedido ${pedido.id} abonado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/tienda/marcar-enviado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); pedido.estado = 'enviado'; pedido.fechaEnviado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ENVIADO', `Pedido ${pedido.id} enviado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/tienda/marcar-entregado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); pedido.estado = 'entregado'; pedido.fechaEntregado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ENTREGADO', `Pedido ${pedido.id} entregado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/tienda/cancelar-pedido-admin', (req, res) => { try { let pedidosData = readData('./pedidos.json'), pData = readData('./productos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); if (pedido.estado==='entregado') return res.status(400).json({ error: 'No se puede cancelar entregado' }); if (pedido.estado!=='pendiente') { for (let item of pedido.items) { if (item.esManual) continue; const prod = pData.lista.find(x=>x.id==item.pId); if (prod) { const v = prod.variantes.find(v=>v.nombre===item.vNom); if (v) v.stock += item.cant; } } writeData('./productos.json', pData); } pedido.estado = 'cancelado'; pedido.fechaCancelado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'CANCELAR_PEDIDO', `Pedido ${pedido.id} cancelado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
 
+// Retirar con PIN
 app.post('/tienda/retirar-pedido', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); if (!pedido || (pedido.estado !== 'confirmado' && pedido.estado !== 'abonado') || pedido.pin !== req.body.pin) return res.status(400).json({ error: 'PIN incorrecto' }); pedido.estado = 'entregado'; pedido.fechaEntrega = new Date().toISOString(); writeData('./pedidos.json', pedidosData); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/tienda/verificar-pin', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.pin === req.body.pin && (p.estado === 'confirmado' || p.estado === 'abonado')); if (!pedido) return res.status(400).json({ error: 'PIN no encontrado' }); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
 
-app.post('/dashboard/stats', (req, res) => { try { const ventas = readData('./ventas.json').lista; const usuarios = readData('./usuarios.json').lista; const hoy = new Date().toLocaleDateString('es-AR'); const ventasHoy = ventas.filter(v => new Date(v.fechaTimestamp).toLocaleDateString('es-AR') === hoy); const totalHoy = ventasHoy.reduce((s, v) => s + v.pago.total, 0); const ticketPromedio = ventasHoy.length ? Math.round(totalHoy / ventasHoy.length) : 0; res.json({ ventasHoy: ventasHoy.length, totalHoy, ticketPromedio, ventasSemana: [], productosTop: [], clientesTop: [], horariosPico: [] }); } catch (e) { res.status(500).json({ error: e.message }); } });
+// Dashboard
+app.post('/dashboard/stats', (req, res) => { 
+    try { 
+        const ventas = readData('./ventas.json').lista; 
+        const usuarios = readData('./usuarios.json').lista; 
+        const hoy = new Date().toLocaleDateString('es-AR'); 
+        const ventasHoy = ventas.filter(v => new Date(v.fechaTimestamp).toLocaleDateString('es-AR') === hoy); 
+        const totalHoy = ventasHoy.reduce((s, v) => s + v.pago.total, 0); 
+        const ticketPromedio = ventasHoy.length ? Math.round(totalHoy / ventasHoy.length) : 0; 
+        res.json({ ventasHoy: ventasHoy.length, totalHoy, ticketPromedio }); 
+    } catch (e) { res.status(500).json({ error: e.message }); } 
+});
 
+// Notificaciones y logs
 app.post('/notificaciones', (req, res) => { try { res.json(readData('./notificaciones.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/notificaciones/leer', (req, res) => { try { let data = readData('./notificaciones.json'); const notif = data.lista.find(n => n.id === req.body.id); if (notif) notif.leida = true; writeData('./notificaciones.json', data); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/notificaciones/leer-todas', (req, res) => { try { let data = readData('./notificaciones.json'); data.lista.forEach(n => n.leida = true); writeData('./notificaciones.json', data); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/logs/admin', (req, res) => { try { res.json(readData('./logs/admin-activity.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
 app.post('/backup', (req, res) => { try { realizarBackupAutomatico(); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
 
+// Manejo de errores
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((err, req, res, next) => { console.error('Error:', err.message); res.status(500).json({ error: 'Error interno del servidor' }); });
 
+// Iniciar servidor
 app.listen(PORT, () => {
     console.log(`\n╔══════════════════════════════════════════════════╗`);
     console.log(`║        🏪 CASA ELEGIDA - SISTEMA ACTIVO          ║`);
