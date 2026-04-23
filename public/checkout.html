@@ -112,6 +112,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .form-row {
@@ -160,11 +161,25 @@
             box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
         }
         
-        .form-group input[readonly] {
+        .form-group input.campo-bloqueado {
             background: #F8F2EC;
             color: var(--text-dark);
-            cursor: default;
+            cursor: not-allowed;
             border-color: #E8DCD2;
+            font-weight: 500;
+        }
+        
+        .campo-bloqueado-aviso {
+            display: block;
+            font-size: 10px;
+            color: var(--primary);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        
+        .campo-bloqueado-aviso i {
+            margin-right: 4px;
+            font-size: 10px;
         }
         
         .readonly-badge {
@@ -410,7 +425,7 @@
             margin-bottom: 20px;
         }
         
-        .redirect-message .btn-login {
+        .redirect-message .btn-action {
             display: inline-block;
             padding: 14px 32px;
             background: var(--primary);
@@ -419,6 +434,23 @@
             text-decoration: none;
             font-weight: 600;
             margin: 10px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .btn-secondary-action {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #F8F2EC;
+            color: var(--text-dark);
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
         }
         
         .loading-spinner {
@@ -486,36 +518,31 @@
         
         const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
         
-        // ========== MOSTRAR MENSAJE DE REDIRECCIÓN ==========
-        function mostrarRedireccionLogin() {
+        // ========== MOSTRAR PANTALLA DE LOGIN REQUERIDO ==========
+        function mostrarPantallaLoginRequerido() {
             const container = document.getElementById('checkout-container');
+            localStorage.setItem('returnUrl', '/checkout');
+            
             container.innerHTML = `
                 <div class="checkout-form-section" style="grid-column: 1/-1;">
                     <div class="redirect-message">
                         <i class="fas fa-user-lock"></i>
                         <h2>Debés iniciar sesión para continuar</h2>
-                        <p>Serás redirigido automáticamente en <span id="countdown">3</span> segundos...</p>
-                        <a href="/login" class="btn-login">
-                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión Ahora
+                        <p>Para finalizar tu compra necesitás estar registrado</p>
+                        <a href="/login" class="btn-action">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </a>
+                        <a href="/registro" class="btn-secondary-action">
+                            <i class="fas fa-user-plus"></i> Crear Cuenta
                         </a>
                         <p style="margin-top: 20px; font-size: 14px;">
-                            ¿No tenés cuenta? <a href="/registro" style="color: var(--primary);">Registrate aquí</a>
+                            <a href="/tienda" style="color: var(--primary);">
+                                <i class="fas fa-arrow-left"></i> Seguir comprando
+                            </a>
                         </p>
                     </div>
                 </div>
             `;
-            
-            // Cuenta regresiva y redirección
-            let seconds = 3;
-            const countdownEl = document.getElementById('countdown');
-            const interval = setInterval(() => {
-                seconds--;
-                if (countdownEl) countdownEl.textContent = seconds;
-                if (seconds <= 0) {
-                    clearInterval(interval);
-                    window.location.href = '/login';
-                }
-            }, 1000);
         }
         
         function mostrarCarritoVacio() {
@@ -524,9 +551,9 @@
                 <div class="checkout-form-section" style="grid-column: 1/-1;">
                     <div class="redirect-message">
                         <i class="fas fa-shopping-bag"></i>
-                        <h2>Tu carrito está vacío</h2>
+                        <h2>Tu pedido está vacío</h2>
                         <p>Agregá productos desde la tienda para continuar</p>
-                        <button class="btn-login" onclick="window.location.href='/tienda'">
+                        <button class="btn-action" onclick="window.location.href='/tienda'">
                             <i class="fas fa-store"></i> Ir a la Tienda
                         </button>
                     </div>
@@ -538,30 +565,28 @@
         async function cargarDatos() {
             const token = localStorage.getItem('token');
             
-            // PRIMERO: Verificar si hay token
             if (!token) {
-                mostrarRedireccionLogin();
+                mostrarPantallaLoginRequerido();
                 return;
             }
             
             try {
-                // Cargar perfil del usuario
                 const userRes = await fetch('/auth/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (!userRes.ok) {
-                    // Token inválido o expirado
                     localStorage.removeItem('token');
                     localStorage.removeItem('usuario');
-                    mostrarRedireccionLogin();
+                    mostrarPantallaLoginRequerido();
                     return;
                 }
                 
                 usuarioActual = await userRes.json();
                 
-                // Cargar configuración y productos
                 const res = await fetch('/tienda/listar-productos', { method: 'POST' });
+                if (!res.ok) throw new Error('Error al cargar productos');
+                
                 const data = await res.json();
                 configuracion = data.configuracion || configuracion;
                 metodosEnvio = data.metodosEnvio || [];
@@ -574,12 +599,12 @@
                     return;
                 }
                 
-                // Todo bien: renderizar checkout
+                recalcularPreciosMayoristas();
                 renderizarCheckout();
                 actualizarMetodosEnvio();
                 
             } catch(e) { 
-                console.error(e); 
+                console.error('Error:', e); 
                 mostrarToast('Error al cargar los datos', 'error');
             }
         }
@@ -589,14 +614,20 @@
             if (guardado) {
                 try { 
                     carrito = JSON.parse(guardado);
-                    recalcularPreciosMayoristas();
-                } catch(e) { carrito = []; }
+                } catch(e) { 
+                    carrito = []; 
+                }
             }
         }
         
         function recalcularPreciosMayoristas() {
-            if (!configuracion.mayorista?.habilitado) {
-                carrito.forEach(i => { if (i.precioOriginal) { i.precio = i.precioOriginal; delete i.precioOriginal; } });
+            if (!configuracion.mayorista?.habilitado || !productos.length) {
+                carrito.forEach(i => { 
+                    if (i.precioOriginal) { 
+                        i.precio = i.precioOriginal; 
+                        delete i.precioOriginal; 
+                    } 
+                });
                 return;
             }
             
@@ -610,6 +641,7 @@
             else cumple = cant >= valorCantidad && monto >= valorMonto;
             
             carrito.forEach(i => {
+                if (i.esManual) return;
                 const p = productos.find(x => x.id == i.pId);
                 if (!p) return;
                 
@@ -627,36 +659,60 @@
             const container = document.getElementById('checkout-container');
             const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
             const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
+            const ahorro = carrito.reduce((s,i) => s + ((i.precioOriginal || i.precio) - i.precio) * i.cant, 0);
             
             container.innerHTML = `
                 <div class="checkout-form-section">
-                    <h2><i class="fas fa-user"></i> Datos del Cliente <span class="readonly-badge"><i class="fas fa-lock"></i> Datos verificados</span></h2>
+                    <h2>
+                        <i class="fas fa-user"></i> Datos del Cliente 
+                        <span class="readonly-badge"><i class="fas fa-shield-alt"></i> Verificado</span>
+                    </h2>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label><i class="fas fa-user"></i> Nombre *</label>
-                            <input type="text" id="cliente-nombre" value="${usuarioActual?.nombre || ''}" readonly>
+                            <input type="text" id="cliente-nombre" value="${usuarioActual?.nombre || ''}" 
+                                class="campo-bloqueado" readonly>
+                            <span class="campo-bloqueado-aviso">
+                                <i class="fas fa-lock"></i> Dato de tu perfil - No editable
+                            </span>
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-user"></i> Apellido *</label>
-                            <input type="text" id="cliente-apellido" value="${usuarioActual?.apellido || ''}" readonly>
+                            <input type="text" id="cliente-apellido" value="${usuarioActual?.apellido || ''}" 
+                                class="campo-bloqueado" readonly>
+                            <span class="campo-bloqueado-aviso">
+                                <i class="fas fa-lock"></i> Dato de tu perfil - No editable
+                            </span>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label><i class="fas fa-id-card"></i> DNI *</label>
-                            <input type="text" id="cliente-dni" placeholder="Ingresá tu DNI" value="${usuarioActual?.dni || ''}">
+                            <input type="text" id="cliente-dni" value="${usuarioActual?.dni || ''}" 
+                                class="campo-bloqueado" readonly>
+                            <span class="campo-bloqueado-aviso">
+                                <i class="fas fa-lock"></i> Dato de tu perfil - No editable
+                            </span>
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-phone"></i> Teléfono *</label>
-                            <input type="tel" id="cliente-telefono" value="${usuarioActual?.telefono || ''}">
+                            <input type="tel" id="cliente-telefono" value="${usuarioActual?.telefono || ''}" 
+                                placeholder="Ingresá tu teléfono">
+                            <span style="font-size: 10px; color: var(--text-light); margin-top: 4px; display: block;">
+                                <i class="fas fa-info-circle"></i> Podés editarlo si cambió
+                            </span>
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label><i class="fas fa-envelope"></i> Email *</label>
-                        <input type="email" id="cliente-email" value="${usuarioActual?.email || ''}" readonly>
+                        <input type="email" id="cliente-email" value="${usuarioActual?.email || ''}" 
+                            class="campo-bloqueado" readonly>
+                        <span class="campo-bloqueado-aviso">
+                            <i class="fas fa-lock"></i> Dato de tu perfil - No editable
+                        </span>
                     </div>
                     
                     <h2 style="margin-top: 32px;"><i class="fas fa-truck"></i> Tipo de Entrega</h2>
@@ -731,7 +787,7 @@
                     
                     ${esMayorista ? `
                         <div class="mayorista-info">
-                            <p><i class="fas fa-tags"></i> ¡Precio mayorista aplicado! Ahorro: ${fmt.format(carrito.reduce((s,i) => s + ((i.precioOriginal || i.precio) - i.precio) * i.cant, 0))}</p>
+                            <p><i class="fas fa-tags"></i> ¡Precio mayorista aplicado! Ahorro: ${fmt.format(ahorro)}</p>
                         </div>
                     ` : ''}
                     
@@ -768,7 +824,9 @@
             const select = document.getElementById('metodo-envio');
             if (select) {
                 select.innerHTML = '<option value="">Seleccionar método</option>';
-                metodosEnvio.forEach(m => { select.innerHTML += `<option value="${m}">${m}</option>`; });
+                metodosEnvio.forEach(m => { 
+                    select.innerHTML += `<option value="${m}">${m}</option>`; 
+                });
             }
         }
         
@@ -780,7 +838,7 @@
             carrito.forEach(it => {
                 total += it.precio * it.cant;
                 const esMayorista = it.precioOriginal && it.precio < it.precioOriginal;
-                const imagen = it.vFoto || 'https://via.placeholder.com/60';
+                const imagen = (it.vFoto && it.vFoto.startsWith('/uploads/')) ? it.vFoto : 'https://via.placeholder.com/60';
                 
                 html += `<div class="summary-item">
                     <img src="${imagen}" onerror="this.src='https://via.placeholder.com/60/F5EDE6/8B5E3C?text=Producto'">
@@ -792,22 +850,29 @@
                 </div>`;
             });
             
-            container.innerHTML = html || '<p>No hay productos</p>';
-            document.getElementById('summary-subtotal').textContent = fmt.format(total);
-            document.getElementById('summary-total').textContent = fmt.format(total);
+            container.innerHTML = html || '<p style="text-align:center;color:#94a3b8;">No hay productos</p>';
+            
+            const subtotalEl = document.getElementById('summary-subtotal');
+            const totalEl = document.getElementById('summary-total');
+            if (subtotalEl) subtotalEl.textContent = fmt.format(total);
+            if (totalEl) totalEl.textContent = fmt.format(total);
         }
         
         function mostrarDatosPago() {
             const p = configuracion.pagos || {};
             const w = configuracion.redes?.whatsapp || configuracion.empresa?.telefono || '';
             const detailsDiv = document.getElementById('payment-details');
+            if (!detailsDiv) return;
             
             let html = '';
             if (p.titular) html += `<p><i class="fas fa-user"></i> <strong>Titular:</strong> ${p.titular}</p>`;
             if (p.banco) html += `<p><i class="fas fa-university"></i> <strong>Banco:</strong> ${p.banco}</p>`;
             if (p.alias) html += `<p><i class="fas fa-tag"></i> <strong>Alias:</strong> ${p.alias} <button class="copy-btn" onclick="copiar('${p.alias}')"><i class="far fa-copy"></i> Copiar</button></p>`;
             if (p.cbu) html += `<p><i class="fas fa-barcode"></i> <strong>CBU:</strong> ${p.cbu} <button class="copy-btn" onclick="copiar('${p.cbu}')"><i class="far fa-copy"></i> Copiar</button></p>`;
-            if (w) html += `<a href="https://wa.me/${w.replace(/\D/g,'')}" target="_blank" class="whatsapp-link"><i class="fab fa-whatsapp"></i> Enviar comprobante</a>`;
+            if (w) {
+                const waNum = w.replace(/\D/g, '');
+                html += `<a href="https://wa.me/${waNum}" target="_blank" class="whatsapp-link"><i class="fab fa-whatsapp"></i> Enviar comprobante al ${w}</a>`;
+            }
             
             detailsDiv.innerHTML = html || '<p style="color: var(--text-light);">Configurá los datos de pago en el panel de administración.</p>';
         }
@@ -815,16 +880,25 @@
         function seleccionarTipoEntrega(t) {
             tipoEntregaSeleccionado = t;
             document.querySelectorAll('.delivery-option').forEach(o => o.classList.toggle('active', o.dataset.type === t));
-            document.getElementById('envio-fields').style.display = t === 'envio' ? 'block' : 'none';
+            const envioFields = document.getElementById('envio-fields');
+            if (envioFields) envioFields.style.display = t === 'envio' ? 'block' : 'none';
         }
         
-        function copiar(texto) { navigator.clipboard?.writeText(texto).then(() => mostrarToast('✅ Copiado')); }
+        function copiar(texto) { 
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(texto).then(() => mostrarToast('✅ Copiado al portapapeles')); 
+            } else {
+                mostrarToast('📋 Texto: ' + texto);
+            }
+        }
         
         function mostrarToast(mensaje, tipo = 'success') {
+            const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${tipo}`;
-            toast.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${mensaje}`;
-            document.getElementById('toast-container').appendChild(toast);
+            const icono = tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle';
+            toast.innerHTML = `<i class="fas fa-${icono}"></i> ${mensaje}`;
+            container.appendChild(toast);
             setTimeout(() => toast.remove(), 4000);
         }
         
@@ -835,12 +909,15 @@
             const telefono = document.getElementById('cliente-telefono')?.value.trim();
             const email = document.getElementById('cliente-email')?.value.trim();
             
-            if (!nombre || !apellido || !dni || !telefono || !email) {
-                mostrarToast('Completá todos los campos obligatorios (*)', 'error');
-                return false;
+            if (!nombre) { mostrarToast('Completá tu nombre en el perfil', 'error'); return false; }
+            if (!apellido) { mostrarToast('Completá tu apellido en el perfil', 'error'); return false; }
+            if (!dni) { mostrarToast('Completá tu DNI en el perfil', 'error'); return false; }
+            if (!telefono) { mostrarToast('Ingresá tu teléfono', 'error'); return false; }
+            if (!email) { mostrarToast('Completá tu email en el perfil', 'error'); return false; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { 
+                mostrarToast('Email inválido', 'error'); 
+                return false; 
             }
-            if (!/^\d+$/.test(dni)) { mostrarToast('DNI solo números', 'error'); return false; }
-            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { mostrarToast('Email inválido', 'error'); return false; }
             
             if (tipoEntregaSeleccionado === 'envio') {
                 const metodo = document.getElementById('metodo-envio')?.value;
@@ -849,10 +926,13 @@
                 const cp = document.getElementById('cliente-cp')?.value.trim();
                 const direccion = document.getElementById('cliente-direccion')?.value.trim();
                 const altura = document.getElementById('cliente-altura')?.value.trim();
-                if (!metodo || !provincia || !localidad || !cp || !direccion || !altura) {
-                    mostrarToast('Completá todos los datos de envío', 'error');
-                    return false;
-                }
+                
+                if (!metodo) { mostrarToast('Seleccioná un método de envío', 'error'); return false; }
+                if (!provincia) { mostrarToast('Seleccioná una provincia', 'error'); return false; }
+                if (!localidad) { mostrarToast('Ingresá tu localidad', 'error'); return false; }
+                if (!cp) { mostrarToast('Ingresá tu código postal', 'error'); return false; }
+                if (!direccion) { mostrarToast('Ingresá tu dirección', 'error'); return false; }
+                if (!altura) { mostrarToast('Ingresá la altura', 'error'); return false; }
             }
             return true;
         }
@@ -894,10 +974,12 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        carrito, cliente, total, esMayorista,
+                        carrito, cliente, total, 
+                        esMayorista,
                         razonMayorista: esMayorista ? 'Pedido mayorista' : '',
                         tipoEntrega: tipoEntregaSeleccionado,
-                        metodoEnvio: tipoEntregaSeleccionado === 'envio' ? document.getElementById('metodo-envio').value : ''
+                        metodoEnvio: tipoEntregaSeleccionado === 'envio' ? 
+                            document.getElementById('metodo-envio').value : ''
                     })
                 });
                 
@@ -908,7 +990,7 @@
                     mostrarToast(`✅ ¡Pedido #${data.pedidoId} confirmado! Te contactaremos pronto.`);
                     setTimeout(() => window.location.href = '/tienda', 3000);
                 } else {
-                    throw new Error(data.error || 'Error al procesar');
+                    throw new Error(data.error || 'Error al procesar el pedido');
                 }
             } catch(e) {
                 mostrarToast('Error: ' + e.message, 'error');
