@@ -3,7 +3,6 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const session = require('express-session');
@@ -11,8 +10,157 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const nodemailer = require('nodemailer');
 const cloudinary = require('cloudinary').v2;
+const Database = require('better-sqlite3');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ==================== BASE DE DATOS SQLITE ====================
+const db = new Database('./data.db');
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+// Crear tablas
+db.exec(`
+    CREATE TABLE IF NOT EXISTS productos (
+        id INTEGER PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        precio REAL NOT NULL DEFAULT 0,
+        precioMayor REAL DEFAULT 0,
+        descripcion TEXT DEFAULT '',
+        categoriaId INTEGER,
+        subcategoria TEXT DEFAULT '',
+        fechaCreacion TEXT DEFAULT (datetime('now'))
+    );
+    
+    CREATE TABLE IF NOT EXISTS variantes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        productoId INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        stock INTEGER DEFAULT 0,
+        foto TEXT DEFAULT '',
+        FOREIGN KEY (productoId) REFERENCES productos(id) ON DELETE CASCADE
+    );
+    
+    CREATE TABLE IF NOT EXISTS categorias (
+        id INTEGER PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        subcategorias TEXT DEFAULT '[]'
+    );
+    
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id TEXT PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        apellido TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        telefono TEXT DEFAULT '',
+        dni TEXT DEFAULT '',
+        password TEXT,
+        googleId TEXT,
+        foto TEXT DEFAULT '',
+        rol TEXT DEFAULT 'cliente',
+        resetPin TEXT,
+        resetPinExpires INTEGER,
+        fechaRegistro TEXT DEFAULT (datetime('now'))
+    );
+    
+    CREATE TABLE IF NOT EXISTS ventas (
+        id TEXT PRIMARY KEY,
+        fecha TEXT,
+        fechaTimestamp INTEGER,
+        items TEXT DEFAULT '[]',
+        total REAL DEFAULT 0,
+        metodoPago TEXT DEFAULT 'efectivo',
+        logistica TEXT DEFAULT 'local',
+        cliente TEXT DEFAULT '{}',
+        esMayorista INTEGER DEFAULT 0,
+        razonMayorista TEXT DEFAULT '',
+        estado TEXT DEFAULT 'completada',
+        origen TEXT DEFAULT 'admin',
+        pedidoId TEXT
+    );
+    
+    CREATE TABLE IF NOT EXISTS pedidos (
+        id TEXT PRIMARY KEY,
+        fecha TEXT,
+        fechaTimestamp INTEGER,
+        items TEXT DEFAULT '[]',
+        total REAL DEFAULT 0,
+        cliente TEXT DEFAULT '{}',
+        tipoEntrega TEXT DEFAULT 'local',
+        metodoEnvio TEXT DEFAULT '',
+        esMayorista INTEGER DEFAULT 0,
+        razonMayorista TEXT DEFAULT '',
+        estado TEXT DEFAULT 'pendiente',
+        origen TEXT DEFAULT 'tienda',
+        pin TEXT,
+        ventaId TEXT,
+        usuarioId TEXT,
+        stockDescontado INTEGER DEFAULT 1,
+        fechaCancelado TEXT,
+        fechaAbonado TEXT,
+        fechaEnviado TEXT,
+        fechaEntregado TEXT
+    );
+    
+    CREATE TABLE IF NOT EXISTS notificaciones (
+        id TEXT PRIMARY KEY,
+        tipo TEXT,
+        titulo TEXT,
+        descripcion TEXT,
+        fecha TEXT,
+        leida INTEGER DEFAULT 0
+    );
+    
+    CREATE TABLE IF NOT EXISTS configuracion (
+        clave TEXT PRIMARY KEY,
+        valor TEXT
+    );
+    
+    CREATE TABLE IF NOT EXISTS metodos_envio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL
+    );
+`);
+
+// Insertar configuración por defecto si no existe
+const configInicial = {
+    logo: '',
+    empresa: JSON.stringify({ nombre: "Casa Elegida", telefono: "", email: "casaelegida20@gmail.com", direccion: "" }),
+    horarios: JSON.stringify({ lunesViernes: "9:00 - 13:00 y 17:00 - 20:00", sabados: "9:00 - 13:00", domingos: "Cerrado" }),
+    redes: JSON.stringify({ instagram: "", instagramUrl: "", facebook: "", facebookUrl: "", tiktok: "", tiktokUrl: "", whatsapp: "", whatsappUrl: "" }),
+    pagos: JSON.stringify({ alias: "", cbu: "", banco: "", titular: "" }),
+    mayorista: JSON.stringify({ habilitado: false, modo: "cantidad", valorCantidad: 3, valorMonto: 80000 }),
+    tienda: JSON.stringify({ habilitada: true, titulo: "Casa Elegida", mensajeBienvenida: "Calidad y confort para tu hogar", retiroLocal: true }),
+    diseno: JSON.stringify({ colorPrimario: "#8B5E3C", colorSecundario: "#D4A574", colorFondo: "#FDF8F4", colorTexto: "#3E2A1E" }),
+    registroObligatorio: 'true',
+    heroConfig: JSON.stringify({ titulo: "Casa Elegida", subtitulo: "Toallones, sábanas, mantas y más", badge: "¡Precios especiales por cantidad!" }),
+    seccionesDestacadas: JSON.stringify([{ id: "dest-1", titulo: "Novedades", tipo: "categoria", valor: "Toallones", limite: 4 }])
+};
+
+const insertConfig = db.prepare('INSERT OR IGNORE INTO configuracion (clave, valor) VALUES (?, ?)');
+for (const [clave, valor] of Object.entries(configInicial)) {
+    insertConfig.run(clave, valor);
+}
+
+// Métodos de envío por defecto
+const metodosEnvioDefault = ['Via Cargo', 'Correo Argentino', 'Andreani', 'Moto Mensajería'];
+const insertMetodo = db.prepare('INSERT OR IGNORE INTO metodos_envio (nombre) VALUES (?)');
+metodosEnvioDefault.forEach(m => insertMetodo.run(m));
+
+// ==================== FUNCIONES AUXILIARES ====================
+function getConfig() {
+    const rows = db.prepare('SELECT clave, valor FROM configuracion').all();
+    const config = {};
+    rows.forEach(r => {
+        try { config[r.clave] = JSON.parse(r.valor); } catch(e) { config[r.clave] = r.valor; }
+    });
+    return config;
+}
+
+function setConfig(clave, valor) {
+    const v = typeof valor === 'string' ? valor : JSON.stringify(valor);
+    db.prepare('INSERT OR REPLACE INTO configuracion (clave, valor) VALUES (?, ?)').run(clave, v);
+}
 
 // ==================== CONFIGURACIÓN DE CLOUDINARY ====================
 cloudinary.config({
@@ -38,58 +186,10 @@ const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS',
 
 // Crear directorios necesarios
 if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads', { recursive: true });
-if (!fs.existsSync('./config')) fs.mkdirSync('./config', { recursive: true });
-if (!fs.existsSync('./pedidos')) fs.mkdirSync('./pedidos', { recursive: true });
 if (!fs.existsSync('./backups')) fs.mkdirSync('./backups', { recursive: true });
-if (!fs.existsSync('./logs')) fs.mkdirSync('./logs', { recursive: true });
 if (!fs.existsSync('./public')) fs.mkdirSync('./public', { recursive: true });
 
-// Función para inicializar archivos JSON
-const initJsonFile = (filePath, defaultContent = { lista: [] }) => {
-    if (!fs.existsSync(filePath)) {
-        fs.writeFileSync(filePath, JSON.stringify(defaultContent, null, 2));
-        console.log(`✅ Archivo creado: ${filePath}`);
-    } else {
-        try {
-            const content = fs.readFileSync(filePath, 'utf-8');
-            JSON.parse(content);
-        } catch (e) {
-            fs.writeFileSync(filePath, JSON.stringify(defaultContent, null, 2));
-            console.log(`🔄 Archivo reparado: ${filePath}`);
-        }
-    }
-};
-
-// Inicializar archivos de datos
-initJsonFile('./productos.json');
-initJsonFile('./ventas.json');
-initJsonFile('./pedidos.json');
-initJsonFile('./categorias.json');
-initJsonFile('./metodos-envio.json', { lista: ['Via Cargo', 'Correo Argentino', 'Andreani', 'Moto Mensajería'] });
-initJsonFile('./sucursales.json', { lista: [] });
-initJsonFile('./usuarios.json', { lista: [] });
-initJsonFile('./notificaciones.json', { lista: [] });
-initJsonFile('./logs/admin-activity.json', { lista: [] });
-
-// Configuración inicial
-if (!fs.existsSync('./config/config.json')) {
-    fs.writeFileSync('./config/config.json', JSON.stringify({ 
-        logo: null,
-        empresa: { nombre: "Casa Elegida", telefono: "", email: "casaelegida20@gmail.com", direccion: "" },
-        horarios: { lunesViernes: "9:00 - 13:00 y 17:00 - 20:00", sabados: "9:00 - 13:00", domingos: "Cerrado" },
-        redes: { instagram: "", instagramUrl: "", facebook: "", facebookUrl: "", tiktok: "", tiktokUrl: "", whatsapp: "", whatsappUrl: "" },
-        pagos: { alias: "", cbu: "", banco: "", titular: "" },
-        mayorista: { habilitado: false, modo: "cantidad", valorCantidad: 3, valorMonto: 80000 },
-        tienda: { habilitada: true, titulo: "Casa Elegida", mensajeBienvenida: "Calidad y confort para tu hogar", retiroLocal: true },
-        diseno: { colorPrimario: "#8B5E3C", colorSecundario: "#D4A574", colorFondo: "#FDF8F4", colorTexto: "#3E2A1E" },
-        registroObligatorio: true,
-        heroConfig: { titulo: "Casa Elegida", subtitulo: "Toallones, sábanas, mantas y más", badge: "¡Precios especiales por cantidad!" },
-        seccionesDestacadas: [{ id: "dest-1", titulo: "Novedades", tipo: "categoria", valor: "Toallones", limite: 4 }]
-    }, null, 2));
-    console.log('✅ Configuración inicial creada');
-}
-
-// Configuración de multer (archivos temporales)
+// Configuración de multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, './uploads/'),
     filename: (req, file, cb) => {
@@ -124,28 +224,19 @@ app.use(passport.session());
 app.use('/uploads', express.static('uploads'));
 app.use(express.static('public'));
 
-// Configuración de Passport (Google OAuth)
+// Passport Google OAuth
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
     callbackURL: '/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
     try {
-        let usuarios = readData('./usuarios.json');
-        let usuario = usuarios.lista.find(u => u.email === profile.emails[0].value);
+        let usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(profile.emails[0].value);
         if (!usuario) {
-            usuario = { 
-                id: 'USR-' + Date.now(), 
-                nombre: profile.name.givenName || '', 
-                apellido: profile.name.familyName || '', 
-                email: profile.emails[0].value, 
-                googleId: profile.id, 
-                foto: profile.photos?.[0]?.value || '', 
-                fechaRegistro: new Date().toISOString(), 
-                rol: 'cliente' 
-            };
-            usuarios.lista.push(usuario);
-            writeData('./usuarios.json', usuarios);
+            const id = 'USR-' + Date.now();
+            db.prepare(`INSERT INTO usuarios (id, nombre, apellido, email, googleId, foto, rol) VALUES (?, ?, ?, ?, ?, ?, 'cliente')`)
+              .run(id, profile.name.givenName || '', profile.name.familyName || '', profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '');
+            usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id);
         }
         return done(null, usuario);
     } catch (e) { return done(e, null); }
@@ -153,25 +244,14 @@ passport.use(new GoogleStrategy({
 
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => {
-    let usuarios = readData('./usuarios.json');
-    const user = usuarios.lista.find(u => u.id === id);
+    const user = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id);
     done(null, user || null);
-});
-
-// Middleware de logging
-app.use((req, res, next) => {
-    const start = Date.now();
-    res.on('finish', () => {
-        const duration = Date.now() - start;
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
-    });
-    next();
 });
 
 // Middleware de autenticación
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) return res.status(401).json({ error: 'No autorizado. Iniciá sesión.' });
+    if (!token) return res.status(401).json({ error: 'No autorizado' });
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.usuario = decoded;
@@ -181,7 +261,28 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// Rutas principales
+// ==================== FUNCIONES HELPERS ====================
+function generarPIN() { return Math.floor(1000 + Math.random() * 9000).toString(); }
+
+function crearNotificacion(tipo, titulo, descripcion) {
+    db.prepare('INSERT INTO notificaciones (id, tipo, titulo, descripcion, fecha, leida) VALUES (?, ?, ?, ?, datetime(\'now\'), 0)')
+      .run('NOTIF-' + Date.now(), tipo, titulo, descripcion);
+}
+
+async function enviarEmail(destinatario, asunto, html) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+    try {
+        const config = getConfig();
+        const empresa = typeof config.empresa === 'string' ? JSON.parse(config.empresa) : config.empresa;
+        await transporter.sendMail({ 
+            from: `"${empresa?.nombre || 'Casa Elegida'}" <${process.env.EMAIL_USER}>`, 
+            to: destinatario, subject: asunto, html 
+        });
+        return true;
+    } catch (e) { return false; }
+}
+
+// ==================== RUTAS PRINCIPALES ====================
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/tienda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tienda.html')));
 app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
@@ -199,148 +300,30 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
     res.redirect(`/tienda?token=${token}`);
 });
 
-// ==================== FUNCIONES AUXILIARES ====================
-const readData = (file) => { 
-    try { 
-        const content = fs.readFileSync(file, 'utf-8'); 
-        const data = JSON.parse(content); 
-        if (!data.lista) data.lista = []; 
-        return data; 
-    } catch (e) { 
-        return { lista: [] }; 
-    } 
-};
-
-const writeData = (file, data) => { 
-    try { 
-        fs.writeFileSync(file, JSON.stringify(data, null, 2)); 
-        return true; 
-    } catch (e) { 
-        return false; 
-    } 
-};
-
-const readConfig = () => { 
-    try { 
-        return JSON.parse(fs.readFileSync('./config/config.json', 'utf-8')); 
-    } catch (e) { 
-        return { registroObligatorio: true }; 
-    } 
-};
-
-const writeConfig = (data) => { 
-    try { 
-        fs.writeFileSync('./config/config.json', JSON.stringify(data, null, 2)); 
-        return true; 
-    } catch (e) { 
-        return false; 
-    } 
-};
-
-const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
-
-function crearNotificacion(tipo, titulo, descripcion) {
-    const notifData = readData('./notificaciones.json');
-    notifData.lista.unshift({ 
-        id: 'NOTIF-' + Date.now(), tipo, titulo, descripcion, 
-        fecha: new Date().toISOString(), tiempo: 'Ahora mismo', leida: false 
-    });
-    if (notifData.lista.length > 100) notifData.lista = notifData.lista.slice(0, 100);
-    writeData('./notificaciones.json', notifData);
-}
-
-function logActividad(admin, accion, detalles, req) {
-    const logData = readData('./logs/admin-activity.json');
-    logData.lista.unshift({ 
-        id: 'LOG-' + Date.now(), admin: admin || 'Sistema', accion, 
-        detalles: typeof detalles === 'string' ? detalles : JSON.stringify(detalles).substring(0, 200), 
-        ip: req?.ip || req?.connection?.remoteAddress || 'localhost', 
-        fecha: new Date().toISOString(), fechaLocal: new Date().toLocaleString('es-AR') 
-    });
-    if (logData.lista.length > 1000) logData.lista = logData.lista.slice(0, 1000);
-    writeData('./logs/admin-activity.json', logData);
-}
-
-async function enviarEmail(destinatario, asunto, html) {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.log('⚠️ Email no configurado');
-        return false;
-    }
-    try {
-        const config = readConfig();
-        await transporter.sendMail({ 
-            from: `"${config.empresa.nombre}" <${process.env.EMAIL_USER}>`, 
-            to: destinatario, subject: asunto, html 
-        });
-        console.log(`📧 Email enviado a ${destinatario}`);
-        return true;
-    } catch (e) { 
-        console.error('Error enviando email:', e); 
-        return false; 
-    }
-}
-
-const emailTemplates = {
-    pedidoCreado: (pedido, config) => `
-        <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
-            <h1 style="color:#8B5E3C">${config.empresa.nombre}</h1>
-            <h2>Pedido #${pedido.id}</h2>
-            <p><strong>Total:</strong> ${fmt.format(pedido.total)}</p>
-            <p><strong>Estado:</strong> Pendiente de confirmación</p>
-            <p>Te avisaremos cuando esté confirmado.</p>
-        </div>
-    `,
-    pedidoConfirmado: (pedido, config) => `
-        <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
-            <h1 style="color:#8B5E3C">${config.empresa.nombre}</h1>
-            <h2>¡Pedido confirmado!</h2>
-            ${pedido.tipoEntrega === 'local' ? `
-                <div style="background:#F0FDF4;padding:20px;text-align:center">
-                    <p>🔐 Tu PIN de retiro</p>
-                    <div style="font-size:36px;font-weight:800;letter-spacing:12px;color:#8B5E3C">${pedido.pin}</div>
-                </div>` : '<p>Tu pedido será enviado pronto.</p>'}
-        </div>
-    `
-};
-
-const realizarBackupAutomatico = () => {
-    try {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        ['productos.json', 'ventas.json', 'pedidos.json', 'categorias.json', 'usuarios.json', 'config/config.json'].forEach(file => { 
-            if (fs.existsSync(file)) fs.copyFileSync(file, path.join('./backups', `${path.basename(file)}.${timestamp}.backup`)); 
-        });
-        console.log(`✅ Backup: ${timestamp}`);
-    } catch (e) {}
-};
-setInterval(realizarBackupAutomatico, 12 * 60 * 60 * 1000);
-
 // ==================== AUTENTICACIÓN ====================
 app.post('/auth/registro', async (req, res) => {
     try {
         const { nombre, apellido, email, telefono, password } = req.body;
         if (!nombre || !apellido || !email || !password) return res.status(400).json({ error: 'Todos los campos son requeridos' });
-        let usuarios = readData('./usuarios.json');
-        if (usuarios.lista.find(u => u.email === email)) return res.status(400).json({ error: 'El email ya está registrado' });
+        const existe = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+        if (existe) return res.status(400).json({ error: 'El email ya está registrado' });
         const hashedPassword = await bcrypt.hash(password, 10);
-        const nuevoUsuario = { id: 'USR-' + Date.now(), nombre, apellido, email, telefono: telefono || '', password: hashedPassword, fechaRegistro: new Date().toISOString(), rol: 'cliente' };
-        usuarios.lista.push(nuevoUsuario);
-        writeData('./usuarios.json', usuarios);
-        const token = jwt.sign({ id: nuevoUsuario.id, email, nombre, rol: 'cliente' }, JWT_SECRET, { expiresIn: '7d' });
-        logActividad('Sistema', 'REGISTRO', `Nuevo usuario: ${email}`, req);
-        res.json({ success: true, token, usuario: { id: nuevoUsuario.id, nombre, apellido, email } });
+        const id = 'USR-' + Date.now();
+        db.prepare('INSERT INTO usuarios (id, nombre, apellido, email, telefono, password, rol) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .run(id, nombre, apellido, email, telefono || '', hashedPassword, 'cliente');
+        const token = jwt.sign({ id, email, nombre, rol: 'cliente' }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ success: true, token, usuario: { id, nombre, apellido, email } });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        let usuarios = readData('./usuarios.json');
-        const usuario = usuarios.lista.find(u => u.email === email);
+        const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
         if (!usuario || !usuario.password) return res.status(401).json({ error: 'Credenciales inválidas' });
         const validPassword = await bcrypt.compare(password, usuario.password);
         if (!validPassword) return res.status(401).json({ error: 'Credenciales inválidas' });
         const token = jwt.sign({ id: usuario.id, email: usuario.email, nombre: usuario.nombre, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
-        logActividad(usuario.nombre, 'LOGIN', `Inicio de sesión: ${email}`, req);
         res.json({ success: true, token, usuario: { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, email: usuario.email } });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -348,24 +331,17 @@ app.post('/auth/login', async (req, res) => {
 app.post('/auth/recuperar', async (req, res) => {
     try {
         const { email } = req.body;
-        let usuarios = readData('./usuarios.json');
-        const usuario = usuarios.lista.find(u => u.email === email);
+        const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
         if (!usuario) return res.status(404).json({ error: 'Email no encontrado' });
         const pin = Math.floor(100000 + Math.random() * 900000).toString();
-        usuario.resetPin = pin;
-        usuario.resetPinExpires = Date.now() + 3600000;
-        writeData('./usuarios.json', usuarios);
-        
-        await enviarEmail(email, 'Recuperación de contraseña', `
-            <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px;background:#FDF8F4">
-                <h1 style="color:#8B5E3C">Casa Elegida</h1>
-                <h2>Recuperación de contraseña</h2>
-                <p>Tu PIN de recuperación es:</p>
-                <div style="font-size:36px;font-weight:800;letter-spacing:12px;color:#8B5E3C;text-align:center;padding:20px">${pin}</div>
-                <p>Este código expirará en 1 hora.</p>
-            </div>
+        db.prepare('UPDATE usuarios SET resetPin = ?, resetPinExpires = ? WHERE id = ?')
+          .run(pin, Date.now() + 3600000, usuario.id);
+        await enviarEmail(email, 'Recuperación de contraseña - Casa Elegida', `
+            <h1>Casa Elegida</h1>
+            <h2>Recuperación de contraseña</h2>
+            <p>Tu PIN de recuperación es: <strong>${pin}</strong></p>
+            <p>Expira en 1 hora.</p>
         `);
-        
         res.json({ success: true, message: 'Se ha enviado un PIN a tu email' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -373,222 +349,327 @@ app.post('/auth/recuperar', async (req, res) => {
 app.post('/auth/reset-password', async (req, res) => {
     try {
         const { email, pin, newPassword } = req.body;
-        let usuarios = readData('./usuarios.json');
-        const usuario = usuarios.lista.find(u => u.email === email);
-        if (!usuario || usuario.resetPin !== pin || usuario.resetPinExpires < Date.now()) return res.status(400).json({ error: 'PIN inválido o expirado' });
-        usuario.password = await bcrypt.hash(newPassword, 10);
-        delete usuario.resetPin; delete usuario.resetPinExpires;
-        writeData('./usuarios.json', usuarios);
+        const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+        if (!usuario || usuario.resetPin !== pin || usuario.resetPinExpires < Date.now())
+            return res.status(400).json({ error: 'PIN inválido o expirado' });
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        db.prepare('UPDATE usuarios SET password = ?, resetPin = NULL, resetPinExpires = NULL WHERE id = ?')
+          .run(hashedPassword, usuario.id);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/auth/me', authMiddleware, (req, res) => {
-    let usuarios = readData('./usuarios.json');
-    const usuario = usuarios.lista.find(u => u.id === req.usuario.id);
+    const usuario = db.prepare('SELECT id, nombre, apellido, email, telefono, dni, foto FROM usuarios WHERE id = ?').get(req.usuario.id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, email: usuario.email, telefono: usuario.telefono, dni: usuario.dni, foto: usuario.foto });
+    res.json(usuario);
 });
 
 app.post('/auth/update-profile', authMiddleware, async (req, res) => {
     try {
         const { nombre, apellido, telefono, dni } = req.body;
-        let usuarios = readData('./usuarios.json');
-        const usuario = usuarios.lista.find(u => u.id === req.usuario.id);
+        const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.usuario.id);
         if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-        usuario.nombre = nombre || usuario.nombre;
-        usuario.apellido = apellido || usuario.apellido;
-        usuario.telefono = telefono || usuario.telefono;
-        usuario.dni = dni || usuario.dni;
-        writeData('./usuarios.json', usuarios);
+        db.prepare('UPDATE usuarios SET nombre = ?, apellido = ?, telefono = ?, dni = ? WHERE id = ?')
+          .run(nombre || usuario.nombre, apellido || usuario.apellido, telefono || usuario.telefono, dni || usuario.dni, usuario.id);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ==================== MIS PEDIDOS (CLIENTE) ====================
-app.get('/api/mis-pedidos', authMiddleware, (req, res) => {
+// ==================== PRODUCTOS ====================
+app.post('/listar', (req, res) => {
     try {
-        let pedidos = readData('./pedidos.json');
-        const misPedidos = pedidos.lista
-            .filter(p => p.usuarioId === req.usuario.id || p.cliente?.email === req.usuario.email)
-            .sort((a, b) => b.fechaTimestamp - a.fechaTimestamp);
-        res.json({ lista: misPedidos });
+        const productos = db.prepare('SELECT * FROM productos ORDER BY id DESC').all();
+        const result = productos.map(p => {
+            const variantes = db.prepare('SELECT * FROM variantes WHERE productoId = ?').all(p.id);
+            return { ...p, variantes };
+        });
+        res.json({ lista: result });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ==================== RUTAS ADMIN ====================
-app.post('/listar', (req, res) => { try { res.json(readData('./productos.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
-
 app.post('/guardar-producto', (req, res) => {
     try {
-        let data = readData('./productos.json');
         const p = req.body;
         if (!p.nombre?.trim()) return res.status(400).json({ error: 'Nombre requerido' });
         if (p.precio <= 0) return res.status(400).json({ error: 'Precio debe ser mayor a 0' });
-        if (p.precioMayor > 0 && p.precioMayor >= p.precio) return res.status(400).json({ error: 'Precio mayorista debe ser menor al regular' });
-        if (!p.variantes?.length) return res.status(400).json({ error: 'Debe tener al menos una variante' });
-        p.precioMayor = p.precioMayor || 0;
-        const idx = data.lista.findIndex(x => x.id == p.id);
-        if (idx !== -1) data.lista[idx] = p; else data.lista.unshift(p);
-        writeData('./productos.json', data);
-        logActividad('Admin', 'GUARDAR_PRODUCTO', `Producto: ${p.nombre}`, req);
+        
+        const existe = db.prepare('SELECT id FROM productos WHERE id = ?').get(p.id);
+        if (existe) {
+            db.prepare('UPDATE productos SET nombre = ?, precio = ?, precioMayor = ?, descripcion = ?, categoriaId = ?, subcategoria = ? WHERE id = ?')
+              .run(p.nombre, p.precio, p.precioMayor || 0, p.descripcion || '', p.categoriaId || null, p.subcategoria || '', p.id);
+            db.prepare('DELETE FROM variantes WHERE productoId = ?').run(p.id);
+        } else {
+            db.prepare('INSERT INTO productos (id, nombre, precio, precioMayor, descripcion, categoriaId, subcategoria) VALUES (?, ?, ?, ?, ?, ?, ?)')
+              .run(p.id, p.nombre, p.precio, p.precioMayor || 0, p.descripcion || '', p.categoriaId || null, p.subcategoria || '');
+        }
+        
+        if (p.variantes?.length) {
+            const insertVar = db.prepare('INSERT INTO variantes (productoId, nombre, stock, foto) VALUES (?, ?, ?, ?)');
+            p.variantes.forEach(v => {
+                insertVar.run(p.id, v.nombre, v.stock || 0, v.foto || '');
+            });
+        }
+        
         res.json({ success: true, producto: p });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Subir imagen a Cloudinary
+app.post('/eliminar-producto', (req, res) => {
+    try {
+        db.prepare('DELETE FROM productos WHERE id = ?').run(req.body.id);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/reordenar-productos', (req, res) => {
+    res.json({ success: true });
+});
+
+app.post('/stock-bajo', (req, res) => {
+    try {
+        const minimo = req.body.minimo || 5;
+        const variantes = db.prepare('SELECT v.*, p.nombre as productoNombre FROM variantes v JOIN productos p ON v.productoId = p.id WHERE v.stock <= ?').all(minimo);
+        res.json({ stockBajo: variantes });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== IMÁGENES ====================
 app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
-        const result = await cloudinary.uploader.upload(req.file.path, { 
-            folder: 'casa-elegida/productos' 
-        });
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida/productos' });
         fs.unlinkSync(req.file.path);
         res.json({ url: result.secure_url });
-    } catch (e) {
-        console.error('Error subiendo a Cloudinary:', e);
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Subir logo a Cloudinary
 app.post('/subir-logo', upload.single('logo'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se recibió imagen' });
-        const result = await cloudinary.uploader.upload(req.file.path, { 
-            folder: 'casa-elegida/logo' 
-        });
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida/logo' });
         fs.unlinkSync(req.file.path);
-        const config = readConfig();
-        config.logo = result.secure_url;
-        writeConfig(config);
+        setConfig('logo', result.secure_url);
         res.json({ success: true, url: result.secure_url });
-    } catch (e) {
-        console.error('Error subiendo logo:', e);
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/get-config', (req, res) => { try { res.json(readConfig()); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/save-config', (req, res) => { try { const { empresa, horarios, redes, pagos } = req.body; const config = readConfig(); if (empresa) config.empresa = empresa; if (horarios) config.horarios = horarios; if (redes) config.redes = redes; if (pagos) config.pagos = pagos; writeConfig(config); logActividad('Admin', 'SAVE_CONFIG', 'Configuración guardada', req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/save-tienda-config', (req, res) => { try { const { tienda } = req.body; const config = readConfig(); config.tienda = { ...config.tienda, ...tienda }; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/save-mayorista-config', (req, res) => { try { const { habilitado, modo, valorCantidad, valorMonto } = req.body; const config = readConfig(); config.mayorista = { habilitado, modo, valorCantidad, valorMonto }; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/save-diseno-config', (req, res) => { try { const { diseno } = req.body; const config = readConfig(); config.diseno = { ...config.diseno, ...diseno }; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/save-home-config', (req, res) => { try { const { heroConfig, seccionesDestacadas } = req.body; const config = readConfig(); config.heroConfig = heroConfig; config.seccionesDestacadas = seccionesDestacadas; writeConfig(config); logActividad('Admin', 'SAVE_HOME_CONFIG', 'Página de inicio actualizada', req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/eliminar-logo', (req, res) => { try { const config = readConfig(); config.logo = null; writeConfig(config); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/eliminar-logo', (req, res) => {
+    try { setConfig('logo', ''); res.json({ success: true }); } 
+    catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ==================== CATEGORÍAS ====================
-app.post('/listar-categorias', (req, res) => { try { res.json(readData('./categorias.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/guardar-categoria', (req, res) => { try { let data = readData('./categorias.json'); const { id, nombre, subcategorias } = req.body; if (!nombre?.trim()) return res.status(400).json({ error: 'Nombre requerido' }); const idx = data.lista.findIndex(x => x.id == id); const nueva = { id: id || Date.now(), nombre: nombre.trim(), subcategorias: subcategorias || [] }; if (idx !== -1) data.lista[idx] = nueva; else data.lista.push(nueva); writeData('./categorias.json', data); res.json({ success: true, categoria: nueva }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/eliminar-categoria', (req, res) => { try { let data = readData('./categorias.json'); data.lista = data.lista.filter(x => x.id != req.body.id); writeData('./categorias.json', data); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/listar-categorias', (req, res) => {
+    try {
+        const categorias = db.prepare('SELECT * FROM categorias').all();
+        const result = categorias.map(c => ({ ...c, subcategorias: JSON.parse(c.subcategorias || '[]') }));
+        res.json({ lista: result });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/guardar-categoria', (req, res) => {
+    try {
+        const { id, nombre, subcategorias } = req.body;
+        if (!nombre?.trim()) return res.status(400).json({ error: 'Nombre requerido' });
+        const existe = db.prepare('SELECT id FROM categorias WHERE id = ?').get(id);
+        if (existe) {
+            db.prepare('UPDATE categorias SET nombre = ?, subcategorias = ? WHERE id = ?')
+              .run(nombre.trim(), JSON.stringify(subcategorias || []), id);
+        } else {
+            db.prepare('INSERT INTO categorias (id, nombre, subcategorias) VALUES (?, ?, ?)')
+              .run(id || Date.now(), nombre.trim(), JSON.stringify(subcategorias || []));
+        }
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/eliminar-categoria', (req, res) => {
+    try { db.prepare('DELETE FROM categorias WHERE id = ?').run(req.body.id); res.json({ success: true }); } 
+    catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ==================== MÉTODOS DE ENVÍO ====================
-app.post('/listar-metodos-envio', (req, res) => { try { res.json(readData('./metodos-envio.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/guardar-metodos-envio', (req, res) => { try { const { lista } = req.body; writeData('./metodos-envio.json', { lista: lista || [] }); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/listar-metodos-envio', (req, res) => {
+    try {
+        const metodos = db.prepare('SELECT nombre FROM metodos_envio').all();
+        res.json({ lista: metodos.map(m => m.nombre) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/guardar-metodos-envio', (req, res) => {
+    try {
+        const { lista } = req.body;
+        db.prepare('DELETE FROM metodos_envio').run();
+        const insert = db.prepare('INSERT INTO metodos_envio (nombre) VALUES (?)');
+        (lista || []).forEach(m => insert.run(m));
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== CONFIGURACIÓN ====================
+app.post('/get-config', (req, res) => {
+    try { res.json(getConfig()); } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/save-config', (req, res) => {
+    try {
+        const { empresa, horarios, redes, pagos } = req.body;
+        if (empresa) setConfig('empresa', empresa);
+        if (horarios) setConfig('horarios', horarios);
+        if (redes) setConfig('redes', redes);
+        if (pagos) setConfig('pagos', pagos);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/save-tienda-config', (req, res) => {
+    try { 
+        if (req.body.tienda) setConfig('tienda', req.body.tienda); 
+        res.json({ success: true }); 
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/save-mayorista-config', (req, res) => {
+    try {
+        setConfig('mayorista', req.body);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/save-diseno-config', (req, res) => {
+    try { 
+        if (req.body.diseno) setConfig('diseno', req.body.diseno); 
+        res.json({ success: true }); 
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/save-home-config', (req, res) => {
+    try {
+        if (req.body.heroConfig) setConfig('heroConfig', req.body.heroConfig);
+        if (req.body.seccionesDestacadas) setConfig('seccionesDestacadas', req.body.seccionesDestacadas);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ==================== VENTAS ====================
 app.post('/confirmar-venta', (req, res) => {
     try {
         const { carrito, pago, logistica, cliente, mayoristaConfig } = req.body;
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
-        let pData = readData('./productos.json');
+        
         let carritoFinal = [...carrito];
         let totalVentaCalculado = pago.total;
         let esMayorista = false, razonMayorista = '';
         
         if (mayoristaConfig?.habilitado) {
-            const { modo, valorCantidad=0, valorMonto=0 } = mayoristaConfig;
-            const cantidadTotal = carrito.reduce((s,i) => s+i.cant, 0);
+            const { modo, valorCantidad = 0, valorMonto = 0 } = mayoristaConfig;
+            const cantidadTotal = carrito.reduce((s, i) => s + i.cant, 0);
             let totalConMayorista = 0;
-            for (let item of carrito) { 
-                let precio = item.precio; 
-                if (!item.esManual) { 
-                    const prod = pData.lista.find(x => x.id == item.pId); 
-                    if (prod?.precioMayor > 0) precio = prod.precioMayor; 
-                } 
-                totalConMayorista += precio * item.cant; 
+            
+            for (let item of carrito) {
+                let precio = item.precio;
+                if (!item.esManual) {
+                    const prod = db.prepare('SELECT * FROM productos WHERE id = ?').get(item.pId);
+                    if (prod?.precioMayor > 0) precio = prod.precioMayor;
+                }
+                totalConMayorista += precio * item.cant;
             }
+            
             let cumple = false;
-            if (modo === 'cantidad') { cumple = cantidadTotal >= valorCantidad; if (!cumple) return res.status(400).json({ error: `Se requieren ${valorCantidad} productos` }); razonMayorista = `Mayorista por cantidad`; }
-            else if (modo === 'monto') { cumple = totalConMayorista >= valorMonto; if (!cumple) return res.status(400).json({ error: `Monto mínimo ${fmt.format(valorMonto)}` }); razonMayorista = `Mayorista por monto`; }
-            else { const cC = cantidadTotal >= valorCantidad, cM = totalConMayorista >= valorMonto; cumple = cC && cM; if (!cumple) return res.status(400).json({ error: `Debe cumplir cantidad y monto` }); razonMayorista = `Mayorista por cantidad y monto`; }
-            esMayorista = true; carritoFinal = []; totalVentaCalculado = 0;
-            for (let item of carrito) { 
-                let precio = item.precio; 
-                if (!item.esManual) { 
-                    const prod = pData.lista.find(x => x.id == item.pId); 
-                    if (prod?.precioMayor > 0) precio = prod.precioMayor; 
-                } 
-                carritoFinal.push({ ...item, precio, precioOriginal: item.precio, aplicaMayorista: precio !== item.precio }); 
-                totalVentaCalculado += precio * item.cant; 
+            if (modo === 'cantidad') { cumple = cantidadTotal >= valorCantidad; razonMayorista = 'Mayorista por cantidad'; }
+            else if (modo === 'monto') { cumple = totalConMayorista >= valorMonto; razonMayorista = 'Mayorista por monto'; }
+            else { cumple = cantidadTotal >= valorCantidad && totalConMayorista >= valorMonto; razonMayorista = 'Mayorista por cantidad y monto'; }
+            
+            if (!cumple) return res.status(400).json({ error: 'No cumple requisitos mayoristas' });
+            
+            esMayorista = true;
+            carritoFinal = [];
+            totalVentaCalculado = 0;
+            for (let item of carrito) {
+                let precio = item.precio;
+                if (!item.esManual) {
+                    const prod = db.prepare('SELECT * FROM productos WHERE id = ?').get(item.pId);
+                    if (prod?.precioMayor > 0) precio = prod.precioMayor;
+                }
+                carritoFinal.push({ ...item, precio, precioOriginal: item.precio });
+                totalVentaCalculado += precio * item.cant;
             }
         }
         
-        for (let item of carritoFinal) { 
-            if (item.esManual) continue; 
-            const prod = pData.lista.find(x => x.id == item.pId); 
-            if (!prod) return res.status(400).json({ error: `Producto no encontrado` }); 
-            const variante = prod.variantes.find(v => v.nombre === item.vNom); 
-            if (!variante || variante.stock < item.cant) return res.status(400).json({ error: `Stock insuficiente para ${item.pNom}. Disponible: ${variante?.stock || 0}` }); 
+        // Descontar stock
+        for (let item of carritoFinal) {
+            if (item.esManual) continue;
+            db.prepare('UPDATE variantes SET stock = stock - ? WHERE productoId = ? AND nombre = ?')
+              .run(item.cant, item.pId, item.vNom);
         }
-        for (let item of carritoFinal) { 
-            if (!item.esManual) { 
-                const prod = pData.lista.find(x => x.id == item.pId); 
-                prod.variantes.find(v => v.nombre === item.vNom).stock -= item.cant; 
-            } 
-        }
-        writeData('./productos.json', pData);
         
-        let vData = readData('./ventas.json');
-        const nuevaVenta = { 
-            id: 'FAC-' + Date.now(), fecha: new Date().toLocaleString('es-AR'), fechaTimestamp: Date.now(), 
-            items: carritoFinal.map(i => ({ ...i, subtotal: i.precio*i.cant })), 
-            pago: { ...pago, total: totalVentaCalculado }, logistica, 
-            cliente: cliente || { nombre: 'Mostrador' }, esMayorista, razonMayorista, estado: 'completada' 
-        };
-        vData.lista.unshift(nuevaVenta);
-        writeData('./ventas.json', vData);
-        logActividad('Admin', 'VENTA', `Venta ${nuevaVenta.id} - ${fmt.format(totalVentaCalculado)}`, req);
-        res.json({ success: true, ventaId: nuevaVenta.id, esMayorista, razonMayorista });
+        const id = 'FAC-' + Date.now();
+        db.prepare(`INSERT INTO ventas (id, fecha, fechaTimestamp, items, total, metodoPago, logistica, cliente, esMayorista, razonMayorista, estado, origen)
+            VALUES (?, datetime('now','localtime'), ?, ?, ?, ?, ?, ?, ?, ?, 'completada', 'admin')`)
+          .run(id, Date.now(), JSON.stringify(carritoFinal), totalVentaCalculado, pago.metodo, logistica, JSON.stringify(cliente || { nombre: 'Mostrador' }), esMayorista ? 1 : 0, razonMayorista);
+        
+        crearNotificacion('venta', '💰 Nueva venta', `Venta ${id} - ${fmt.format(totalVentaCalculado)}`);
+        res.json({ success: true, ventaId: id, esMayorista, razonMayorista });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/listar-ventas', (req, res) => { try { res.json(readData('./ventas.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/corte-caja', (req, res) => { try { const ventas = readData('./ventas.json').lista; const hoy = new Date().toLocaleDateString('es-AR'); const ventasHoy = ventas.filter(v => new Date(v.fechaTimestamp).toLocaleDateString('es-AR') === hoy); res.json({ fecha: hoy, total: ventasHoy.reduce((s,v)=>s+v.pago.total,0), cantidad: ventasHoy.length }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/reordenar-productos', (req, res) => { try { writeData('./productos.json', req.body); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/eliminar-producto', (req, res) => { try { let data = readData('./productos.json'); const prod = data.lista.find(x => x.id == req.body.id); data.lista = data.lista.filter(x => x.id != req.body.id); writeData('./productos.json', data); logActividad('Admin', 'ELIMINAR_PRODUCTO', `Producto: ${prod?.nombre}`, req); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/stock-bajo', (req, res) => { try { const { minimo=5 } = req.body; const data = readData('./productos.json'); const bajo = data.lista.filter(p=>p.variantes.some(v=>v.stock<=minimo)).map(p=>({ id:p.id, nombre:p.nombre, variantes:p.variantes.filter(v=>v.stock<=minimo).map(v=>({ nombre:v.nombre, stock:v.stock })) })); res.json({ stockBajo: bajo }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/listar-ventas', (req, res) => {
+    try {
+        const ventas = db.prepare('SELECT * FROM ventas ORDER BY fechaTimestamp DESC').all();
+        const result = ventas.map(v => ({
+            ...v,
+            items: JSON.parse(v.items || '[]'),
+            cliente: JSON.parse(v.cliente || '{}'),
+            pago: { total: v.total, metodo: v.metodoPago },
+            esMayorista: !!v.esMayorista
+        }));
+        res.json({ lista: result });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/corte-caja', (req, res) => {
+    try {
+        const hoy = new Date().toLocaleDateString('es-AR');
+        const ventas = db.prepare("SELECT * FROM ventas WHERE date(fecha) = date('now','localtime')").all();
+        const total = ventas.reduce((s, v) => s + v.total, 0);
+        res.json({ fecha: hoy, total, cantidad: ventas.length });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ==================== TIENDA ====================
 app.post('/tienda/listar-productos', (req, res) => {
     try {
-        const data = readData('./productos.json');
-        const categorias = readData('./categorias.json');
-        const metodosEnvio = readData('./metodos-envio.json');
-        const config = readConfig();
-        if (!config.tienda?.habilitada) return res.status(403).json({ error: 'Tienda cerrada' });
-        res.json({ 
-            productos: data.lista, 
-            categorias: categorias.lista, 
-            metodosEnvio: metodosEnvio.lista, 
-            configuracion: { 
-                empresa: config.empresa, logo: config.logo, tienda: config.tienda, 
-                mayorista: config.mayorista, horarios: config.horarios, redes: config.redes, 
-                pagos: config.pagos, diseno: config.diseno, registroObligatorio: config.registroObligatorio, 
-                heroConfig: config.heroConfig, seccionesDestacadas: config.seccionesDestacadas 
-            } 
+        const config = getConfig();
+        const tienda = typeof config.tienda === 'string' ? JSON.parse(config.tienda) : config.tienda;
+        if (!tienda?.habilitada) return res.status(403).json({ error: 'Tienda cerrada' });
+        
+        const productos = db.prepare('SELECT * FROM productos ORDER BY id DESC').all();
+        const result = productos.map(p => {
+            const variantes = db.prepare('SELECT * FROM variantes WHERE productoId = ?').all(p.id);
+            return { ...p, variantes };
+        });
+        
+        const categorias = db.prepare('SELECT * FROM categorias').all();
+        const catsResult = categorias.map(c => ({ ...c, subcategorias: JSON.parse(c.subcategorias || '[]') }));
+        
+        const metodosEnvio = db.prepare('SELECT nombre FROM metodos_envio').all();
+        
+        res.json({
+            productos: result,
+            categorias: catsResult,
+            metodosEnvio: metodosEnvio.map(m => m.nombre),
+            configuracion: config
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Crear pedido desde la tienda
 app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
     try {
         const { carrito, cliente, total, esMayorista, razonMayorista, tipoEntrega, metodoEnvio } = req.body;
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
         
-        let usuarios = readData('./usuarios.json');
-        const usuario = usuarios.lista.find(u => u.id === req.usuario.id);
+        const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.usuario.id);
         if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado' });
         
         cliente.nombre = usuario.nombre;
@@ -597,134 +678,212 @@ app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
         if (!cliente.dni) cliente.dni = usuario.dni || '';
         if (!cliente.telefono) cliente.telefono = usuario.telefono || '';
         
-        let pData = readData('./productos.json');
-        for (let item of carrito) { 
-            if (item.esManual) continue; 
-            const prod = pData.lista.find(x => x.id == item.pId); 
-            if (!prod) return res.status(400).json({ error: `Producto no encontrado` }); 
-            const v = prod.variantes.find(v => v.nombre === item.vNom); 
-            if (!v) return res.status(400).json({ error: `Variante no encontrada` });
-            if (v.stock < item.cant) return res.status(400).json({ error: `Stock insuficiente para ${item.pNom}. Disponible: ${v.stock}` }); 
-            v.stock -= item.cant;
+        // Descontar stock
+        for (let item of carrito) {
+            if (item.esManual) continue;
+            db.prepare('UPDATE variantes SET stock = stock - ? WHERE productoId = ? AND nombre = ?')
+              .run(item.cant, item.pId, item.vNom);
         }
-        writeData('./productos.json', pData);
         
-        const pedidosData = readData('./pedidos.json');
-        const nuevo = { 
-            id: 'PED-' + Date.now(), fecha: new Date().toLocaleString('es-AR'), fechaTimestamp: Date.now(), 
-            items: carrito.map(i => ({...i, subtotal: i.precio * i.cant})), total, 
-            cliente: { 
-                nombre: cliente.nombre, apellido: cliente.apellido, dni: cliente.dni || '', 
-                email: cliente.email, telefono: cliente.telefono || '', 
-                provincia: cliente.provincia || '', localidad: cliente.localidad || '', 
-                cp: cliente.cp || '', direccion: cliente.direccion || '', 
-                altura: cliente.altura || '', referencias: cliente.referencias || '', notas: cliente.notas || '' 
-            }, 
-            tipoEntrega, metodoEnvio, esMayorista: esMayorista || false, razonMayorista: razonMayorista || '', 
-            estado: 'pendiente', origen: 'tienda', pin: null, stockDescontado: true, usuarioId: usuario.id
-        };
-        pedidosData.lista.unshift(nuevo);
-        writeData('./pedidos.json', pedidosData);
+        const id = 'PED-' + Date.now();
+        db.prepare(`INSERT INTO pedidos (id, fecha, fechaTimestamp, items, total, cliente, tipoEntrega, metodoEnvio, esMayorista, razonMayorista, estado, origen, usuarioId)
+            VALUES (?, datetime('now','localtime'), ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', 'tienda', ?)`)
+          .run(id, Date.now(), JSON.stringify(carrito), total, JSON.stringify(cliente), tipoEntrega, metodoEnvio, esMayorista ? 1 : 0, razonMayorista || '', usuario.id);
         
-        crearNotificacion('pedido', '🛍️ Nuevo pedido web', `Pedido #${nuevo.id} - ${cliente.nombre} ${cliente.apellido} - ${fmt.format(total)}`);
-        logActividad(cliente.nombre, 'PEDIDO_WEB', `Pedido ${nuevo.id} - ${cliente.email}`, req);
+        crearNotificacion('pedido', '🛍️ Nuevo pedido web', `Pedido #${id} - ${cliente.nombre} ${cliente.apellido}`);
+        enviarEmail(cliente.email, `Pedido #${id} recibido`, `<h1>Casa Elegida</h1><h2>Pedido #${id}</h2><p>Total: ${fmt.format(total)}</p><p>Estado: Pendiente</p>`);
         
-        const config = readConfig();
-        if (cliente.email) enviarEmail(cliente.email, `Pedido #${nuevo.id} recibido`, emailTemplates.pedidoCreado(nuevo, config));
-        res.json({ success: true, pedidoId: nuevo.id });
+        res.json({ success: true, pedidoId: id });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/tienda/listar-pedidos', (req, res) => { try { res.json(readData('./pedidos.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/tienda/listar-pedidos', (req, res) => {
+    try {
+        const pedidos = db.prepare('SELECT * FROM pedidos ORDER BY fechaTimestamp DESC').all();
+        const result = pedidos.map(p => ({
+            ...p,
+            items: JSON.parse(p.items || '[]'),
+            cliente: JSON.parse(p.cliente || '{}'),
+            esMayorista: !!p.esMayorista
+        }));
+        res.json({ lista: result });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 app.post('/tienda/confirmar-pedido', (req, res) => {
     try {
         const { pedidoId } = req.body;
-        let pedidosData = readData('./pedidos.json');
-        const pedido = pedidosData.lista.find(p => p.id === pedidoId);
-        if (!pedido || pedido.estado !== 'pendiente') return res.status(400).json({ error: 'Pedido no válido' });
+        const pedido = db.prepare('SELECT * FROM pedidos WHERE id = ? AND estado = ?').get(pedidoId, 'pendiente');
+        if (!pedido) return res.status(400).json({ error: 'Pedido no válido' });
+        
         const pin = generarPIN();
+        const ventaId = 'FAC-' + Date.now();
         
-        let ventasData = readData('./ventas.json');
-        const nuevaVenta = { 
-            id: 'FAC-' + Date.now(), fecha: new Date().toLocaleString('es-AR'), fechaTimestamp: Date.now(), 
-            items: pedido.items, pago: { total: pedido.total, metodo: 'pedido_online' }, 
-            logistica: pedido.tipoEntrega === 'envio' ? 'envio' : 'local', 
-            cliente: pedido.cliente, esMayorista: pedido.esMayorista, estado: 'completada', 
-            origen: 'tienda', pedidoId: pedido.id 
-        };
-        ventasData.lista.unshift(nuevaVenta);
-        pedido.estado = 'confirmado'; pedido.ventaId = nuevaVenta.id; pedido.pin = pin; pedido.pinGenerado = new Date().toISOString();
-        writeData('./ventas.json', ventasData); 
-        writeData('./pedidos.json', pedidosData);
-        logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${pedido.id} confirmado - PIN: ${pin}`, req);
+        db.prepare(`INSERT INTO ventas (id, fecha, fechaTimestamp, items, total, metodoPago, logistica, cliente, esMayorista, estado, origen, pedidoId)
+            VALUES (?, datetime('now','localtime'), ?, ?, ?, 'pedido_online', ?, ?, ?, 'completada', 'tienda', ?)`)
+          .run(ventaId, Date.now(), pedido.items, pedido.total, pedido.tipoEntrega === 'envio' ? 'envio' : 'local', pedido.cliente, pedido.esMayorista, pedido.id);
         
-        const config = readConfig();
-        if (pedido.cliente?.email) enviarEmail(pedido.cliente.email, `Pedido #${pedido.id} confirmado`, emailTemplates.pedidoConfirmado(pedido, config));
-        res.json({ success: true, ventaId: nuevaVenta.id, pin });
+        db.prepare('UPDATE pedidos SET estado = ?, pin = ?, ventaId = ? WHERE id = ?')
+          .run('confirmado', pin, ventaId, pedido.id);
+        
+        const cliente = JSON.parse(pedido.cliente || '{}');
+        if (cliente.email) {
+            enviarEmail(cliente.email, `Pedido #${pedido.id} confirmado`, `
+                <h1>Casa Elegida</h1>
+                <h2>¡Pedido confirmado!</h2>
+                ${pedido.tipoEntrega === 'local' ? `<p>Tu PIN de retiro: <strong>${pin}</strong></p>` : '<p>Pronto despacharemos tu pedido.</p>'}
+            `);
+        }
+        
+        res.json({ success: true, ventaId, pin });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/tienda/cancelar-pedido', authMiddleware, (req, res) => {
-    try { 
-        let pedidosData = readData('./pedidos.json'), pData = readData('./productos.json');
-        const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId && p.usuarioId === req.usuario.id); 
-        if (!pedido || pedido.estado !== 'pendiente') return res.status(400).json({ error: 'No se puede cancelar' }); 
-        for (let item of pedido.items) { 
-            if (item.esManual) continue; 
-            const prod = pData.lista.find(x => x.id == item.pId); 
-            if (prod) { const v = prod.variantes.find(v => v.nombre === item.vNom); if (v) v.stock += item.cant; } 
+    try {
+        const pedido = db.prepare('SELECT * FROM pedidos WHERE id = ? AND usuarioId = ? AND estado = ?')
+          .get(req.body.pedidoId, req.usuario.id, 'pendiente');
+        if (!pedido) return res.status(400).json({ error: 'No se puede cancelar' });
+        
+        const items = JSON.parse(pedido.items || '[]');
+        for (let item of items) {
+            if (item.esManual) continue;
+            db.prepare('UPDATE variantes SET stock = stock + ? WHERE productoId = ? AND nombre = ?')
+              .run(item.cant, item.pId, item.vNom);
         }
-        pedido.estado = 'cancelado'; pedido.fechaCancelado = new Date().toISOString();
-        writeData('./productos.json', pData); writeData('./pedidos.json', pedidosData); 
-        logActividad(req.usuario.nombre, 'CANCELAR_PEDIDO', `Pedido ${pedido.id} cancelado`, req);
-        res.json({ success: true }); 
+        
+        db.prepare('UPDATE pedidos SET estado = ?, fechaCancelado = datetime(\'now\') WHERE id = ?')
+          .run('cancelado', pedido.id);
+        res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Gestión de pedidos (admin)
-app.post('/tienda/marcar-abonado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); pedido.estado = 'abonado'; pedido.fechaAbonado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ABONADO', `Pedido ${pedido.id} abonado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/marcar-enviado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); pedido.estado = 'enviado'; pedido.fechaEnviado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ENVIADO', `Pedido ${pedido.id} enviado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/marcar-entregado', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); pedido.estado = 'entregado'; pedido.fechaEntregado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'MARCAR_ENTREGADO', `Pedido ${pedido.id} entregado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/cancelar-pedido-admin', (req, res) => { try { let pedidosData = readData('./pedidos.json'), pData = readData('./productos.json'); const pedido = pedidosData.lista.find(p=>p.id===req.body.pedidoId); if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' }); if (pedido.estado==='entregado') return res.status(400).json({ error: 'No se puede cancelar entregado' }); if (pedido.estado!=='pendiente') { for (let item of pedido.items) { if (item.esManual) continue; const prod = pData.lista.find(x=>x.id==item.pId); if (prod) { const v = prod.variantes.find(v=>v.nombre===item.vNom); if (v) v.stock += item.cant; } } writeData('./productos.json', pData); } pedido.estado = 'cancelado'; pedido.fechaCancelado = new Date().toISOString(); writeData('./pedidos.json', pedidosData); logActividad('Admin', 'CANCELAR_PEDIDO', `Pedido ${pedido.id} cancelado`, req); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-
-// Retirar con PIN
-app.post('/tienda/retirar-pedido', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.id === req.body.pedidoId); if (!pedido || (pedido.estado !== 'confirmado' && pedido.estado !== 'abonado') || pedido.pin !== req.body.pin) return res.status(400).json({ error: 'PIN incorrecto' }); pedido.estado = 'entregado'; pedido.fechaEntrega = new Date().toISOString(); writeData('./pedidos.json', pedidosData); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/tienda/verificar-pin', (req, res) => { try { let pedidosData = readData('./pedidos.json'); const pedido = pedidosData.lista.find(p => p.pin === req.body.pin && (p.estado === 'confirmado' || p.estado === 'abonado')); if (!pedido) return res.status(400).json({ error: 'PIN no encontrado' }); res.json({ success: true, pedido }); } catch (e) { res.status(500).json({ error: e.message }); } });
-
-// Dashboard
-app.post('/dashboard/stats', (req, res) => { 
-    try { 
-        const ventas = readData('./ventas.json').lista; 
-        const usuarios = readData('./usuarios.json').lista; 
-        const hoy = new Date().toLocaleDateString('es-AR'); 
-        const ventasHoy = ventas.filter(v => new Date(v.fechaTimestamp).toLocaleDateString('es-AR') === hoy); 
-        const totalHoy = ventasHoy.reduce((s, v) => s + v.pago.total, 0); 
-        const ticketPromedio = ventasHoy.length ? Math.round(totalHoy / ventasHoy.length) : 0; 
-        res.json({ ventasHoy: ventasHoy.length, totalHoy, ticketPromedio }); 
-    } catch (e) { res.status(500).json({ error: e.message }); } 
+app.post('/tienda/marcar-abonado', (req, res) => {
+    try {
+        db.prepare('UPDATE pedidos SET estado = ?, fechaAbonado = datetime(\'now\') WHERE id = ?').run('abonado', req.body.pedidoId);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Notificaciones y logs
-app.post('/notificaciones', (req, res) => { try { res.json(readData('./notificaciones.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/notificaciones/leer', (req, res) => { try { let data = readData('./notificaciones.json'); const notif = data.lista.find(n => n.id === req.body.id); if (notif) notif.leida = true; writeData('./notificaciones.json', data); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/notificaciones/leer-todas', (req, res) => { try { let data = readData('./notificaciones.json'); data.lista.forEach(n => n.leida = true); writeData('./notificaciones.json', data); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/logs/admin', (req, res) => { try { res.json(readData('./logs/admin-activity.json')); } catch (e) { res.status(500).json({ error: e.message }); } });
-app.post('/backup', (req, res) => { try { realizarBackupAutomatico(); res.json({ success: true }); } catch (e) { res.status(500).json({ error: e.message }); } });
+app.post('/tienda/marcar-enviado', (req, res) => {
+    try {
+        db.prepare('UPDATE pedidos SET estado = ?, fechaEnviado = datetime(\'now\') WHERE id = ?').run('enviado', req.body.pedidoId);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/tienda/marcar-entregado', (req, res) => {
+    try {
+        db.prepare('UPDATE pedidos SET estado = ?, fechaEntregado = datetime(\'now\') WHERE id = ?').run('entregado', req.body.pedidoId);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/tienda/cancelar-pedido-admin', (req, res) => {
+    try {
+        const pedido = db.prepare('SELECT * FROM pedidos WHERE id = ?').get(req.body.pedidoId);
+        if (!pedido) return res.status(400).json({ error: 'Pedido no encontrado' });
+        
+        const items = JSON.parse(pedido.items || '[]');
+        for (let item of items) {
+            if (item.esManual) continue;
+            db.prepare('UPDATE variantes SET stock = stock + ? WHERE productoId = ? AND nombre = ?')
+              .run(item.cant, item.pId, item.vNom);
+        }
+        
+        db.prepare('UPDATE pedidos SET estado = ?, fechaCancelado = datetime(\'now\') WHERE id = ?')
+          .run('cancelado', pedido.id);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Retirar con PIN
+app.post('/tienda/retirar-pedido', (req, res) => {
+    try {
+        const pedido = db.prepare('SELECT * FROM pedidos WHERE id = ? AND pin = ?').get(req.body.pedidoId, req.body.pin);
+        if (!pedido) return res.status(400).json({ error: 'PIN incorrecto o pedido no válido' });
+        db.prepare('UPDATE pedidos SET estado = ?, fechaEntregado = datetime(\'now\') WHERE id = ?').run('entregado', pedido.id);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/tienda/verificar-pin', (req, res) => {
+    try {
+        const pedido = db.prepare("SELECT * FROM pedidos WHERE pin = ? AND estado IN ('confirmado','abonado')").get(req.body.pin);
+        if (!pedido) return res.status(400).json({ error: 'PIN no encontrado' });
+        const cliente = JSON.parse(pedido.cliente || '{}');
+        const items = JSON.parse(pedido.items || '[]');
+        res.json({ success: true, pedido: { ...pedido, cliente, items } });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== DASHBOARD ====================
+app.post('/dashboard/stats', (req, res) => {
+    try {
+        const ventasHoy = db.prepare("SELECT COUNT(*) as count, COALESCE(SUM(total),0) as total FROM ventas WHERE date(fecha) = date('now','localtime')").get();
+        const clientesNuevos = db.prepare("SELECT COUNT(*) as count FROM usuarios WHERE date(fechaRegistro) >= date('now','start of month')").get();
+        res.json({
+            ventasHoy: ventasHoy.count,
+            totalHoy: ventasHoy.total,
+            ticketPromedio: ventasHoy.count > 0 ? Math.round(ventasHoy.total / ventasHoy.count) : 0,
+            clientesNuevos: clientesNuevos.count,
+            ventasSemana: [],
+            productosTop: [],
+            clientesTop: [],
+            horariosPico: []
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== NOTIFICACIONES ====================
+app.post('/notificaciones', (req, res) => {
+    try {
+        const notifs = db.prepare('SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT 50').all();
+        res.json({ lista: notifs });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/notificaciones/leer', (req, res) => {
+    try {
+        db.prepare('UPDATE notificaciones SET leida = 1 WHERE id = ?').run(req.body.id);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/notificaciones/leer-todas', (req, res) => {
+    try {
+        db.prepare('UPDATE notificaciones SET leida = 1').run();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== MIS PEDIDOS (CLIENTE) ====================
+app.get('/api/mis-pedidos', authMiddleware, (req, res) => {
+    try {
+        const pedidos = db.prepare('SELECT * FROM pedidos WHERE usuarioId = ? ORDER BY fechaTimestamp DESC').all(req.usuario.id);
+        const result = pedidos.map(p => ({
+            ...p,
+            items: JSON.parse(p.items || '[]'),
+            cliente: JSON.parse(p.cliente || '{}')
+        }));
+        res.json({ lista: result });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // Manejo de errores
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
-app.use((err, req, res, next) => { console.error('Error:', err.message); res.status(500).json({ error: 'Error interno del servidor' }); });
+app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Error interno' }); });
 
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`\n╔══════════════════════════════════════════════════╗`);
-    console.log(`║        🏪 CASA ELEGIDA - SISTEMA ACTIVO          ║`);
+    console.log(`║     🏪 CASA ELEGIDA - SISTEMA ACTIVO (SQLite)    ║`);
     console.log(`╠══════════════════════════════════════════════════╣`);
     console.log(`║  Tienda: http://localhost:${PORT}/tienda            ║`);
     console.log(`║  Admin:  http://localhost:${PORT}/admin             ║`);
     console.log(`╚══════════════════════════════════════════════════╝\n`);
 });
 
-process.on('SIGTERM', () => { realizarBackupAutomatico(); process.exit(0); });
-process.on('SIGINT', () => { realizarBackupAutomatico(); process.exit(0); });
+process.on('SIGTERM', () => { db.close(); process.exit(0); });
+process.on('SIGINT', () => { db.close(); process.exit(0); });
