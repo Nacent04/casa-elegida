@@ -1,7 +1,7 @@
 {
   "name": "pos-master",
-  "version": "2.0.0",
-  "description": "Sistema POS Master - Gestión de ventas, stock y tienda online",
+  "version": "3.0.0",
+  "description": "Sistema POS Master - Gestión de ventas, stock y tienda online con SQLite",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
     "cloudinary": "^2.5.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
