@@ -2,122 +2,225 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro | Blanquería Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Crear Cuenta | Casa Elegida</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --primary: #8B5E3C; --primary-dark: #6B4423; --bg-light: #FDF8F4; --success: #4CAF50; --danger: #F44336; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .register-container { max-width: 460px; width: 100%; }
-        .register-card { background: white; border-radius: 28px; padding: 40px 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
-        .logo { text-align: center; margin-bottom: 32px; }
-        .logo-icon { width: 64px; height: 64px; background: linear-gradient(135deg, var(--primary), #A0714F); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; margin: 0 auto 16px; }
-        .logo h2 { color: var(--primary); font-size: 24px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #3E2A1E; }
-        .form-group input { width: 100%; padding: 14px 16px; border: 2px solid #F0E6DC; border-radius: 16px; font-size: 14px; transition: all 0.3s; }
+        :root { --primary: #8B5E3C; --primary-dark: #6B4423; --bg-light: #FDF8F4; --success: #4CAF50; --danger: #F44336; --warning: #FF9800; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-light); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 460px; width: 100%; }
+        .card { background: white; border-radius: 28px; padding: 32px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo-icon { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #A0714F); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 26px; margin: 0 auto 14px; }
+        .logo h2 { color: var(--primary); font-size: 22px; }
+        .logo p { color: #7B6B5A; font-size: 13px; margin-top: 6px; }
+        
+        /* ========== AVISO DE DATOS VERDADEROS ========== */
+        .aviso-datos {
+            background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+            border: 2px solid #FFB347;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .aviso-datos .aviso-icono {
+            background: #FF8F00;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .aviso-datos .aviso-texto h4 {
+            font-size: 14px;
+            color: #B45309;
+            margin-bottom: 4px;
+        }
+        .aviso-datos .aviso-texto p {
+            font-size: 11px;
+            color: #92400E;
+            line-height: 1.5;
+        }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #3E2A1E; }
+        .form-group label .required { color: var(--danger); }
+        .form-group input { width: 100%; padding: 14px 16px; border: 2px solid #F0E6DC; border-radius: 14px; font-size: 14px; transition: all 0.3s; background: white; }
         .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139,94,60,0.1); }
-        .btn-register { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-bottom: 20px; }
-        .btn-register:hover { background: var(--primary-dark); transform: translateY(-2px); }
-        .btn-google { width: 100%; padding: 14px; background: white; color: #3E2A1E; border: 2px solid #F0E6DC; border-radius: 50px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s; margin-bottom: 20px; }
-        .btn-google:hover { background: #f8fafc; border-color: var(--primary); }
-        .btn-google i { color: #DB4437; font-size: 18px; }
-        .login-link { text-align: center; font-size: 14px; color: #7B6B5A; }
+        .form-group input.campo-bloqueado { background: #FFF8E1; border-color: #FFB347; font-weight: 600; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } }
+        .btn-submit { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 50px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-submit:disabled { background: #CCC; cursor: not-allowed; transform: none; }
+        .login-link { text-align: center; margin-top: 20px; font-size: 14px; color: #7B6B5A; }
         .login-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 14px 20px; border-radius: 40px; font-weight: 600; z-index: 2000; animation: slideIn 0.3s; }
+        .back-link { text-align: center; margin-top: 12px; }
+        .back-link a { color: #7B6B5A; text-decoration: none; font-size: 13px; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 14px 20px; border-radius: 40px; font-weight: 600; z-index: 2000; animation: slideIn 0.3s; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
         .toast.error { background: var(--danger); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .campo-info { font-size: 10px; color: #7B6B5A; margin-top: 2px; }
+        .campo-bloqueado-info { font-size: 10px; color: #B45309; margin-top: 2px; font-weight: 500; }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <div class="register-card">
+    <div class="container">
+        <div class="card">
             <div class="logo">
                 <div class="logo-icon"><i class="fas fa-bed"></i></div>
                 <h2>Crear Cuenta</h2>
-                <p style="color: #7B6B5A; margin-top: 8px;">Registrate para realizar pedidos</p>
+                <p>Registrate para comprar en Casa Elegida</p>
             </div>
             
-            <form id="register-form">
+            <!-- ========== AVISO IMPORTANTE ========== -->
+            <div class="aviso-datos">
+                <div class="aviso-icono">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="aviso-texto">
+                    <h4>⚠️ Completá con tus datos verdaderos</h4>
+                    <p>
+                        Una vez creada la cuenta, <strong>nombre, apellido, DNI y email no se podrán modificar</strong>. 
+                        Los envíos y retiros se realizarán con estos datos. 
+                        Asegurate de que sean correctos.
+                    </p>
+                </div>
+            </div>
+            
+            <form id="registro-form">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Nombre</label>
-                        <input type="text" id="nombre" placeholder="María" required>
+                        <label><span class="required">*</span> Nombre</label>
+                        <input type="text" id="nombre" class="campo-bloqueado" placeholder="Tu nombre real" required autocomplete="given-name">
+                        <p class="campo-bloqueado-info"><i class="fas fa-lock"></i> No editable después</p>
                     </div>
                     <div class="form-group">
-                        <label>Apellido</label>
-                        <input type="text" id="apellido" placeholder="González" required>
+                        <label><span class="required">*</span> Apellido</label>
+                        <input type="text" id="apellido" class="campo-bloqueado" placeholder="Tu apellido real" required autocomplete="family-name">
+                        <p class="campo-bloqueado-info"><i class="fas fa-lock"></i> No editable después</p>
                     </div>
                 </div>
+                
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" placeholder="tu@email.com" required>
+                    <label><span class="required">*</span> DNI</label>
+                    <input type="text" id="dni" class="campo-bloqueado" placeholder="Sin puntos ni espacios" required inputmode="numeric" maxlength="8">
+                    <p class="campo-bloqueado-info"><i class="fas fa-lock"></i> No editable después - Necesario para retiros</p>
                 </div>
+                
                 <div class="form-group">
-                    <label>Teléfono (opcional)</label>
-                    <input type="tel" id="telefono" placeholder="3811234567">
+                    <label>Teléfono <span style="color:#4CAF50;font-size:10px;">(Editable)</span></label>
+                    <input type="tel" id="telefono" placeholder="Podés cambiarlo después">
                 </div>
+                
                 <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <label><span class="required">*</span> Email</label>
+                    <input type="email" id="email" class="campo-bloqueado" placeholder="tu@email.com" required autocomplete="email">
+                    <p class="campo-bloqueado-info"><i class="fas fa-lock"></i> No editable después</p>
                 </div>
+                
                 <div class="form-group">
-                    <label>Confirmar Contraseña</label>
-                    <input type="password" id="confirm-password" placeholder="••••••••" required>
+                    <label><span class="required">*</span> Contraseña</label>
+                    <input type="password" id="password" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" minlength="6">
                 </div>
-                <button type="submit" class="btn-register"><i class="fas fa-user-plus"></i> Registrarse</button>
+                
+                <button type="submit" class="btn-submit" id="submit-btn">
+                    <i class="fas fa-check-circle"></i> Confirmo que mis datos son verdaderos y creo mi cuenta
+                </button>
             </form>
             
-            <a href="/auth/google" class="btn-google">
-                <i class="fab fa-google"></i> Continuar con Google
-            </a>
-            
-            <p class="login-link">¿Ya tenés cuenta? <a href="/login">Iniciá Sesión</a></p>
+            <p class="login-link">¿Ya tenés cuenta? <a href="/login">Iniciar Sesión</a></p>
+            <p class="back-link"><a href="/tienda"><i class="fas fa-arrow-left"></i> Volver a la tienda</a></p>
         </div>
     </div>
     <div id="toast-container"></div>
+    
     <script>
         function mostrarToast(msg, error = false) {
-            const t = document.createElement('div'); t.className = `toast ${error ? 'error' : ''}`;
-            t.innerHTML = msg; document.getElementById('toast-container').appendChild(t);
+            const t = document.createElement('div'); 
+            t.className = `toast ${error ? 'error' : ''}`;
+            t.innerHTML = `<i class="fas ${error ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`; 
+            document.getElementById('toast-container').appendChild(t);
             setTimeout(() => t.remove(), 4000);
         }
         
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
+        const returnUrl = new URLSearchParams(window.location.search).get('return') || localStorage.getItem('returnUrl') || '/tienda';
+
+        document.getElementById('dni').addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 8);
+        });
+
+        document.getElementById('registro-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const nombre = document.getElementById('nombre').value;
-            const apellido = document.getElementById('apellido').value;
-            const email = document.getElementById('email').value;
-            const telefono = document.getElementById('telefono').value;
-            const password = document.getElementById('password').value;
-            const confirm = document.getElementById('confirm-password').value;
             
-            if (password !== confirm) {
-                return mostrarToast('Las contraseñas no coinciden', true);
+            const nombre = document.getElementById('nombre').value.trim();
+            const apellido = document.getElementById('apellido').value.trim();
+            const dni = document.getElementById('dni').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!nombre || !apellido || !dni || !email || !password) {
+                mostrarToast('Completá todos los campos obligatorios (*)', true);
+                return;
             }
+            
+            if (dni.length < 7) {
+                mostrarToast('DNI inválido (7-8 números)', true);
+                return;
+            }
+            
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                mostrarToast('Email inválido', true);
+                return;
+            }
+            
             if (password.length < 6) {
-                return mostrarToast('La contraseña debe tener al menos 6 caracteres', true);
+                mostrarToast('La contraseña debe tener al menos 6 caracteres', true);
+                return;
             }
+            
+            // Confirmación final
+            if (!confirm('¿Confirmás que todos tus datos son verdaderos?\n\nNombre: ' + nombre + '\nApellido: ' + apellido + '\nDNI: ' + dni + '\nEmail: ' + email + '\n\n⚠️ Estos datos NO se podrán modificar después.')) {
+                return;
+            }
+            
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Creando cuenta...';
             
             try {
                 const res = await fetch('/auth/registro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre, apellido, email, telefono, password })
+                    body: JSON.stringify({ nombre, apellido, dni, telefono, email, password })
                 });
                 const data = await res.json();
+                
                 if (data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('usuario', JSON.stringify(data.usuario));
                     mostrarToast('✅ ¡Cuenta creada! Redirigiendo...');
-                    setTimeout(() => window.location.href = '/tienda', 1000);
+                    setTimeout(() => window.location.href = returnUrl, 800);
                 } else {
                     mostrarToast(data.error || 'Error al registrarse', true);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmo que mis datos son verdaderos y creo mi cuenta';
                 }
             } catch (e) {
                 mostrarToast('Error de conexión', true);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmo que mis datos son verdaderos y creo mi cuenta';
             }
         });
     </script>
