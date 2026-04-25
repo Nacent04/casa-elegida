@@ -14,6 +14,36 @@ const Database = require('better-sqlite3');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ==================== BACKUP AUTOMÁTICO ====================
+const BACKUP_FILE = './backups/data_backup.db';
+
+function crearBackup() {
+    try {
+        if (fs.existsSync('./data.db')) {
+            if (!fs.existsSync('./backups')) fs.mkdirSync('./backups', { recursive: true });
+            fs.copyFileSync('./data.db', BACKUP_FILE);
+            console.log('✅ Backup creado antes de reiniciar');
+        }
+    } catch(e) { console.error('Error creando backup:', e); }
+}
+
+function restaurarBackup() {
+    try {
+        if (fs.existsSync(BACKUP_FILE)) {
+            fs.copyFileSync(BACKUP_FILE, './data.db');
+            console.log('✅ Backup restaurado correctamente');
+            return true;
+        }
+    } catch(e) { console.error('Error restaurando backup:', e); }
+    return false;
+}
+
+// Restaurar backup si existe al iniciar
+if (fs.existsSync(BACKUP_FILE) && !fs.existsSync('./data.db')) {
+    restaurarBackup();
+}
+
+// ==================== BASE DE DATOS ====================
 const db = new Database('./data.db');
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
@@ -33,6 +63,7 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS caja_diaria (fecha TEXT PRIMARY KEY, montoInicial REAL DEFAULT 0, abiertaPor TEXT, cerradaPor TEXT, estado TEXT DEFAULT 'cerrada', aperturaTimestamp INTEGER, cierreTimestamp INTEGER, totalVentas REAL DEFAULT 0, totalEsperado REAL DEFAULT 0, detallePagos TEXT DEFAULT '{}');
 `);
 
+// Configuración inicial (solo si no existe)
 const configInicial = {
     logo: '', empresa: JSON.stringify({ nombre: "Casa Elegida", telefono: "", email: "casaelegida20@gmail.com", direccion: "" }),
     horarios: JSON.stringify({ lunesViernes: "9:00 - 13:00 y 17:00 - 20:00", sabados: "9:00 - 13:00", domingos: "Cerrado" }),
@@ -53,7 +84,6 @@ for (const [k, v] of Object.entries(configInicial)) insertConfig.run(k, v);
 if (!db.prepare('SELECT id FROM perfiles WHERE usuario = ?').get('admin')) {
     db.prepare('INSERT INTO perfiles (id, usuario, password, nombre, rol, permisos) VALUES (?, ?, ?, ?, ?, ?)')
       .run('PERF-' + Date.now(), 'admin', bcrypt.hashSync('NacentLion03-04-04', 10), 'Administrador Principal', 'admin', '[]');
-    console.log('✅ Admin creado');
 }
 
 function getConfig() { const rows = db.prepare('SELECT clave, valor FROM configuracion').all(); const c = {}; rows.forEach(r => { try { c[r.clave] = JSON.parse(r.valor); } catch(e) { c[r.clave] = r.valor; } }); return c; }
@@ -67,7 +97,7 @@ const JWT_SECRET = process.env.JWT_SECRET; const SESSION_SECRET = process.env.SE
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID; const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
 
-['./uploads', './public'].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
+['./uploads', './public', './backups'].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
 const storage = multer.diskStorage({ destination: (req, f, cb) => cb(null, './uploads/'), filename: (req, f, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(f.originalname)) });
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: (req, f, cb) => { const a = /jpeg|jpg|png|gif|webp/; cb(null, a.test(path.extname(f.originalname).toLowerCase()) && a.test(f.mimetype)); } });
 
@@ -78,12 +108,7 @@ app.use('/uploads', express.static('uploads')); app.use(express.static('public')
 
 passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, callbackURL: '/auth/google/callback' },
     async (accessToken, refreshToken, profile, done) => {
-        try {
-            let u = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(profile.emails[0].value);
-            if (!u) { const id = 'USR-' + Date.now(); db.prepare('INSERT INTO usuarios (id, nombre, apellido, email, googleId, foto, rol) VALUES (?,?,?,?,?,?,?)').run(id, profile.name.givenName||'', profile.name.familyName||'', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente'); u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id); }
-            return done(null, u);
-        } catch(e) { return done(e, null); }
-    }));
+        try { let u = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(profile.emails[0].value); if (!u) { const id = 'USR-' + Date.now(); db.prepare('INSERT INTO usuarios (id, nombre, apellido, email, googleId, foto, rol) VALUES (?,?,?,?,?,?,?)').run(id, profile.name.givenName||'', profile.name.familyName||'', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente'); u = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id); } return done(null, u); } catch(e) { return done(e, null); } }));
 passport.serializeUser((u, d) => d(null, u.id));
 passport.deserializeUser((id, d) => d(null, db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id) || null));
 
@@ -98,53 +123,10 @@ app.get('/', (req, res) => res.redirect('/tienda'));
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => { res.redirect(`/tienda?token=${jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' })}`); });
 
-app.post('/admin/login', async (req, res) => {
-    try {
-        const { usuario, password } = req.body;
-        const p = db.prepare('SELECT * FROM perfiles WHERE usuario = ? AND activo = 1').get(usuario);
-        if (!p) return res.status(401).json({ error: 'Usuario no encontrado' });
-        if (!(await bcrypt.compare(password, p.password))) return res.status(401).json({ error: 'Contraseña incorrecta' });
-        const token = jwt.sign({ id: p.id, usuario: p.usuario, nombre: p.nombre, rol: p.rol, permisos: JSON.parse(p.permisos||'[]'), tipo: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
-        res.json({ success: true, token, perfil: { id: p.id, usuario: p.usuario, nombre: p.nombre, rol: p.rol, permisos: JSON.parse(p.permisos||'[]') } });
-    } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/admin/cambiar-password', adminMiddleware(), async (req, res) => {
-    try {
-        const { passwordActual, passwordNueva } = req.body;
-        if (!passwordActual || !passwordNueva || passwordNueva.length < 6) return res.status(400).json({ error: 'Datos inválidos' });
-        const p = db.prepare('SELECT * FROM perfiles WHERE id = ?').get(req.admin.id);
-        if (!p) return res.status(404).json({ error: 'Perfil no encontrado' });
-        if (!(await bcrypt.compare(passwordActual, p.password))) return res.status(401).json({ error: 'Contraseña incorrecta' });
-        db.prepare('UPDATE perfiles SET password = ? WHERE id = ?').run(await bcrypt.hash(passwordNueva, 10), req.admin.id);
-        res.json({ success: true });
-    } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/admin/perfiles', adminMiddleware(), (req, res) => { res.json({ lista: db.prepare('SELECT id, usuario, nombre, rol, permisos, activo FROM perfiles ORDER BY fechaCreacion DESC').all().map(p => ({ ...p, permisos: JSON.parse(p.permisos||'[]') })) }); });
-
-app.post('/admin/crear-perfil', async (req, res) => {
-    try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) return res.status(401).json({ error: 'No autorizado' });
-        let decoded;
-        try { decoded = jwt.verify(token, JWT_SECRET); } catch(e) { return res.status(401).json({ error: 'Token inválido' }); }
-        if (decoded.rol !== 'admin') return res.status(403).json({ error: 'Solo el administrador puede crear perfiles' });
-        
-        const { adminPassword, usuario, password, nombre, permisos } = req.body;
-        if (!adminPassword || !usuario || !password || !nombre) return res.status(400).json({ error: 'Todos los campos son requeridos' });
-        
-        const adminPerfil = db.prepare('SELECT * FROM perfiles WHERE usuario = ?').get('admin');
-        if (!adminPerfil) return res.status(404).json({ error: 'Admin no encontrado en la base de datos' });
-        if (!(await bcrypt.compare(adminPassword, adminPerfil.password))) return res.status(401).json({ error: 'Contraseña de administrador incorrecta' });
-        if (db.prepare('SELECT id FROM perfiles WHERE usuario = ?').get(usuario)) return res.status(400).json({ error: 'El usuario ya existe' });
-        
-        const id = 'PERF-' + Date.now();
-        db.prepare('INSERT INTO perfiles (id, usuario, password, nombre, rol, permisos) VALUES (?,?,?,?,?,?)').run(id, usuario, await bcrypt.hash(password, 10), nombre, 'vendedor', JSON.stringify(permisos||[]));
-        res.json({ success: true });
-    } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
+app.post('/admin/login', async (req, res) => { try { const { usuario, password } = req.body; const p = db.prepare('SELECT * FROM perfiles WHERE usuario = ? AND activo = 1').get(usuario); if (!p) return res.status(401).json({ error: 'Usuario no encontrado' }); if (!(await bcrypt.compare(password, p.password))) return res.status(401).json({ error: 'Contraseña incorrecta' }); res.json({ success: true, token: jwt.sign({ id: p.id, usuario: p.usuario, nombre: p.nombre, rol: p.rol, permisos: JSON.parse(p.permisos||'[]'), tipo: 'admin' }, JWT_SECRET, { expiresIn: '8h' }), perfil: { id: p.id, usuario: p.usuario, nombre: p.nombre, rol: p.rol, permisos: JSON.parse(p.permisos||'[]') } }); } catch(e) { res.status(500).json({ error: e.message }); } });
+app.post('/admin/cambiar-password', adminMiddleware(), async (req, res) => { try { const { passwordActual, passwordNueva } = req.body; if (!passwordActual || !passwordNueva || passwordNueva.length < 6) return res.status(400).json({ error: 'Datos inválidos' }); const p = db.prepare('SELECT * FROM perfiles WHERE id = ?').get(req.admin.id); if (!p) return res.status(404).json({ error: 'Perfil no encontrado' }); if (!(await bcrypt.compare(passwordActual, p.password))) return res.status(401).json({ error: 'Contraseña incorrecta' }); db.prepare('UPDATE perfiles SET password = ? WHERE id = ?').run(await bcrypt.hash(passwordNueva, 10), req.admin.id); res.json({ success: true }); } catch(e) { res.status(500).json({ error: e.message }); } });
+app.post('/admin/perfiles', adminMiddleware(), (req, res) => res.json({ lista: db.prepare('SELECT id, usuario, nombre, rol, permisos, activo FROM perfiles ORDER BY fechaCreacion DESC').all().map(p => ({ ...p, permisos: JSON.parse(p.permisos||'[]') })) }));
+app.post('/admin/crear-perfil', async (req, res) => { try { const token = req.headers.authorization?.replace('Bearer ', ''); if (!token) return res.status(401).json({ error: 'No autorizado' }); let decoded; try { decoded = jwt.verify(token, JWT_SECRET); } catch(e) { return res.status(401).json({ error: 'Token inválido' }); } if (decoded.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' }); const { adminPassword, usuario, password, nombre, permisos } = req.body; if (!adminPassword || !usuario || !password || !nombre) return res.status(400).json({ error: 'Todos los campos requeridos' }); const adminPerfil = db.prepare('SELECT * FROM perfiles WHERE usuario = ?').get('admin'); if (!adminPerfil) return res.status(404).json({ error: 'Admin no encontrado' }); if (!(await bcrypt.compare(adminPassword, adminPerfil.password))) return res.status(401).json({ error: 'Contraseña incorrecta' }); if (db.prepare('SELECT id FROM perfiles WHERE usuario = ?').get(usuario)) return res.status(400).json({ error: 'Usuario ya existe' }); db.prepare('INSERT INTO perfiles (id, usuario, password, nombre, rol, permisos) VALUES (?,?,?,?,?,?)').run('PERF-' + Date.now(), usuario, await bcrypt.hash(password, 10), nombre, 'vendedor', JSON.stringify(permisos||[])); res.json({ success: true }); } catch(e) { res.status(500).json({ error: e.message }); } });
 app.post('/admin/editar-perfil', adminMiddleware(), (req, res) => { try { const { id, nombre, permisos, activo } = req.body; const p = db.prepare('SELECT * FROM perfiles WHERE id = ?').get(id); if (!p || p.rol === 'admin') return res.status(400).json({ error: 'No se puede editar' }); db.prepare('UPDATE perfiles SET nombre=?, permisos=?, activo=? WHERE id=?').run(nombre||p.nombre, JSON.stringify(permisos||[]), activo!==undefined?activo:p.activo, id); res.json({ success: true }); } catch(e) { res.status(500).json({ error: e.message }); } });
 
 app.post('/auth/registro', async (req, res) => { try { const { nombre, apellido, email, dni, telefono, password } = req.body; if (!nombre || !apellido || !email || !dni || !password) return res.status(400).json({ error: 'Completá todos los campos' }); if (db.prepare('SELECT id FROM usuarios WHERE email=?').get(email)) return res.status(400).json({ error: 'Email ya registrado' }); const id = 'USR-' + Date.now(); db.prepare('INSERT INTO usuarios (id,nombre,apellido,email,dni,telefono,password,rol) VALUES (?,?,?,?,?,?,?,?)').run(id, nombre, apellido, email, dni, telefono||'', await bcrypt.hash(password, 10), 'cliente'); res.json({ success: true, token: jwt.sign({ id, email, nombre, rol: 'cliente' }, JWT_SECRET, { expiresIn: '7d' }), usuario: { id, nombre, apellido, email } }); } catch(e) { res.status(500).json({ error: e.message }); } });
@@ -158,6 +140,7 @@ app.post('/listar', (req, res) => res.json({ lista: db.prepare('SELECT * FROM pr
 app.post('/guardar-producto', (req, res) => { try { const p = req.body; if (!p.nombre?.trim() || p.precio <= 0) return res.status(400).json({ error: 'Datos inválidos' }); if (db.prepare('SELECT id FROM productos WHERE id=?').get(p.id)) { db.prepare('UPDATE productos SET nombre=?,precio=?,precioMayor=?,descripcion=?,categoriaId=?,subcategoria=? WHERE id=?').run(p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId||null, p.subcategoria||'', p.id); db.prepare('DELETE FROM variantes WHERE productoId=?').run(p.id); } else { db.prepare('INSERT INTO productos (id,nombre,precio,precioMayor,descripcion,categoriaId,subcategoria) VALUES (?,?,?,?,?,?,?)').run(p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId||null, p.subcategoria||''); } if (p.variantes?.length) { const ins = db.prepare('INSERT INTO variantes (productoId,nombre,stock,foto) VALUES (?,?,?,?)'); p.variantes.forEach(v => ins.run(p.id, v.nombre, v.stock||0, v.foto||'')); } res.json({ success: true }); } catch(e) { res.status(500).json({ error: e.message }); } });
 app.post('/eliminar-producto', (req, res) => { db.prepare('DELETE FROM productos WHERE id=?').run(req.body.id); res.json({ success: true }); });
 app.post('/reordenar-productos', (req, res) => res.json({ success: true }));
+app.post('/verificar-stock', (req, res) => { try { const v = db.prepare('SELECT stock FROM variantes WHERE productoId=? AND nombre=?').get(req.body.productoId, req.body.varianteNombre); if (!v) return res.status(404).json({ error: 'No encontrada' }); res.json({ stock: v.stock }); } catch(e) { res.status(500).json({ error: e.message }); } });
 app.post('/stock-bajo', (req, res) => res.json({ stockBajo: db.prepare('SELECT v.*, p.nombre as pn FROM variantes v JOIN productos p ON v.productoId=p.id WHERE v.stock <= ?').all(req.body.minimo||5) }));
 
 app.post('/subir-imagen', upload.single('foto'), async (req, res) => { if (!req.file) return res.status(400).json({ error: 'No imagen' }); const r = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' }); fs.unlinkSync(req.file.path); res.json({ url: r.secure_url }); });
@@ -178,7 +161,7 @@ app.post('/save-mayorista-config', (req, res) => { setConfig('mayorista', req.bo
 app.post('/save-diseno-config', (req, res) => { if(req.body.diseno) setConfig('diseno', req.body.diseno); res.json({ success: true }); });
 app.post('/save-home-config', (req, res) => { if(req.body.heroConfig) setConfig('heroConfig', req.body.heroConfig); res.json({ success: true }); });
 
-app.post('/confirmar-venta', (req, res) => { try { const { carrito, pago, logistica, cliente } = req.body; if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' }); for (let it of carrito) { if(it.esManual) continue; db.prepare('UPDATE variantes SET stock=stock-? WHERE productoId=? AND nombre=?').run(it.cant, it.pId, it.vNom); } const id = 'FAC-' + Date.now(); db.prepare("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen) VALUES (?,datetime('now','localtime'),?,?,?,?,?,?,'completada','admin')").run(id, Date.now(), JSON.stringify(carrito), pago.total, pago.metodo, logistica, JSON.stringify(cliente||{nombre:'Mostrador'})); crearNotificacion('venta', '💰 Venta', `${id} - ${fmt.format(pago.total)}`); res.json({ success: true, ventaId: id }); } catch(e) { res.status(500).json({ error: e.message }); } });
+app.post('/confirmar-venta', (req, res) => { try { const { carrito, pago, logistica, cliente } = req.body; if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' }); for (let it of carrito) { if(it.esManual) continue; db.prepare('UPDATE variantes SET stock=stock-? WHERE productoId=? AND nombre=?').run(it.cant, it.pId, it.vNom); } const id = 'FAC-' + Date.now(); db.prepare("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen) VALUES (?,datetime('now','localtime'),?,?,?,?,?,?,'completada','admin')").run(id, Date.now(), JSON.stringify(carrito), pago.total, pago.metodo, logistica, JSON.stringify(cliente||{nombre:'Mostrador'})); crearNotificacion('venta', '💰 Venta', `${id}`); res.json({ success: true, ventaId: id }); } catch(e) { res.status(500).json({ error: e.message }); } });
 app.post('/listar-ventas', (req, res) => res.json({ lista: db.prepare('SELECT * FROM ventas ORDER BY fechaTimestamp DESC').all().map(v => ({ ...v, items: JSON.parse(v.items||'[]'), cliente: JSON.parse(v.cliente||'{}'), pago: { total: v.total, metodo: v.metodoPago } })) }));
 app.post('/corte-caja', (req, res) => { const v = db.prepare("SELECT * FROM ventas WHERE date(fecha) = date('now','localtime')").all(); res.json({ total: v.reduce((s,x)=>s+x.total,0), cantidad: v.length }); });
 
@@ -212,5 +195,14 @@ app.get('/api/mis-pedidos', authMiddleware, (req, res) => res.json({ lista: db.p
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Error interno' }); });
 
-app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n`));
-process.on('SIGTERM', () => { db.close(); process.exit(0); });
+app.listen(PORT, () => {
+    console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n`);
+    // Crear backup cada 30 minutos
+    setInterval(crearBackup, 30 * 60 * 1000);
+    console.log('✅ Backup automático cada 30 minutos');
+});
+
+// Backup antes de reiniciar
+process.on('SIGTERM', () => { crearBackup(); db.close(); process.exit(0); });
+process.on('SIGINT', () => { crearBackup(); db.close(); process.exit(0); });
+process.on('SIGUSR2', () => { crearBackup(); db.close(); process.exit(0); });
