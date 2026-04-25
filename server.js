@@ -14,7 +14,7 @@ const Database = require('better-sqlite3');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==================== BASE DE DATOS SQLITE ====================
+// ==================== BASE DE DATOS SQLite ====================
 const db = new Database('./data.db');
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
@@ -251,7 +251,7 @@ passport.deserializeUser((id, done) => {
 // Middleware de autenticación
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) return res.status(401).json({ error: 'No autorizado' });
+    if (!token) return res.status(401).json({ error: 'No autorizado. Iniciá sesión.' });
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.usuario = decoded;
@@ -303,16 +303,23 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 // ==================== AUTENTICACIÓN ====================
 app.post('/auth/registro', async (req, res) => {
     try {
-        const { nombre, apellido, email, telefono, password } = req.body;
-        if (!nombre || !apellido || !email || !password) return res.status(400).json({ error: 'Todos los campos son requeridos' });
-        const existe = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
-        if (existe) return res.status(400).json({ error: 'El email ya está registrado' });
+        const { nombre, apellido, email, dni, telefono, password } = req.body;
+        if (!nombre || !apellido || !email || !dni || !password) 
+            return res.status(400).json({ error: 'Todos los campos son requeridos (incluyendo DNI)' });
+        
+        const existeEmail = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+        if (existeEmail) return res.status(400).json({ error: 'El email ya está registrado' });
+        
+        const existeDni = db.prepare('SELECT id FROM usuarios WHERE dni = ?').get(dni);
+        if (existeDni) return res.status(400).json({ error: 'El DNI ya está registrado' });
+        
         const hashedPassword = await bcrypt.hash(password, 10);
         const id = 'USR-' + Date.now();
-        db.prepare('INSERT INTO usuarios (id, nombre, apellido, email, telefono, password, rol) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .run(id, nombre, apellido, email, telefono || '', hashedPassword, 'cliente');
+        db.prepare('INSERT INTO usuarios (id, nombre, apellido, email, dni, telefono, password, rol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+          .run(id, nombre, apellido, email, dni, telefono || '', hashedPassword, 'cliente');
+        
         const token = jwt.sign({ id, email, nombre, rol: 'cliente' }, JWT_SECRET, { expiresIn: '7d' });
-        res.json({ success: true, token, usuario: { id, nombre, apellido, email } });
+        res.json({ success: true, token, usuario: { id, nombre, apellido, email, dni } });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -324,7 +331,7 @@ app.post('/auth/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, usuario.password);
         if (!validPassword) return res.status(401).json({ error: 'Credenciales inválidas' });
         const token = jwt.sign({ id: usuario.id, email: usuario.email, nombre: usuario.nombre, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
-        res.json({ success: true, token, usuario: { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, email: usuario.email } });
+        res.json({ success: true, token, usuario: { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, email: usuario.email, dni: usuario.dni } });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -367,11 +374,9 @@ app.get('/auth/me', authMiddleware, (req, res) => {
 
 app.post('/auth/update-profile', authMiddleware, async (req, res) => {
     try {
-        const { nombre, apellido, telefono, dni } = req.body;
-        const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.usuario.id);
-        if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-        db.prepare('UPDATE usuarios SET nombre = ?, apellido = ?, telefono = ?, dni = ? WHERE id = ?')
-          .run(nombre || usuario.nombre, apellido || usuario.apellido, telefono || usuario.telefono, dni || usuario.dni, usuario.id);
+        const { telefono } = req.body;
+        db.prepare('UPDATE usuarios SET telefono = ? WHERE id = ?')
+          .run(telefono || '', req.usuario.id);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -672,10 +677,11 @@ app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
         const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.usuario.id);
         if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado' });
         
+        // Forzar datos del perfil (no editables)
         cliente.nombre = usuario.nombre;
         cliente.apellido = usuario.apellido;
         cliente.email = usuario.email;
-        if (!cliente.dni) cliente.dni = usuario.dni || '';
+        cliente.dni = usuario.dni || '';
         if (!cliente.telefono) cliente.telefono = usuario.telefono || '';
         
         // Descontar stock
