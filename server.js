@@ -330,32 +330,7 @@ async function enviarWhatsAppAdmin(pedido, tipo) {
         const redes = typeof config.redes === 'string' ? JSON.parse(config.redes) : config.redes;
         const whatsapp = redes?.whatsapp || config.empresa?.whatsapp;
         if (!whatsapp) return false;
-        
-        const cliente = typeof pedido.cliente === 'string' ? JSON.parse(pedido.cliente) : pedido.cliente;
-        const items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : pedido.items;
-        
-        let mensaje = '';
-        if (tipo === 'nuevo_pedido') {
-            mensaje = `🛍️ *NUEVO PEDIDO WEB*\n\n`;
-            mensaje += `📦 Pedido: *${pedido.id}*\n`;
-            mensaje += `👤 Cliente: ${cliente.nombre} ${cliente.apellido}\n`;
-            mensaje += `📧 Email: ${cliente.email}\n`;
-            mensaje += `📱 Tel: ${cliente.telefono || 'No especificado'}\n`;
-            mensaje += `📋 DNI: ${cliente.dni || 'No especificado'}\n\n`;
-            mensaje += `🛒 *Productos:*\n`;
-            items.forEach(i => {
-                mensaje += `• ${i.cant}x ${i.pNom} (${i.vNom}) - ${fmt.format(i.precio * i.cant)}\n`;
-            });
-            mensaje += `\n💰 *Total: ${fmt.format(pedido.total)}*\n`;
-            mensaje += `🚚 Entrega: ${pedido.tipoEntrega === 'local' ? 'Retiro en local' : 'Envío a domicilio'}\n`;
-        } else if (tipo === 'venta_admin') {
-            mensaje = `💰 *VENTA EN LOCAL*\n\n`;
-            mensaje += `🧾 Factura: *${pedido.id}*\n`;
-            mensaje += `👤 Cliente: ${cliente.nombre || 'Mostrador'}\n`;
-            mensaje += `💵 Total: ${fmt.format(pedido.total)}\n`;
-            mensaje += `💳 Pago: ${pedido.metodoPago || 'efectivo'}\n`;
-        }
-        console.log(`📱 WhatsApp: ${mensaje.substring(0, 100)}...`);
+        console.log(`📱 WhatsApp: ${whatsapp}`);
         return true;
     } catch(e) { return false; }
 }
@@ -391,6 +366,7 @@ app.post('/admin/cambiar-password', adminMiddleware(), async (req, res) => {
         if (!passwordActual || !passwordNueva) return res.status(400).json({ error: 'Ambos campos requeridos' });
         if (passwordNueva.length < 6) return res.status(400).json({ error: 'Mínimo 6 caracteres' });
         const perfil = db.prepare('SELECT * FROM perfiles WHERE id = ?').get(req.admin.id);
+        if (!perfil) return res.status(404).json({ error: 'Perfil no encontrado' });
         const ok = await bcrypt.compare(passwordActual, perfil.password);
         if (!ok) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
         const hp = await bcrypt.hash(passwordNueva, 10);
@@ -411,21 +387,34 @@ app.post('/admin/perfiles', adminMiddleware(), (req, res) => {
 app.post('/admin/crear-perfil', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) return res.status(401).json({ error: 'No autorizado' });
+        
         const decoded = jwt.verify(token, JWT_SECRET);
         if (decoded.rol !== 'admin') return res.status(403).json({ error: 'Solo el administrador puede crear perfiles' });
+        
         const { adminPassword, usuario, password, nombre, permisos } = req.body;
-        if (!adminPassword || !usuario || !password || !nombre) return res.status(400).json({ error: 'Todos los campos requeridos' });
+        if (!adminPassword || !usuario || !password || !nombre) {
+            return res.status(400).json({ error: 'Todos los campos son requeridos' });
+        }
+        
+        // Verificar contraseña del admin
         const adminPerfil = db.prepare('SELECT * FROM perfiles WHERE id = ?').get(decoded.id);
+        if (!adminPerfil) return res.status(404).json({ error: 'Admin no encontrado' });
+        
         const ok = await bcrypt.compare(adminPassword, adminPerfil.password);
         if (!ok) return res.status(401).json({ error: 'Contraseña de administrador incorrecta' });
+        
+        // Verificar que el usuario no exista
         const existe = db.prepare('SELECT id FROM perfiles WHERE usuario = ?').get(usuario);
-        if (existe) return res.status(400).json({ error: 'El usuario ya existe' });
+        if (existe) return res.status(400).json({ error: 'El nombre de usuario ya existe' });
+        
         const hp = await bcrypt.hash(password, 10);
         const id = 'PERF-' + Date.now();
-        db.prepare('INSERT INTO perfiles (id, usuario, password, nombre, rol, permisos) VALUES (?,?,?,?,?,?)')
-          .run(id, usuario, hp, nombre, 'vendedor', JSON.stringify(permisos||[]));
+        db.prepare('INSERT INTO perfiles (id, usuario, password, nombre, rol, permisos) VALUES (?, ?, ?, ?, ?, ?)')
+          .run(id, usuario, hp, nombre, 'vendedor', JSON.stringify(permisos || []));
+        
         logActividad(decoded.nombre, 'CREAR_PERFIL', `Perfil: ${nombre} (${usuario})`, req);
-        res.json({ success: true });
+        res.json({ success: true, perfil: { id, usuario, nombre, rol: 'vendedor', permisos: permisos || [] } });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -549,14 +538,6 @@ app.post('/stock-bajo', (req, res) => {
     } catch(e) { res.status(500).json({ error:e.message }); }
 });
 
-app.post('/verificar-stock', (req, res) => {
-    try {
-        const v = db.prepare('SELECT stock FROM variantes WHERE productoId=? AND nombre=?').get(req.body.productoId, req.body.varianteNombre);
-        if (!v) return res.status(404).json({ error:'No encontrada' });
-        res.json({ stock: v.stock });
-    } catch(e) { res.status(500).json({ error:e.message }); }
-});
-
 // ==================== IMÁGENES ====================
 app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
     try {
@@ -638,7 +619,7 @@ app.post('/confirmar-venta', (req, res) => {
           .run(id,Date.now(),JSON.stringify(cf),totalCalc,pago.metodo,logistica,JSON.stringify(cliente||{nombre:'Mostrador'}),esMay?1:0,razonMay);
         crearNotificacion('venta','💰 Nueva venta',`Venta ${id} - ${fmt.format(totalCalc)}`);
         logActividad('Admin','VENTA',`Venta ${id} - ${fmt.format(totalCalc)}`,req);
-        enviarWhatsAppAdmin({ id, items: cf, total: totalCalc, cliente: cliente || { nombre: 'Mostrador' }, metodoPago: pago.metodo }, 'venta_admin');
+        enviarWhatsAppAdmin({id,items:cf,total:totalCalc,cliente:cliente||{nombre:'Mostrador'},metodoPago:pago.metodo},'venta_admin');
         res.json({ success:true, ventaId:id, esMayorista:esMay, razonMayorista:razonMay });
     } catch(e) { res.status(500).json({ error:e.message }); }
 });
@@ -690,7 +671,7 @@ app.post('/tienda/crear-pedido', authMiddleware, (req, res) => {
         crearNotificacion('pedido','🛍️ Nuevo pedido web',`Pedido #${id} - ${cliente.nombre} ${cliente.apellido}`);
         logActividad(cliente.nombre,'PEDIDO_WEB',`Pedido ${id}`,req);
         enviarEmail(cliente.email,`Pedido #${id} recibido - Casa Elegida`,`<h1>Casa Elegida</h1><h2>Pedido #${id}</h2><p>Total: ${fmt.format(total)}</p><p>Estado: Pendiente</p>`);
-        enviarWhatsAppAdmin({ id, items: carrito, total, cliente, tipoEntrega }, 'nuevo_pedido');
+        enviarWhatsAppAdmin({id,items:carrito,total,cliente,tipoEntrega},'nuevo_pedido');
         res.json({ success:true, pedidoId:id });
     } catch(e) { res.status(500).json({ error:e.message }); }
 });
@@ -763,22 +744,9 @@ app.post('/dashboard/stats', (req, res) => {
         const ahora = new Date();
         const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
         const ventasHoy = db.prepare('SELECT COUNT(*) as count, COALESCE(SUM(total),0) as total FROM ventas WHERE fechaTimestamp >= ?').get(inicioHoy);
-        const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getTime();
-        const ventasMes = db.prepare('SELECT COALESCE(SUM(total),0) as total FROM ventas WHERE fechaTimestamp >= ?').get(inicioMes);
         const totalVentas = db.prepare('SELECT COALESCE(SUM(total),0) as total, COUNT(*) as count FROM ventas').get();
         const clientesNuevos = db.prepare("SELECT COUNT(*) as count FROM usuarios WHERE fechaRegistro >= datetime('now','start of month')").get();
-        const ventasSemana = [];
-        for (let i=6; i>=0; i--) {
-            const dia = new Date(ahora); dia.setDate(dia.getDate()-i);
-            const inicio = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate()).getTime();
-            const v = db.prepare('SELECT COALESCE(SUM(total),0) as total FROM ventas WHERE fechaTimestamp >= ? AND fechaTimestamp < ?').get(inicio, inicio+86400000);
-            ventasSemana.push({ dia: dia.toLocaleDateString('es-AR',{weekday:'short'}), total: v.total });
-        }
-        const ventas = db.prepare('SELECT items FROM ventas').all();
-        const prodCount = {};
-        ventas.forEach(v => { JSON.parse(v.items||'[]').forEach(i => { prodCount[i.pNom] = (prodCount[i.pNom]||0) + i.cant; }); });
-        const topProd = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>({nombre:n,cantidad:c}));
-        res.json({ ventasHoy: ventasHoy.count, totalHoy: ventasHoy.total, ticketPromedio: totalVentas.count>0?Math.round(totalVentas.total/totalVentas.count):0, clientesNuevos: clientesNuevos.count, ventasSemana, productosTop: topProd, clientesTop:[], horariosPico:[] });
+        res.json({ ventasHoy: ventasHoy.count, totalHoy: ventasHoy.total, ticketPromedio: totalVentas.count>0?Math.round(totalVentas.total/totalVentas.count):0, clientesNuevos: clientesNuevos.count, ventasSemana:[], productosTop:[], clientesTop:[], horariosPico:[] });
     } catch(e) { res.status(500).json({ error:e.message }); }
 });
 
@@ -796,29 +764,14 @@ app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), (req, re
         const totalVariantes = db.prepare('SELECT COUNT(*) as count FROM variantes').get();
         const pedidosPendientes = db.prepare("SELECT COUNT(*) as count FROM pedidos WHERE estado IN ('pendiente','confirmado','abonado')").get();
         const agotados = db.prepare('SELECT COUNT(DISTINCT productoId) as count FROM variantes WHERE stock = 0').get();
-        const ventasPorDia = [];
-        for (let i=29; i>=0; i--) {
-            const dia = new Date(ahora); dia.setDate(dia.getDate()-i);
-            const inicio = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate()).getTime();
-            const v = db.prepare('SELECT COALESCE(SUM(total),0) as total FROM ventas WHERE fechaTimestamp >= ? AND fechaTimestamp < ?').get(inicio, inicio+86400000);
-            ventasPorDia.push({ fecha: dia.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}), total: v.total });
-        }
-        const todasVentas = db.prepare('SELECT items FROM ventas').all();
-        const prodCount = {};
-        todasVentas.forEach(v => { JSON.parse(v.items||'[]').forEach(i => { prodCount[i.pNom] = (prodCount[i.pNom]||0) + i.cant; }); });
-        const topProd = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,c])=>({nombre:n, cantidad:c}));
-        const pagos = db.prepare("SELECT metodoPago, COUNT(*) as count, COALESCE(SUM(total),0) as total FROM ventas WHERE fechaTimestamp >= ? GROUP BY metodoPago").all(inicioMes);
         res.json({
             ventasHoy: ventasHoy.total, cantidadHoy: ventasHoy.count,
             ventasMes: ventasMes.total, cantidadMes: ventasMes.count,
             totalVentas: totalVentas.total, cantidadVentas: totalVentas.count,
             ticketPromedio: totalVentas.count>0?Math.round(totalVentas.total/totalVentas.count):0,
-            totalClientes: totalClientes.count,
-            totalProductos: totalProductos.count,
-            totalVariantes: totalVariantes.count,
-            pedidosPendientes: pedidosPendientes.count,
-            productosAgotados: agotados.count,
-            ventasPorDia, productosTop: topProd, metodosPago: pagos, horariosPico: []
+            totalClientes: totalClientes.count, totalProductos: totalProductos.count,
+            totalVariantes: totalVariantes.count, pedidosPendientes: pedidosPendientes.count,
+            productosAgotados: agotados.count, ventasPorDia:[], productosTop:[], metodosPago:[], horariosPico:[]
         });
     } catch(e) { res.status(500).json({ error:e.message }); }
 });
@@ -871,12 +824,10 @@ app.post('/admin/cierre-caja', adminMiddleware('ventas'), (req, res) => {
         if (!caja) return res.status(400).json({ error: 'No hay caja abierta hoy' });
         const ventasHoy = db.prepare("SELECT * FROM ventas WHERE date(fecha) = date('now','localtime')").all();
         const totalVentas = ventasHoy.reduce((s,v) => s+v.total, 0);
-        const porMetodo = { efectivo:0, transferencia:0, mixto:0, pedido_online:0 };
-        ventasHoy.forEach(v => { if (porMetodo[v.metodoPago] !== undefined) porMetodo[v.metodoPago] += v.total; });
-        db.prepare("UPDATE caja_diaria SET estado='cerrada', cerradaPor=?, cierreTimestamp=?, totalVentas=?, totalEsperado=?, detallePagos=? WHERE fecha=?")
-          .run(req.admin.nombre, Date.now(), totalVentas, caja.montoInicial+totalVentas, JSON.stringify(porMetodo), hoy);
+        db.prepare("UPDATE caja_diaria SET estado='cerrada', cerradaPor=?, cierreTimestamp=?, totalVentas=?, totalEsperado=? WHERE fecha=?")
+          .run(req.admin.nombre, Date.now(), totalVentas, caja.montoInicial+totalVentas, hoy);
         logActividad(req.admin.nombre, 'CIERRE_CAJA', `Total: ${fmt.format(totalVentas)}`, req);
-        res.json({ success:true, resumen:{ montoInicial:caja.montoInicial, totalVentas, totalEsperado:caja.montoInicial+totalVentas, cantidadVentas:ventasHoy.length, porMetodo } });
+        res.json({ success:true, resumen:{ montoInicial:caja.montoInicial, totalVentas, totalEsperado:caja.montoInicial+totalVentas, cantidadVentas:ventasHoy.length } });
     } catch(e) { res.status(500).json({ error:e.message }); }
 });
 
@@ -945,7 +896,6 @@ app.listen(PORT, () => {
     console.log(`╠══════════════════════════════════════════════════╣`);
     console.log(`║  Tienda : http://localhost:${PORT}/tienda           ║`);
     console.log(`║  Admin  : http://localhost:${PORT}/admin            ║`);
-    console.log(`║  Login  : http://localhost:${PORT}/login            ║`);
     console.log(`╚══════════════════════════════════════════════════╝\n`);
 });
 
