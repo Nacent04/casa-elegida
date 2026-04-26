@@ -147,7 +147,7 @@ async function initDB() {
                 detallePagos TEXT DEFAULT '{}'
             );
         `);
-        console.log('✅ Base de datos PostgreSQL lista');
+        console.log('✅ PostgreSQL listo');
     } finally {
         client.release();
     }
@@ -444,7 +444,7 @@ app.post('/verificar-stock', async (req, res) => {
 });
 
 app.post('/stock-bajo', async (req, res) => {
-    const vars = (await pool.query('SELECT v.*, p.nombre as productoNombre FROM variantes v JOIN productos p ON v.productoId=p.id WHERE v.stock <= $1', [req.body.minimo||5])).rows;
+    const vars = (await pool.query('SELECT v.*, p.nombre as "productoNombre" FROM variantes v JOIN productos p ON v."productoId"=p.id WHERE v.stock <= $1', [req.body.minimo||5])).rows;
     res.json({ stockBajo: vars });
 });
 
@@ -521,10 +521,10 @@ app.post('/confirmar-venta', async (req, res) => {
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
         for (let it of carrito) {
             if(it.esManual) continue;
-            await pool.query('UPDATE variantes SET stock=stock-$1 WHERE productoId=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
+            await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
         }
         const id = 'FAC-' + Date.now();
-        await pool.query("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen) VALUES ($1,NOW(),$2,$3,$4,$5,$6,$7,'completada','admin')",
+        await pool.query("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'completada','admin')",
             [id, Date.now(), JSON.stringify(carrito), pago.total, pago.metodo, logistica, JSON.stringify(cliente||{nombre:'Mostrador'})]);
         await crearNotificacion('venta', '💰 Venta', `${id}`);
         await logActividad(req.admin?.nombre || 'Admin', 'VENTA', `Venta ${id} - ${fmt.format(pago.total)}`, req);
@@ -533,12 +533,12 @@ app.post('/confirmar-venta', async (req, res) => {
 });
 
 app.post('/listar-ventas', async (req, res) => {
-    const ventas = (await pool.query('SELECT * FROM ventas ORDER BY fechaTimestamp DESC')).rows;
+    const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
     res.json({ lista: ventas.map(v => ({ ...v, items: JSON.parse(v.items||'[]'), cliente: JSON.parse(v.cliente||'{}'), pago: { total: v.total, metodo: v.metodoPago } })) });
 });
 
 app.post('/corte-caja', async (req, res) => {
-    const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as cantidad FROM ventas WHERE date(fecha) = CURRENT_DATE")).rows[0];
+    const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as cantidad FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ total: v.total, cantidad: v.cantidad });
 });
 
@@ -547,7 +547,7 @@ app.post('/tienda/listar-productos', async (req, res) => {
     const c = await getConfig();
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
     for (const p of prods) {
-        p.variantes = (await pool.query('SELECT * FROM variantes WHERE productoId=$1', [p.id])).rows;
+        p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
     }
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
     const metodos = (await pool.query('SELECT nombre FROM metodos_envio')).rows;
@@ -567,10 +567,10 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         cliente.nombre = u.nombre; cliente.apellido = u.apellido; cliente.email = u.email; cliente.dni = u.dni||'';
         for (let it of carrito) {
             if(it.esManual) continue;
-            await pool.query('UPDATE variantes SET stock=stock-$1 WHERE productoId=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
+            await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
         }
         const id = 'PED-' + Date.now();
-        await pool.query("INSERT INTO pedidos (id,fecha,fechaTimestamp,items,total,cliente,tipoEntrega,metodoEnvio,estado,origen,usuarioId) VALUES ($1,NOW(),$2,$3,$4,$5,$6,$7,'pendiente','tienda',$8)",
+        await pool.query("INSERT INTO pedidos (id,fecha,fechaTimestamp,items,total,cliente,tipoEntrega,metodoEnvio,estado,origen,usuarioId) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'pendiente','tienda',$8)",
             [id, Date.now(), JSON.stringify(carrito), total, JSON.stringify(cliente), tipoEntrega, metodoEnvio, u.id]);
         await crearNotificacion('pedido', '🛍️ Nuevo pedido', `#${id}`);
         await logActividad(cliente.nombre, 'PEDIDO_WEB', `Pedido #${id} - ${fmt.format(total)}`, req);
@@ -579,7 +579,7 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
 });
 
 app.post('/tienda/listar-pedidos', async (req, res) => {
-    const pedidos = (await pool.query('SELECT * FROM pedidos ORDER BY fechaTimestamp DESC')).rows;
+    const pedidos = (await pool.query('SELECT * FROM pedidos ORDER BY "fechaTimestamp" DESC')).rows;
     res.json({ lista: pedidos.map(p => ({ ...p, items: JSON.parse(p.items||'[]'), cliente: JSON.parse(p.cliente||'{}') })) });
 });
 
@@ -588,18 +588,18 @@ app.post('/tienda/confirmar-pedido', async (req, res) => {
         const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND estado=$2', [req.body.pedidoId, 'pendiente'])).rows[0];
         if (!p) return res.status(400).json({ error: 'No válido' });
         const pin = generarPIN(), vid = 'FAC-' + Date.now();
-        await pool.query("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen,pedidoId) VALUES ($1,NOW(),$2,$3,$4,'pedido_online',$5,$6,'completada','tienda',$7)",
+        await pool.query("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen,pedidoId) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,'pedido_online',$5,$6,'completada','tienda',$7)",
             [vid, Date.now(), p.items, p.total, p.tipoEntrega==='envio'?'envio':'local', p.cliente, p.id]);
-        await pool.query('UPDATE pedidos SET estado=$1,pin=$2,ventaId=$3 WHERE id=$4', ['confirmado', pin, vid, p.id]);
+        await pool.query('UPDATE pedidos SET estado=$1,pin=$2,"ventaId"=$3 WHERE id=$4', ['confirmado', pin, vid, p.id]);
         await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id} - PIN: ${pin}`, req);
         res.json({ success: true, ventaId: vid, pin });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
-    const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND usuarioId=$2 AND estado=$3', [req.body.pedidoId, req.usuario.id, 'pendiente'])).rows[0];
+    const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND "usuarioId"=$2 AND estado=$3', [req.body.pedidoId, req.usuario.id, 'pendiente'])).rows[0];
     if (!p) return res.status(400).json({ error: 'No se puede cancelar' });
-    JSON.parse(p.items||'[]').forEach(async it => { if(!it.esManual) await pool.query('UPDATE variantes SET stock=stock+$1 WHERE productoId=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); });
+    JSON.parse(p.items||'[]').forEach(async it => { if(!it.esManual) await pool.query('UPDATE variantes SET stock=stock+$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); });
     await pool.query("UPDATE pedidos SET estado='cancelado' WHERE id=$1", [p.id]);
     await logActividad('Sistema', 'CANCELAR_PEDIDO', `Pedido ${p.id} cancelado por cliente`, req);
     res.json({ success: true });
@@ -625,7 +625,7 @@ app.post('/tienda/marcar-entregado', async (req, res) => {
 app.post('/tienda/cancelar-pedido-admin', async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1', [req.body.pedidoId])).rows[0];
     if (!p) return res.status(400).json({ error: 'No encontrado' });
-    JSON.parse(p.items||'[]').forEach(async it => { if(!it.esManual) await pool.query('UPDATE variantes SET stock=stock+$1 WHERE productoId=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); });
+    JSON.parse(p.items||'[]').forEach(async it => { if(!it.esManual) await pool.query('UPDATE variantes SET stock=stock+$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); });
     await pool.query("UPDATE pedidos SET estado='cancelado' WHERE id=$1", [p.id]);
     res.json({ success: true });
 });
@@ -646,7 +646,7 @@ app.post('/tienda/verificar-pin', async (req, res) => {
 
 // Dashboard
 app.post('/dashboard/stats', async (req, res) => {
-    const v = (await pool.query("SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM ventas WHERE date(fecha) = CURRENT_DATE")).rows[0];
+    const v = (await pool.query("SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ ventasHoy: v.c, totalHoy: v.t });
 });
 
@@ -662,13 +662,13 @@ app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), async (r
 
 app.post('/admin/buscar-clientes', adminMiddleware(), async (req, res) => {
     const q = `%${req.body.query||''}%`;
-    const clientes = (await pool.query('SELECT id, nombre, apellido, email, telefono, dni FROM usuarios WHERE nombre LIKE $1 OR apellido LIKE $1 OR email LIKE $1 OR dni LIKE $1 LIMIT 20', [q])).rows;
+    const clientes = (await pool.query('SELECT id, nombre, apellido, email, telefono, dni FROM usuarios WHERE nombre ILIKE $1 OR apellido ILIKE $1 OR email ILIKE $1 OR dni ILIKE $1 LIMIT 20', [q])).rows;
     res.json({ lista: clientes });
 });
 
 app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
     let csv = '\uFEFFFecha;ID;Cliente;Total\n';
-    const ventas = (await pool.query('SELECT * FROM ventas ORDER BY fechaTimestamp DESC')).rows;
+    const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
     ventas.forEach(v => { const c = JSON.parse(v.cliente||'{}'); csv += `"${v.fecha}";"${v.id}";"${c.nombre||'Mostrador'}";"${v.total}"\n`; });
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=ventas.csv');
@@ -676,25 +676,25 @@ app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
 });
 
 app.post('/admin/apertura-caja', adminMiddleware('ventas'), async (req, res) => {
-    await pool.query("INSERT INTO caja_diaria (fecha, montoInicial, abiertaPor, estado, aperturaTimestamp) VALUES (CURRENT_DATE, $1, $2, 'abierta', $3) ON CONFLICT (fecha) DO UPDATE SET estado='abierta', montoInicial=$1, abiertaPor=$2, aperturaTimestamp=$3",
+    await pool.query("INSERT INTO caja_diaria (fecha, montoInicial, abiertaPor, estado, aperturaTimestamp) VALUES (TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY'), $1, $2, 'abierta', $3) ON CONFLICT (fecha) DO UPDATE SET estado='abierta', montoInicial=$1, abiertaPor=$2, aperturaTimestamp=$3",
         [req.body.montoInicial||0, req.admin.nombre, Date.now()]);
     await logActividad(req.admin.nombre, 'APERTURA_CAJA', `Monto inicial: ${fmt.format(req.body.montoInicial||0)}`, req);
     res.json({ success: true });
 });
 
 app.post('/admin/cierre-caja', adminMiddleware('ventas'), async (req, res) => {
-    const v = (await pool.query("SELECT COALESCE(SUM(total),0) as t, COUNT(*) as c FROM ventas WHERE date(fecha) = CURRENT_DATE")).rows[0];
-    await pool.query("UPDATE caja_diaria SET estado='cerrada', totalVentas=$1, totalEsperado=$2 WHERE fecha=CURRENT_DATE AND estado='abierta'",
-        [v.t, ((await pool.query('SELECT montoInicial FROM caja_diaria WHERE fecha=CURRENT_DATE')).rows[0]?.montoInicial||0)+v.t]);
+    const v = (await pool.query("SELECT COALESCE(SUM(total),0) as t, COUNT(*) as c FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
+    await pool.query("UPDATE caja_diaria SET estado='cerrada', totalVentas=$1, totalEsperado=$2 WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado='abierta'",
+        [v.t, ((await pool.query("SELECT montoInicial FROM caja_diaria WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY')")).rows[0]?.montoInicial||0)+v.t]);
     await logActividad(req.admin.nombre, 'CIERRE_CAJA', `Total: ${fmt.format(v.t)}`, req);
     res.json({ success: true, resumen: { totalVentas: v.t, cantidadVentas: v.c } });
 });
 
 app.post('/admin/estado-caja', async (req, res) => {
     try {
-        const caja = (await pool.query("SELECT * FROM caja_diaria WHERE fecha = CURRENT_DATE AND estado = 'abierta'")).rows[0];
+        const caja = (await pool.query("SELECT * FROM caja_diaria WHERE fecha = TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado = 'abierta'")).rows[0];
         if (!caja) return res.json({ abierta: false });
-        const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as count FROM ventas WHERE date(fecha) = CURRENT_DATE")).rows[0];
+        const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as count FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
         res.json({ abierta: true, montoInicial: caja.montoInicial, totalVentas: v.total, cantidadVentas: v.count, abiertaPor: caja.abiertaPor, totalEsperado: caja.montoInicial + v.total });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -727,8 +727,8 @@ app.post('/logs/admin', async (req, res) => {
     let params = [];
     let conditions = [];
     if (filtro) { conditions.push('(admin ILIKE $1 OR accion ILIKE $1 OR detalles ILIKE $1)'); params.push(`%${filtro}%`); }
-    if (desde) { conditions.push(`date(fecha) >= $${params.length+1}`); params.push(desde); }
-    if (hasta) { conditions.push(`date(fecha) <= $${params.length+1}`); params.push(hasta); }
+    if (desde) { conditions.push(`fecha::date >= $${params.length+1}`); params.push(desde); }
+    if (hasta) { conditions.push(`fecha::date <= $${params.length+1}`); params.push(hasta); }
     if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
     query += ' ORDER BY fecha DESC LIMIT 500';
     const logs = (await pool.query(query, params)).rows;
@@ -736,7 +736,7 @@ app.post('/logs/admin', async (req, res) => {
 });
 
 app.get('/api/mis-pedidos', authMiddleware, async (req, res) => {
-    const pedidos = (await pool.query('SELECT * FROM pedidos WHERE usuarioId=$1 ORDER BY fechaTimestamp DESC', [req.usuario.id])).rows;
+    const pedidos = (await pool.query('SELECT * FROM pedidos WHERE "usuarioId"=$1 ORDER BY "fechaTimestamp" DESC', [req.usuario.id])).rows;
     res.json({ lista: pedidos.map(p => ({ ...p, items: JSON.parse(p.items||'[]'), cliente: JSON.parse(p.cliente||'{}') })) });
 });
 
