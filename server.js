@@ -14,13 +14,11 @@ const { Pool } = require('pg');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==================== BASE DE DATOS PostgreSQL ====================
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Crear tablas
 async function initDB() {
     const client = await pool.connect();
     try {
@@ -29,15 +27,15 @@ async function initDB() {
                 id BIGINT PRIMARY KEY,
                 nombre TEXT NOT NULL,
                 precio REAL NOT NULL DEFAULT 0,
-                precioMayor REAL DEFAULT 0,
+                "precioMayor" REAL DEFAULT 0,
                 descripcion TEXT DEFAULT '',
-                categoriaId INTEGER,
+                "categoriaId" INTEGER,
                 subcategoria TEXT DEFAULT '',
-                fechaCreacion TEXT DEFAULT NOW()
+                "fechaCreacion" TEXT DEFAULT NOW()
             );
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
-                productoId BIGINT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+                "productoId" BIGINT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
                 nombre TEXT NOT NULL,
                 stock INTEGER DEFAULT 0,
                 foto TEXT DEFAULT ''
@@ -55,49 +53,49 @@ async function initDB() {
                 telefono TEXT DEFAULT '',
                 dni TEXT DEFAULT '',
                 password TEXT,
-                googleId TEXT,
+                "googleId" TEXT,
                 foto TEXT DEFAULT '',
                 rol TEXT DEFAULT 'cliente',
-                resetPin TEXT,
-                resetPinExpires BIGINT,
-                fechaRegistro TEXT DEFAULT NOW()
+                "resetPin" TEXT,
+                "resetPinExpires" BIGINT,
+                "fechaRegistro" TEXT DEFAULT NOW()
             );
             CREATE TABLE IF NOT EXISTS ventas (
                 id TEXT PRIMARY KEY,
                 fecha TEXT,
-                fechaTimestamp BIGINT,
+                "fechaTimestamp" BIGINT,
                 items TEXT DEFAULT '[]',
                 total REAL DEFAULT 0,
-                metodoPago TEXT DEFAULT 'efectivo',
+                "metodoPago" TEXT DEFAULT 'efectivo',
                 logistica TEXT DEFAULT 'local',
                 cliente TEXT DEFAULT '{}',
-                esMayorista INTEGER DEFAULT 0,
-                razonMayorista TEXT DEFAULT '',
+                "esMayorista" INTEGER DEFAULT 0,
+                "razonMayorista" TEXT DEFAULT '',
                 estado TEXT DEFAULT 'completada',
                 origen TEXT DEFAULT 'admin',
-                pedidoId TEXT
+                "pedidoId" TEXT
             );
             CREATE TABLE IF NOT EXISTS pedidos (
                 id TEXT PRIMARY KEY,
                 fecha TEXT,
-                fechaTimestamp BIGINT,
+                "fechaTimestamp" BIGINT,
                 items TEXT DEFAULT '[]',
                 total REAL DEFAULT 0,
                 cliente TEXT DEFAULT '{}',
-                tipoEntrega TEXT DEFAULT 'local',
-                metodoEnvio TEXT DEFAULT '',
-                esMayorista INTEGER DEFAULT 0,
-                razonMayorista TEXT DEFAULT '',
+                "tipoEntrega" TEXT DEFAULT 'local',
+                "metodoEnvio" TEXT DEFAULT '',
+                "esMayorista" INTEGER DEFAULT 0,
+                "razonMayorista" TEXT DEFAULT '',
                 estado TEXT DEFAULT 'pendiente',
                 origen TEXT DEFAULT 'tienda',
                 pin TEXT,
-                ventaId TEXT,
-                usuarioId TEXT,
-                stockDescontado INTEGER DEFAULT 1,
-                fechaCancelado TEXT,
-                fechaAbonado TEXT,
-                fechaEnviado TEXT,
-                fechaEntregado TEXT
+                "ventaId" TEXT,
+                "usuarioId" TEXT,
+                "stockDescontado" INTEGER DEFAULT 1,
+                "fechaCancelado" TEXT,
+                "fechaAbonado" TEXT,
+                "fechaEnviado" TEXT,
+                "fechaEntregado" TEXT
             );
             CREATE TABLE IF NOT EXISTS notificaciones (
                 id TEXT PRIMARY KEY,
@@ -122,7 +120,7 @@ async function initDB() {
                 detalles TEXT,
                 ip TEXT,
                 fecha TEXT DEFAULT NOW(),
-                fechaLocal TEXT
+                "fechaLocal" TEXT
             );
             CREATE TABLE IF NOT EXISTS perfiles (
                 id TEXT PRIMARY KEY,
@@ -132,19 +130,19 @@ async function initDB() {
                 rol TEXT DEFAULT 'vendedor',
                 permisos TEXT DEFAULT '[]',
                 activo INTEGER DEFAULT 1,
-                fechaCreacion TEXT DEFAULT NOW()
+                "fechaCreacion" TEXT DEFAULT NOW()
             );
             CREATE TABLE IF NOT EXISTS caja_diaria (
                 fecha TEXT PRIMARY KEY,
-                montoInicial REAL DEFAULT 0,
-                abiertaPor TEXT,
-                cerradaPor TEXT,
+                "montoInicial" REAL DEFAULT 0,
+                "abiertaPor" TEXT,
+                "cerradaPor" TEXT,
                 estado TEXT DEFAULT 'cerrada',
-                aperturaTimestamp BIGINT,
-                cierreTimestamp BIGINT,
-                totalVentas REAL DEFAULT 0,
-                totalEsperado REAL DEFAULT 0,
-                detallePagos TEXT DEFAULT '{}'
+                "aperturaTimestamp" BIGINT,
+                "cierreTimestamp" BIGINT,
+                "totalVentas" REAL DEFAULT 0,
+                "totalEsperado" REAL DEFAULT 0,
+                "detallePagos" TEXT DEFAULT '{}'
             );
         `);
         console.log('✅ PostgreSQL listo');
@@ -153,7 +151,6 @@ async function initDB() {
     }
 }
 
-// Configuración inicial
 const configInicial = {
     logo: '', empresa: JSON.stringify({ nombre: "Casa Elegida", telefono: "", email: "casaelegida20@gmail.com", direccion: "" }),
     horarios: JSON.stringify({ lunesViernes: "9:00 - 13:00 y 17:00 - 20:00", sabados: "9:00 - 13:00", domingos: "Cerrado" }),
@@ -190,7 +187,6 @@ async function initAdmin() {
     }
 }
 
-// Funciones auxiliares
 async function getConfig() {
     const result = await pool.query('SELECT clave, valor FROM configuracion');
     const config = {};
@@ -216,7 +212,7 @@ async function logActividad(admin, accion, detalles, req) {
         const ip = req?.ip || 'localhost';
         const fecha = new Date().toISOString();
         const fechaLocal = new Date().toLocaleString('es-AR');
-        await pool.query('INSERT INTO logs_admin (id, admin, accion, detalles, ip, fecha, fechaLocal) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+        await pool.query('INSERT INTO logs_admin (id, admin, accion, detalles, ip, fecha, "fechaLocal") VALUES ($1,$2,$3,$4,$5,$6,$7)',
             [id, admin || 'Sistema', accion, String(detalles).substring(0, 200), ip, fecha, fechaLocal]);
     } catch(e) {}
 }
@@ -234,7 +230,6 @@ async function enviarEmail(dest, asunto, html) {
     } catch(e) { return false; }
 }
 
-// Configuración de servicios
 cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_NAME, api_key: process.env.CLOUDINARY_API_KEY, api_secret: process.env.CLOUDINARY_API_SECRET });
 const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -258,7 +253,7 @@ passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOG
             let u = (await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
             if (!u) {
                 const id = 'USR-' + Date.now();
-                await pool.query('INSERT INTO usuarios (id, nombre, apellido, email, googleId, foto, rol) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+                await pool.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol) VALUES ($1,$2,$3,$4,$5,$6,$7)',
                     [id, profile.name.givenName||'', profile.name.familyName||'', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
                 u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
             }
@@ -272,13 +267,11 @@ const authMiddleware = (req, res, next) => { const t = req.headers.authorization
 const adminMiddleware = (permiso = null) => (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { const d = jwt.verify(t, JWT_SECRET); if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); if (d.rol === 'admin') { req.admin = d; return next(); } if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); req.admin = d; next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
 const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-// Rutas principales
 ['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
 app.get('/', (req, res) => res.redirect('/tienda'));
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => { res.redirect(`/tienda?token=${jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' })}`); });
 
-// Login admin
 app.post('/admin/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
@@ -290,7 +283,6 @@ app.post('/admin/login', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// Cambiar contraseña
 app.post('/admin/cambiar-password', adminMiddleware(), async (req, res) => {
     try {
         const { passwordActual, passwordNueva } = req.body;
@@ -304,9 +296,8 @@ app.post('/admin/cambiar-password', adminMiddleware(), async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// Perfiles
 app.post('/admin/perfiles', adminMiddleware(), async (req, res) => {
-    const perfiles = (await pool.query('SELECT id, usuario, nombre, rol, permisos, activo FROM perfiles ORDER BY fechaCreacion DESC')).rows;
+    const perfiles = (await pool.query('SELECT id, usuario, nombre, rol, permisos, activo FROM perfiles ORDER BY "fechaCreacion" DESC')).rows;
     res.json({ lista: perfiles.map(p => ({ ...p, permisos: JSON.parse(p.permisos||'[]') })) });
 });
 
@@ -342,7 +333,6 @@ app.post('/admin/editar-perfil', adminMiddleware(), async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// Auth clientes
 app.post('/auth/registro', async (req, res) => {
     try {
         const { nombre, apellido, email, dni, telefono, password } = req.body;
@@ -371,7 +361,7 @@ app.post('/auth/recuperar', async (req, res) => {
         const u = (await pool.query('SELECT * FROM usuarios WHERE email=$1', [req.body.email])).rows[0];
         if (!u) return res.status(404).json({ error: 'Email no encontrado' });
         const pin = Math.floor(100000 + Math.random()*900000).toString();
-        await pool.query('UPDATE usuarios SET resetPin=$1, resetPinExpires=$2 WHERE id=$3', [pin, Date.now()+3600000, u.id]);
+        await pool.query('UPDATE usuarios SET "resetPin"=$1, "resetPinExpires"=$2 WHERE id=$3', [pin, Date.now()+3600000, u.id]);
         await enviarEmail(u.email, 'Recuperación', `<h1>Casa Elegida</h1><p>PIN: <strong>${pin}</strong></p>`);
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
@@ -381,8 +371,8 @@ app.post('/auth/reset-password', async (req, res) => {
     try {
         const { email, pin, newPassword } = req.body;
         const u = (await pool.query('SELECT * FROM usuarios WHERE email=$1', [email])).rows[0];
-        if (!u || u.resetPin !== pin || u.resetPinExpires < Date.now()) return res.status(400).json({ error: 'PIN inválido' });
-        await pool.query('UPDATE usuarios SET password=$1, resetPin=NULL, resetPinExpires=NULL WHERE id=$2', [await bcrypt.hash(newPassword, 10), u.id]);
+        if (!u || u["resetPin"] !== pin || u["resetPinExpires"] < Date.now()) return res.status(400).json({ error: 'PIN inválido' });
+        await pool.query('UPDATE usuarios SET password=$1, "resetPin"=NULL, "resetPinExpires"=NULL WHERE id=$2', [await bcrypt.hash(newPassword, 10), u.id]);
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -397,11 +387,10 @@ app.post('/auth/update-profile', authMiddleware, async (req, res) => {
     res.json({ success: true });
 });
 
-// Productos
 app.post('/listar', async (req, res) => {
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
     for (const p of prods) {
-        p.variantes = (await pool.query('SELECT * FROM variantes WHERE productoId=$1', [p.id])).rows;
+        p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
     }
     res.json({ lista: prods });
 });
@@ -412,16 +401,16 @@ app.post('/guardar-producto', async (req, res) => {
         if (!p.nombre?.trim() || p.precio <= 0) return res.status(400).json({ error: 'Datos inválidos' });
         const existe = (await pool.query('SELECT id FROM productos WHERE id=$1', [p.id])).rows[0];
         if (existe) {
-            await pool.query('UPDATE productos SET nombre=$1,precio=$2,precioMayor=$3,descripcion=$4,categoriaId=$5,subcategoria=$6 WHERE id=$7',
+            await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6 WHERE id=$7',
                 [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId||null, p.subcategoria||'', p.id]);
-            await pool.query('DELETE FROM variantes WHERE productoId=$1', [p.id]);
+            await pool.query('DELETE FROM variantes WHERE "productoId"=$1', [p.id]);
         } else {
-            await pool.query('INSERT INTO productos (id,nombre,precio,precioMayor,descripcion,categoriaId,subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+            await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
                 [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId||null, p.subcategoria||'']);
         }
         if (p.variantes?.length) {
             for (const v of p.variantes) {
-                await pool.query('INSERT INTO variantes (productoId,nombre,stock,foto) VALUES ($1,$2,$3,$4)', [p.id, v.nombre, v.stock||0, v.foto||'']);
+                await pool.query('INSERT INTO variantes ("productoId",nombre,stock,foto) VALUES ($1,$2,$3,$4)', [p.id, v.nombre, v.stock||0, v.foto||'']);
             }
         }
         await logActividad('Admin', 'GUARDAR_PRODUCTO', `Producto: ${p.nombre}`, req);
@@ -438,7 +427,7 @@ app.post('/eliminar-producto', async (req, res) => {
 app.post('/reordenar-productos', (req, res) => res.json({ success: true }));
 
 app.post('/verificar-stock', async (req, res) => {
-    const v = (await pool.query('SELECT stock FROM variantes WHERE productoId=$1 AND nombre=$2', [req.body.productoId, req.body.varianteNombre])).rows[0];
+    const v = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [req.body.productoId, req.body.varianteNombre])).rows[0];
     if (!v) return res.status(404).json({ error: 'No encontrada' });
     res.json({ stock: v.stock });
 });
@@ -448,7 +437,6 @@ app.post('/stock-bajo', async (req, res) => {
     res.json({ stockBajo: vars });
 });
 
-// Imágenes
 app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No imagen' });
     const r = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' });
@@ -467,7 +455,6 @@ app.post('/subir-logo', upload.single('logo'), async (req, res) => {
 
 app.post('/eliminar-logo', async (req, res) => { await setConfig('logo', ''); res.json({ success: true }); });
 
-// Categorías
 app.post('/listar-categorias', async (req, res) => {
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
     res.json({ lista: cats.map(c => ({ ...c, subcategorias: JSON.parse(c.subcategorias||'[]') })) });
@@ -488,7 +475,6 @@ app.post('/guardar-categoria', async (req, res) => {
 
 app.post('/eliminar-categoria', async (req, res) => { await pool.query('DELETE FROM categorias WHERE id=$1', [req.body.id]); res.json({ success: true }); });
 
-// Métodos de envío
 app.post('/listar-metodos-envio', async (req, res) => {
     const metodos = (await pool.query('SELECT nombre FROM metodos_envio')).rows;
     res.json({ lista: metodos.map(m => m.nombre) });
@@ -502,7 +488,6 @@ app.post('/guardar-metodos-envio', async (req, res) => {
     res.json({ success: true });
 });
 
-// Configuración
 app.post('/get-config', async (req, res) => res.json(await getConfig()));
 app.post('/save-config', async (req, res) => {
     ['empresa','horarios','redes','pagos'].forEach(async k => { if(req.body[k]) await setConfig(k, req.body[k]); });
@@ -514,7 +499,6 @@ app.post('/save-mayorista-config', async (req, res) => { await setConfig('mayori
 app.post('/save-diseno-config', async (req, res) => { if(req.body.diseno) await setConfig('diseno', req.body.diseno); res.json({ success: true }); });
 app.post('/save-home-config', async (req, res) => { if(req.body.heroConfig) await setConfig('heroConfig', req.body.heroConfig); res.json({ success: true }); });
 
-// Ventas
 app.post('/confirmar-venta', async (req, res) => {
     try {
         const { carrito, pago, logistica, cliente } = req.body;
@@ -524,7 +508,7 @@ app.post('/confirmar-venta', async (req, res) => {
             await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
         }
         const id = 'FAC-' + Date.now();
-        await pool.query("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'completada','admin')",
+        await pool.query("INSERT INTO ventas (id,fecha,\"fechaTimestamp\",items,total,\"metodoPago\",logistica,cliente,estado,origen) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'completada','admin')",
             [id, Date.now(), JSON.stringify(carrito), pago.total, pago.metodo, logistica, JSON.stringify(cliente||{nombre:'Mostrador'})]);
         await crearNotificacion('venta', '💰 Venta', `${id}`);
         await logActividad(req.admin?.nombre || 'Admin', 'VENTA', `Venta ${id} - ${fmt.format(pago.total)}`, req);
@@ -534,7 +518,7 @@ app.post('/confirmar-venta', async (req, res) => {
 
 app.post('/listar-ventas', async (req, res) => {
     const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
-    res.json({ lista: ventas.map(v => ({ ...v, items: JSON.parse(v.items||'[]'), cliente: JSON.parse(v.cliente||'{}'), pago: { total: v.total, metodo: v.metodoPago } })) });
+    res.json({ lista: ventas.map(v => ({ ...v, items: JSON.parse(v.items||'[]'), cliente: JSON.parse(v.cliente||'{}'), pago: { total: v.total, metodo: v["metodoPago"] } })) });
 });
 
 app.post('/corte-caja', async (req, res) => {
@@ -542,7 +526,6 @@ app.post('/corte-caja', async (req, res) => {
     res.json({ total: v.total, cantidad: v.cantidad });
 });
 
-// Tienda
 app.post('/tienda/listar-productos', async (req, res) => {
     const c = await getConfig();
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
@@ -570,7 +553,7 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
             await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
         }
         const id = 'PED-' + Date.now();
-        await pool.query("INSERT INTO pedidos (id,fecha,fechaTimestamp,items,total,cliente,tipoEntrega,metodoEnvio,estado,origen,usuarioId) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'pendiente','tienda',$8)",
+        await pool.query("INSERT INTO pedidos (id,fecha,\"fechaTimestamp\",items,total,cliente,\"tipoEntrega\",\"metodoEnvio\",estado,origen,\"usuarioId\") VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'pendiente','tienda',$8)",
             [id, Date.now(), JSON.stringify(carrito), total, JSON.stringify(cliente), tipoEntrega, metodoEnvio, u.id]);
         await crearNotificacion('pedido', '🛍️ Nuevo pedido', `#${id}`);
         await logActividad(cliente.nombre, 'PEDIDO_WEB', `Pedido #${id} - ${fmt.format(total)}`, req);
@@ -588,8 +571,8 @@ app.post('/tienda/confirmar-pedido', async (req, res) => {
         const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND estado=$2', [req.body.pedidoId, 'pendiente'])).rows[0];
         if (!p) return res.status(400).json({ error: 'No válido' });
         const pin = generarPIN(), vid = 'FAC-' + Date.now();
-        await pool.query("INSERT INTO ventas (id,fecha,fechaTimestamp,items,total,metodoPago,logistica,cliente,estado,origen,pedidoId) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,'pedido_online',$5,$6,'completada','tienda',$7)",
-            [vid, Date.now(), p.items, p.total, p.tipoEntrega==='envio'?'envio':'local', p.cliente, p.id]);
+        await pool.query("INSERT INTO ventas (id,fecha,\"fechaTimestamp\",items,total,\"metodoPago\",logistica,cliente,estado,origen,\"pedidoId\") VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,'pedido_online',$5,$6,'completada','tienda',$7)",
+            [vid, Date.now(), p.items, p.total, p["tipoEntrega"]==='envio'?'envio':'local', p.cliente, p.id]);
         await pool.query('UPDATE pedidos SET estado=$1,pin=$2,"ventaId"=$3 WHERE id=$4', ['confirmado', pin, vid, p.id]);
         await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id} - PIN: ${pin}`, req);
         res.json({ success: true, ventaId: vid, pin });
@@ -644,7 +627,6 @@ app.post('/tienda/verificar-pin', async (req, res) => {
     res.json({ success: true, pedido: { ...p, cliente: JSON.parse(p.cliente||'{}'), items: JSON.parse(p.items||'[]') } });
 });
 
-// Dashboard
 app.post('/dashboard/stats', async (req, res) => {
     const v = (await pool.query("SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ ventasHoy: v.c, totalHoy: v.t });
@@ -676,7 +658,7 @@ app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
 });
 
 app.post('/admin/apertura-caja', adminMiddleware('ventas'), async (req, res) => {
-    await pool.query("INSERT INTO caja_diaria (fecha, montoInicial, abiertaPor, estado, aperturaTimestamp) VALUES (TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY'), $1, $2, 'abierta', $3) ON CONFLICT (fecha) DO UPDATE SET estado='abierta', montoInicial=$1, abiertaPor=$2, aperturaTimestamp=$3",
+    await pool.query("INSERT INTO caja_diaria (fecha, \"montoInicial\", \"abiertaPor\", estado, \"aperturaTimestamp\") VALUES (TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY'), $1, $2, 'abierta', $3) ON CONFLICT (fecha) DO UPDATE SET estado='abierta', \"montoInicial\"=$1, \"abiertaPor\"=$2, \"aperturaTimestamp\"=$3",
         [req.body.montoInicial||0, req.admin.nombre, Date.now()]);
     await logActividad(req.admin.nombre, 'APERTURA_CAJA', `Monto inicial: ${fmt.format(req.body.montoInicial||0)}`, req);
     res.json({ success: true });
@@ -684,8 +666,8 @@ app.post('/admin/apertura-caja', adminMiddleware('ventas'), async (req, res) => 
 
 app.post('/admin/cierre-caja', adminMiddleware('ventas'), async (req, res) => {
     const v = (await pool.query("SELECT COALESCE(SUM(total),0) as t, COUNT(*) as c FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
-    await pool.query("UPDATE caja_diaria SET estado='cerrada', totalVentas=$1, totalEsperado=$2 WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado='abierta'",
-        [v.t, ((await pool.query("SELECT montoInicial FROM caja_diaria WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY')")).rows[0]?.montoInicial||0)+v.t]);
+    await pool.query("UPDATE caja_diaria SET estado='cerrada', \"totalVentas\"=$1, \"totalEsperado\"=$2 WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado='abierta'",
+        [v.t, ((await pool.query("SELECT \"montoInicial\" FROM caja_diaria WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY')")).rows[0]?.["montoInicial"]||0)+v.t]);
     await logActividad(req.admin.nombre, 'CIERRE_CAJA', `Total: ${fmt.format(v.t)}`, req);
     res.json({ success: true, resumen: { totalVentas: v.t, cantidadVentas: v.c } });
 });
@@ -695,7 +677,7 @@ app.post('/admin/estado-caja', async (req, res) => {
         const caja = (await pool.query("SELECT * FROM caja_diaria WHERE fecha = TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado = 'abierta'")).rows[0];
         if (!caja) return res.json({ abierta: false });
         const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as count FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
-        res.json({ abierta: true, montoInicial: caja.montoInicial, totalVentas: v.total, cantidadVentas: v.count, abiertaPor: caja.abiertaPor, totalEsperado: caja.montoInicial + v.total });
+        res.json({ abierta: true, montoInicial: caja["montoInicial"], totalVentas: v.total, cantidadVentas: v.count, abiertaPor: caja["abiertaPor"], totalEsperado: caja["montoInicial"] + v.total });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
