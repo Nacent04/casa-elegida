@@ -410,7 +410,7 @@ app.post('/guardar-producto', async (req, res) => {
         }
         if (p.variantes?.length) {
             for (const v of p.variantes) {
-                await pool.query('INSERT INTO variantes ("productoId",nombre,stock,foto) VALUES ($1,$2,$3,$4)', [p.id, v.nombre, v.stock||0, v.foto||'']);
+                await pool.query('INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1,$2,$3,$4)', [p.id, v.nombre, v.stock||0, v.foto||'']);
             }
         }
         await logActividad('Admin', 'GUARDAR_PRODUCTO', `Producto: ${p.nombre}`, req);
