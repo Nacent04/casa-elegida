@@ -511,7 +511,7 @@ app.post('/confirmar-venta', async (req, res) => {
         await pool.query("INSERT INTO ventas (id,fecha,\"fechaTimestamp\",items,total,\"metodoPago\",logistica,cliente,estado,origen) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'completada','admin')",
             [id, Date.now(), JSON.stringify(carrito), pago.total, pago.metodo, logistica, JSON.stringify(cliente||{nombre:'Mostrador'})]);
         await crearNotificacion('venta', '💰 Venta', `${id}`);
-        await logActividad(req.admin?.nombre || 'Admin', 'VENTA', `Venta ${id} - ${fmt.format(pago.total)}`, req);
+        await logActividad(req.admin?.nombre || 'Admin', 'VENTA', `Venta ${id}`, req);
         res.json({ success: true, ventaId: id });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -556,7 +556,7 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         await pool.query("INSERT INTO pedidos (id,fecha,\"fechaTimestamp\",items,total,cliente,\"tipoEntrega\",\"metodoEnvio\",estado,origen,\"usuarioId\") VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'pendiente','tienda',$8)",
             [id, Date.now(), JSON.stringify(carrito), total, JSON.stringify(cliente), tipoEntrega, metodoEnvio, u.id]);
         await crearNotificacion('pedido', '🛍️ Nuevo pedido', `#${id}`);
-        await logActividad(cliente.nombre, 'PEDIDO_WEB', `Pedido #${id} - ${fmt.format(total)}`, req);
+        await logActividad(cliente.nombre, 'PEDIDO_WEB', `Pedido #${id}`, req);
         res.json({ success: true, pedidoId: id });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -574,7 +574,7 @@ app.post('/tienda/confirmar-pedido', async (req, res) => {
         await pool.query("INSERT INTO ventas (id,fecha,\"fechaTimestamp\",items,total,\"metodoPago\",logistica,cliente,estado,origen,\"pedidoId\") VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,'pedido_online',$5,$6,'completada','tienda',$7)",
             [vid, Date.now(), p.items, p.total, p["tipoEntrega"]==='envio'?'envio':'local', p.cliente, p.id]);
         await pool.query('UPDATE pedidos SET estado=$1,pin=$2,"ventaId"=$3 WHERE id=$4', ['confirmado', pin, vid, p.id]);
-        await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id} - PIN: ${pin}`, req);
+        await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id}`, req);
         res.json({ success: true, ventaId: vid, pin });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -584,7 +584,7 @@ app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
     if (!p) return res.status(400).json({ error: 'No se puede cancelar' });
     JSON.parse(p.items||'[]').forEach(async it => { if(!it.esManual) await pool.query('UPDATE variantes SET stock=stock+$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); });
     await pool.query("UPDATE pedidos SET estado='cancelado' WHERE id=$1", [p.id]);
-    await logActividad('Sistema', 'CANCELAR_PEDIDO', `Pedido ${p.id} cancelado por cliente`, req);
+    await logActividad('Sistema', 'CANCELAR_PEDIDO', `Pedido ${p.id} cancelado`, req);
     res.json({ success: true });
 });
 
@@ -617,7 +617,7 @@ app.post('/tienda/retirar-pedido', async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND pin=$2', [req.body.pedidoId, req.body.pin])).rows[0];
     if (!p) return res.status(400).json({ error: 'PIN incorrecto' });
     await pool.query("UPDATE pedidos SET estado='entregado' WHERE id=$1", [p.id]);
-    await logActividad('Admin', 'RETIRO_PEDIDO', `Pedido ${req.body.pedidoId} retirado con PIN`, req);
+    await logActividad('Admin', 'RETIRO_PEDIDO', `Pedido ${req.body.pedidoId} retirado`, req);
     res.json({ success: true });
 });
 
