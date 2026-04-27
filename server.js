@@ -682,7 +682,7 @@ app.post('/admin/estado-caja', async (req, res) => {
 });
 
 app.post('/admin/estadisticas-vendedor', adminMiddleware('dashboard'), async (req, res) => {
-    const logs = (await pool.query("SELECT admin, accion, COUNT(*) as c FROM logs_admin WHERE accion IN ('VENTA','CONFIRMAR_PEDIDO') GROUP BY admin")).rows;
+    const logs = (await pool.query("SELECT admin, accion, COUNT(*) as c FROM logs_admin WHERE accion IN ('VENTA','CONFIRMAR_PEDIDO') GROUP BY admin, accion")).rows;
     const v = {};
     logs.forEach(l => { if(!v[l.admin]) v[l.admin]={nombre:l.admin,ventas:0,pedidos:0}; if(l.accion==='VENTA')v[l.admin].ventas+=l.c; else v[l.admin].pedidos+=l.c; });
     res.json({ lista: Object.values(v) });
