@@ -401,13 +401,13 @@ app.post('/guardar-producto', async (req, res) => {
         if (!p.nombre?.trim() || p.precio <= 0) return res.status(400).json({ error: 'Datos inválidos' });
         const existe = (await pool.query('SELECT id FROM productos WHERE id=$1', [p.id])).rows[0];
         if (existe) {
-            await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6 WHERE id=$7',
-                [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId||null, p.subcategoria||'', p.id]);
-            await pool.query('DELETE FROM variantes WHERE "productoId"=$1', [p.id]);
-        } else {
-            await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-                [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId||null, p.subcategoria||'']);
-        }
+      await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6 WHERE id=$7',
+    [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'', p.id]);
+await pool.query('DELETE FROM variantes WHERE "productoId"=$1', [p.id]);
+} else {
+await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'']);
+}
         if (p.variantes?.length) {
             for (const v of p.variantes) {
                 await pool.query('INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1,$2,$3,$4)', [p.id, v.nombre, v.stock||0, v.foto||'']);
