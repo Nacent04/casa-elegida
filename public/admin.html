@@ -195,7 +195,55 @@ function renderProductosVenta() { const g=document.getElementById('grid-prods');
 function cambiarVariante(id,idx){ varianteSeleccionada[id]=parseInt(idx); const p=productos.find(x=>x.id==id); if(!p)return; document.getElementById(`q-${id}`).max=p.variantes[idx].stock; }
 function cambiarCantidad(id,d){ const i=document.getElementById('q-'+id); if(i) i.value=Math.max(1,Math.min((parseInt(i.value)||1)+d,parseInt(i.max)||999)); }
 
-async function addAlCarrito(id){ let p=productos.find(x=>x.id==id); if(!p)return; let idx=varianteSeleccionada[id]||0; let v=p.variantes[idx]; if(!v)return; let c=parseInt(document.getElementById('q-'+id).value); if(v.stock<c){ mostrarToast('Stock insuficiente. Disponible: '+v.stock,true); return; } let e=carrito.find(i=>i.pId===id&&i.vNom===v.nombre&&!i.esManual); if(e){ if(v.stock<e.cant+c){ mostrarToast('Stock insuficiente',true); return; } e.cant+=c; } else { carrito.push({pId:id,pNom:p.nombre,vNom:v.nombre,vFoto:v.foto||'',precio:p.precio,precioMayor:p.precioMayor||0,cant:c,esManual:false}); } calcularPreciosMayoristaEnVivo(); renderCart(); localStorage.setItem('pos_carrito',JSON.stringify(carrito)); mostrarToast('✅ Agregado'); }
+async function addAlCarrito(id){
+    let p = productos.find(x => x.id == id);
+    if (!p) return;
+    let idx = varianteSeleccionada[id] || 0;
+    let v = p.variantes[idx];
+    if (!v) return;
+    let c = parseInt(document.getElementById('q-' + id).value);
+    
+    // ✅ Verificar stock en tiempo real desde el servidor
+    try {
+        const res = await fetch('/verificar-stock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productoId: id, varianteNombre: v.nombre })
+        });
+        const data = await res.json();
+        if (data.stock !== undefined) {
+            v.stock = data.stock;
+            const badge = document.querySelector(`.card[data-id="${id}"] .stock-badge`);
+            if (badge) {
+                badge.innerHTML = `<i class="fas fa-box"></i> Stock: ${v.stock}`;
+                badge.classList.toggle('stock-bajo', v.stock <= 5);
+            }
+        }
+    } catch(e) {}
+    
+    if (v.stock < c) {
+        mostrarToast('❌ Stock insuficiente. Disponible: ' + v.stock, true);
+        return;
+    }
+    
+    let e = carrito.find(i => i.pId === id && i.vNom === v.nombre && !i.esManual);
+    if (e) {
+        if (v.stock < e.cant + c) {
+            mostrarToast('❌ Stock insuficiente', true);
+            return;
+        }
+        e.cant += c;
+    } else {
+        carrito.push({
+            pId: id, pNom: p.nombre, vNom: v.nombre, vFoto: v.foto || '',
+            precio: p.precio, precioMayor: p.precioMayor || 0, cant: c, esManual: false
+        });
+    }
+    
+    calcularPreciosMayoristaEnVivo();
+    renderCart();
+    localStorage.setItem('pos_carrito', JSON.stringify(carrito));
+    mostrarToast('✅ Agregado');
 
 function calcularPreciosMayoristaEnVivo(){ if(!mayoristaHabilitado){ carrito.forEach(i=>{ if(i.precioOriginal){ i.precio=i.precioOriginal; delete i.precioOriginal; } }); renderCart(); return; } const cantTotal=carrito.reduce((s,i)=>s+i.cant,0); const montoTotal=carrito.reduce((s,i)=>s+(i.precioOriginal||i.precio)*i.cant,0); const cantReq=parseInt(document.getElementById('mayoristaCantidad')?.value)||3; const montoReq=desformatearNumero(document.getElementById('mayoristaMonto')?.value)||80000; let cumple=false; if(mayoristaModo==='cantidad') cumple=cantTotal>=cantReq; else if(mayoristaModo==='monto') cumple=montoTotal>=montoReq; else cumple=cantTotal>=cantReq&&montoTotal>=montoReq; carrito.forEach(i=>{ if(i.esManual)return; const p=productos.find(x=>x.id==i.pId); if(!p||!p.precioMayor)return; if(cumple){ if(!i.precioOriginal) i.precioOriginal=i.precio; i.precio=p.precioMayor; } else if(i.precioOriginal){ i.precio=i.precioOriginal; delete i.precioOriginal; } }); renderCart(); }
 
