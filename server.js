@@ -401,13 +401,13 @@ app.post('/guardar-producto', async (req, res) => {
         if (!p.nombre?.trim() || p.precio <= 0) return res.status(400).json({ error: 'Datos inválidos' });
         const existe = (await pool.query('SELECT id FROM productos WHERE id=$1', [p.id])).rows[0];
         if (existe) {
-      await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6 WHERE id=$7',
-    [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'', p.id]);
-await pool.query('DELETE FROM variantes WHERE "productoId"=$1', [p.id]);
-} else {
-await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-    [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'']);
-}
+            await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6 WHERE id=$7',
+                [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'', p.id]);
+            await pool.query('DELETE FROM variantes WHERE "productoId"=$1', [p.id]);
+        } else {
+            await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+                [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'']);
+        }
         if (p.variantes?.length) {
             for (const v of p.variantes) {
                 await pool.query('INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1,$2,$3,$4)', [p.id, v.nombre, v.stock||0, v.foto||'']);
@@ -503,6 +503,19 @@ app.post('/confirmar-venta', async (req, res) => {
     try {
         const { carrito, pago, logistica, cliente } = req.body;
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
+        
+        // Verificar stock antes de vender
+        for (let it of carrito) {
+            if (it.esManual) continue;
+            const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', 
+                [it.pId, it.vNom])).rows[0];
+            if (!stockActual || stockActual.stock < it.cant) {
+                return res.status(400).json({ 
+                    error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` 
+                });
+            }
+        }
+        
         for (let it of carrito) {
             if(it.esManual) continue;
             await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
@@ -548,6 +561,19 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
         const u = (await pool.query('SELECT * FROM usuarios WHERE id=$1', [req.usuario.id])).rows[0];
         cliente.nombre = u.nombre; cliente.apellido = u.apellido; cliente.email = u.email; cliente.dni = u.dni||'';
+        
+        // Verificar stock antes de crear pedido
+        for (let it of carrito) {
+            if (it.esManual) continue;
+            const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', 
+                [it.pId, it.vNom])).rows[0];
+            if (!stockActual || stockActual.stock < it.cant) {
+                return res.status(400).json({ 
+                    error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` 
+                });
+            }
+        }
+        
         for (let it of carrito) {
             if(it.esManual) continue;
             await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
