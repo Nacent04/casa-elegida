@@ -444,7 +444,7 @@ app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
     res.json({ url: r.secure_url });
 });
 
-app.post('/subir-logo', upload.single('logo'), async (req, res) => {
+app.post('/subir-logo', adminMiddleware('config'), upload.single('logo'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No imagen' });
     const r = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' });
     fs.unlinkSync(req.file.path);
@@ -453,7 +453,7 @@ app.post('/subir-logo', upload.single('logo'), async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/eliminar-logo', async (req, res) => { await setConfig('logo', ''); res.json({ success: true }); });
+app.post('/eliminar-logo', adminMiddleware('config'), async (req, res) => { await setConfig('logo', ''); res.json({ success: true }); });
 
 app.post('/listar-categorias', async (req, res) => {
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
@@ -488,34 +488,35 @@ app.post('/guardar-metodos-envio', async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/get-config', async (req, res) => res.json(await getConfig()));
-app.post('/save-config', async (req, res) => {
+app.post('/get-config', adminMiddleware('config'), async (req, res) => {
+    res.json(await getConfig());
+});
+
+app.post('/save-config', adminMiddleware('config'), async (req, res) => {
     ['empresa','horarios','redes','pagos'].forEach(async k => { if(req.body[k]) await setConfig(k, req.body[k]); });
     await logActividad('Admin', 'GUARDAR_CONFIG', 'Configuración actualizada', req);
     res.json({ success: true });
 });
-app.post('/save-tienda-config', async (req, res) => { if(req.body.tienda) await setConfig('tienda', req.body.tienda); res.json({ success: true }); });
-app.post('/save-mayorista-config', async (req, res) => { await setConfig('mayorista', req.body); await logActividad('Admin', 'GUARDAR_MAYORISTA', JSON.stringify(req.body), req); res.json({ success: true }); });
-app.post('/save-diseno-config', async (req, res) => { if(req.body.diseno) await setConfig('diseno', req.body.diseno); res.json({ success: true }); });
-app.post('/save-home-config', async (req, res) => { if(req.body.heroConfig) await setConfig('heroConfig', req.body.heroConfig); res.json({ success: true }); });
+
+app.post('/save-tienda-config', adminMiddleware('config'), async (req, res) => { if(req.body.tienda) await setConfig('tienda', req.body.tienda); res.json({ success: true }); });
+
+app.post('/save-mayorista-config', adminMiddleware('config'), async (req, res) => { await setConfig('mayorista', req.body); await logActividad('Admin', 'GUARDAR_MAYORISTA', JSON.stringify(req.body), req); res.json({ success: true }); });
+
+app.post('/save-diseno-config', adminMiddleware('config'), async (req, res) => { if(req.body.diseno) await setConfig('diseno', req.body.diseno); res.json({ success: true }); });
+
+app.post('/save-home-config', adminMiddleware('config'), async (req, res) => { if(req.body.heroConfig) await setConfig('heroConfig', req.body.heroConfig); res.json({ success: true }); });
 
 app.post('/confirmar-venta', async (req, res) => {
     try {
         const { carrito, pago, logistica, cliente } = req.body;
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
-        
-        // Verificar stock antes de vender
         for (let it of carrito) {
             if (it.esManual) continue;
-            const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', 
-                [it.pId, it.vNom])).rows[0];
+            const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [it.pId, it.vNom])).rows[0];
             if (!stockActual || stockActual.stock < it.cant) {
-                return res.status(400).json({ 
-                    error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` 
-                });
+                return res.status(400).json({ error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` });
             }
         }
-        
         for (let it of carrito) {
             if(it.esManual) continue;
             await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
@@ -561,19 +562,13 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         if (!carrito?.length) return res.status(400).json({ error: 'Carrito vacío' });
         const u = (await pool.query('SELECT * FROM usuarios WHERE id=$1', [req.usuario.id])).rows[0];
         cliente.nombre = u.nombre; cliente.apellido = u.apellido; cliente.email = u.email; cliente.dni = u.dni||'';
-        
-        // Verificar stock antes de crear pedido
         for (let it of carrito) {
             if (it.esManual) continue;
-            const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', 
-                [it.pId, it.vNom])).rows[0];
+            const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [it.pId, it.vNom])).rows[0];
             if (!stockActual || stockActual.stock < it.cant) {
-                return res.status(400).json({ 
-                    error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` 
-                });
+                return res.status(400).json({ error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` });
             }
         }
-        
         for (let it of carrito) {
             if(it.esManual) continue;
             await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
