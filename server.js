@@ -258,8 +258,8 @@ passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOG
             let u = (await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
             if (!u) {
                 const id = 'USR-' + Date.now();
-                await pool.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,0)',
-                    [id, '', '', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
+                await pool.query('INSERT INTO usuarios (id, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,0)',
+                    [id, profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
                 u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
             }
             return done(null, u);
@@ -275,9 +275,10 @@ const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 ['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos','completar-datos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
 app.get('/', (req, res) => res.redirect('/tienda'));
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), async (req, res) => {
     const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
-    if (req.user.datosCompletos == 0) {
+    const u = (await pool.query('SELECT "datosCompletos" FROM usuarios WHERE id=$1', [req.user.id])).rows[0];
+    if (u && u.datosCompletos == 0) {
         return res.redirect(`/completar-datos?token=${token}`);
     }
     res.redirect(`/tienda?token=${token}`);
