@@ -47,8 +47,8 @@ async function initDB() {
             );
             CREATE TABLE IF NOT EXISTS usuarios (
                 id TEXT PRIMARY KEY,
-                nombre TEXT NOT NULL,
-                apellido TEXT NOT NULL,
+                nombre TEXT NOT NULL DEFAULT '',
+                apellido TEXT NOT NULL DEFAULT '',
                 email TEXT UNIQUE NOT NULL,
                 telefono TEXT DEFAULT '',
                 dni TEXT DEFAULT '',
@@ -58,7 +58,12 @@ async function initDB() {
                 rol TEXT DEFAULT 'cliente',
                 "resetPin" TEXT,
                 "resetPinExpires" BIGINT,
-                "fechaRegistro" TEXT DEFAULT NOW()
+                "fechaRegistro" TEXT DEFAULT NOW(),
+                direccion TEXT DEFAULT '',
+                provincia TEXT DEFAULT '',
+                localidad TEXT DEFAULT '',
+                cp TEXT DEFAULT '',
+                "datosCompletos" INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS ventas (
                 id TEXT PRIMARY KEY,
@@ -253,8 +258,8 @@ passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOG
             let u = (await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
             if (!u) {
                 const id = 'USR-' + Date.now();
-                await pool.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-                    [id, profile.name.givenName||'', profile.name.familyName||'', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
+                await pool.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,0)',
+                    [id, '', '', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
                 u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
             }
             return done(null, u);
@@ -267,10 +272,16 @@ const authMiddleware = (req, res, next) => { const t = req.headers.authorization
 const adminMiddleware = (permiso = null) => (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { const d = jwt.verify(t, JWT_SECRET); if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); if (d.rol === 'admin') { req.admin = d; return next(); } if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); req.admin = d; next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
 const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
+['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos','completar-datos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
 app.get('/', (req, res) => res.redirect('/tienda'));
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => { res.redirect(`/tienda?token=${jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' })}`); });
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
+    const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
+    if (req.user.datosCompletos == 0) {
+        return res.redirect(`/completar-datos?token=${token}`);
+    }
+    res.redirect(`/tienda?token=${token}`);
+});
 
 app.post('/admin/login', async (req, res) => {
     try {
@@ -339,7 +350,7 @@ app.post('/auth/registro', async (req, res) => {
         if (!nombre || !apellido || !email || !dni || !password) return res.status(400).json({ error: 'Completá todos los campos' });
         if ((await pool.query('SELECT id FROM usuarios WHERE email=$1', [email])).rows.length > 0) return res.status(400).json({ error: 'Email ya registrado' });
         const id = 'USR-' + Date.now();
-        await pool.query('INSERT INTO usuarios (id,nombre,apellido,email,dni,telefono,password,rol) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+        await pool.query('INSERT INTO usuarios (id,nombre,apellido,email,dni,telefono,password,rol,"datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1)',
             [id, nombre, apellido, email, dni, telefono||'', await bcrypt.hash(password, 10), 'cliente']);
         await logActividad('Sistema', 'REGISTRO_CLIENTE', `Nuevo cliente: ${email}`, req);
         res.json({ success: true, token: jwt.sign({ id, email, nombre, rol: 'cliente' }, JWT_SECRET, { expiresIn: '7d' }), usuario: { id, nombre, apellido, email } });
@@ -352,7 +363,11 @@ app.post('/auth/login', async (req, res) => {
         const u = (await pool.query('SELECT * FROM usuarios WHERE email=$1', [email])).rows[0];
         if (!u?.password || !(await bcrypt.compare(password, u.password))) return res.status(401).json({ error: 'Credenciales inválidas' });
         await logActividad('Sistema', 'LOGIN_CLIENTE', `Cliente: ${email}`, req);
-        res.json({ success: true, token: jwt.sign({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol }, JWT_SECRET, { expiresIn: '7d' }), usuario: { id: u.id, nombre: u.nombre, apellido: u.apellido, email: u.email } });
+        const token = jwt.sign({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol }, JWT_SECRET, { expiresIn: '7d' });
+        if (u.datosCompletos == 0) {
+            return res.json({ success: true, token, completarDatos: true, usuario: { id: u.id, nombre: u.nombre, apellido: u.apellido, email: u.email } });
+        }
+        res.json({ success: true, token, usuario: { id: u.id, nombre: u.nombre, apellido: u.apellido, email: u.email } });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -378,13 +393,27 @@ app.post('/auth/reset-password', async (req, res) => {
 });
 
 app.get('/auth/me', authMiddleware, async (req, res) => {
-    const u = (await pool.query('SELECT id,nombre,apellido,email,telefono,dni FROM usuarios WHERE id=$1', [req.usuario.id])).rows[0];
+    const u = (await pool.query('SELECT id,nombre,apellido,email,telefono,dni,direccion,provincia,localidad,cp,"datosCompletos" FROM usuarios WHERE id=$1', [req.usuario.id])).rows[0];
     res.json(u || {});
 });
 
 app.post('/auth/update-profile', authMiddleware, async (req, res) => {
-    await pool.query('UPDATE usuarios SET telefono=$1 WHERE id=$2', [req.body.telefono||'', req.usuario.id]);
+    const { telefono, direccion, provincia, localidad, cp } = req.body;
+    await pool.query('UPDATE usuarios SET telefono=$1, direccion=$2, provincia=$3, localidad=$4, cp=$5 WHERE id=$6',
+        [telefono||'', direccion||'', provincia||'', localidad||'', cp||'', req.usuario.id]);
     res.json({ success: true });
+});
+
+app.post('/auth/completar-datos', authMiddleware, async (req, res) => {
+    try {
+        const { nombre, apellido, dni, telefono, direccion, provincia, localidad, cp } = req.body;
+        if (!nombre || !apellido || !dni || !telefono || !direccion || !provincia || !localidad || !cp) {
+            return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+        }
+        await pool.query('UPDATE usuarios SET nombre=$1, apellido=$2, dni=$3, telefono=$4, direccion=$5, provincia=$6, localidad=$7, cp=$8, "datosCompletos"=1 WHERE id=$9',
+            [nombre, apellido, dni, telefono, direccion, provincia, localidad, cp, req.usuario.id]);
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/listar', async (req, res) => {
