@@ -65,8 +65,30 @@
                 <label>Provincia *</label>
                 <select id="provincia">
                     <option value="">Seleccionar</option>
-                    <option>Buenos Aires</option><option>CABA</option><option>Córdoba</option><option>Santa Fe</option>
-                    <option>Tucumán</option><option>Mendoza</option><option>Salta</option><option>Chaco</option>
+                    <option>Buenos Aires</option>
+                    <option>CABA</option>
+                    <option>Catamarca</option>
+                    <option>Chaco</option>
+                    <option>Chubut</option>
+                    <option>Córdoba</option>
+                    <option>Corrientes</option>
+                    <option>Entre Ríos</option>
+                    <option>Formosa</option>
+                    <option>Jujuy</option>
+                    <option>La Pampa</option>
+                    <option>La Rioja</option>
+                    <option>Mendoza</option>
+                    <option>Misiones</option>
+                    <option>Neuquén</option>
+                    <option>Río Negro</option>
+                    <option>Salta</option>
+                    <option>San Juan</option>
+                    <option>San Luis</option>
+                    <option>Santa Cruz</option>
+                    <option>Santa Fe</option>
+                    <option>Santiago del Estero</option>
+                    <option>Tierra del Fuego</option>
+                    <option>Tucumán</option>
                 </select>
             </div>
             
@@ -94,7 +116,6 @@
         const token = new URLSearchParams(window.location.search).get('token');
         if (!token) window.location.href = '/login';
         
-        // Cargar email desde el token
         async function cargarEmail() {
             try {
                 const res = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
