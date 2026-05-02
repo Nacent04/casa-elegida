@@ -247,7 +247,7 @@ app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: fals
 app.use(passport.initialize()); app.use(passport.session());
 app.use('/uploads', express.static('uploads')); app.use(express.static('public'));
 
-passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, callbackURL: '/auth/google/callback' },
+passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback' },
     async (accessToken, refreshToken, profile, done) => {
         try {
             let u = (await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
