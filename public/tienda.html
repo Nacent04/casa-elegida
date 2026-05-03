@@ -62,7 +62,6 @@
         .badge-stock.low{background:#FEE2E2;color:#991B1B}
         .badge-stock.ultimas{background:#F44336;color:white;animation:pulse 1.5s infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
-        /* IMAGEN NO SELECCIONABLE EN TARJETA DE PRODUCTO */
         .product-image{width:100%;height:160px;object-fit:cover;background:#f5f5f5;pointer-events:none;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
         .product-info{padding:12px}
         .product-name{font-size:14px;font-weight:700;margin-bottom:4px;line-height:1.3}
@@ -71,6 +70,8 @@
         .price-mayorista{font-size:10px;color:#FF8F00;font-weight:600}
         .btn-add-product{width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
         .btn-add-product:disabled{background:#CCC;cursor:not-allowed}
+        
+        /* MODAL SIN CARRUSEL */
         .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1000;justify-content:center;align-items:center;padding:16px}
         .modal.active{display:flex}
         .modal-content{background:var(--bg-white);border-radius:24px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto}
@@ -78,25 +79,23 @@
         .modal-header h3{font-size:18px;font-weight:700}
         .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-light)}
         .modal-body{padding:20px;display:grid;grid-template-columns:1fr;gap:20px}
-        .carrusel-container{position:relative;overflow:hidden;border-radius:16px;background:#f5f5f5}
         
-        /* IMAGEN NO SELECCIONABLE EN CARRUSEL */
-        .carrusel-imagenes{display:flex;transition:transform 0.3s ease;user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
-        .carrusel-imagenes img{width:100%;min-width:100%;height:300px;object-fit:cover;flex-shrink:0;pointer-events:none;-webkit-user-drag:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none}
+        /* IMAGEN ÚNICA EN EL MODAL */
+        .producto-imagen-modal{width:100%;height:350px;object-fit:cover;border-radius:16px;background:#f5f5f5;pointer-events:none;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;transition:opacity 0.3s ease}
         
-        .carrusel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:white;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;z-index:5}
-        .carrusel-btn.prev{left:10px}.carrusel-btn.next{right:10px}
-        .carrusel-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
-        .carrusel-dots span{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.5);cursor:pointer}
-        .carrusel-dots span.active{background:white}
         .modal-details h4{font-size:22px;font-weight:700;margin-bottom:8px}
         .modal-description{color:var(--text-light);margin-bottom:16px;font-size:14px}
-        .variant-selector{display:flex;flex-wrap:wrap;gap:8px}
+        
+        /* SELECTOR DE VARIANTES MEJORADO */
+        .variant-selector{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
         .variant-chip{padding:10px 16px;background:#f5f5f5;border:2px solid transparent;border-radius:50px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s}
         .variant-chip:hover{border-color:var(--primary);background:#e8e8e8}
         .variant-chip.active{background:var(--primary);color:white;border-color:var(--primary)}
         .variant-chip.disabled{opacity:0.5;cursor:not-allowed;border-color:transparent}
         .variant-chip.disabled:hover{background:#f5f5f5;border-color:transparent}
+        
+        .variant-info-seleccionada{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px 16px;margin-bottom:16px;font-size:13px;color:#065f46;display:flex;align-items:center;gap:8px}
+        
         .quantity-selector{display:flex;align-items:center;gap:16px;margin:20px 0}
         .quantity-control{display:flex;align-items:center;background:#f5f5f5;border-radius:50px}
         .quantity-control button{width:36px;height:36px;border:none;background:transparent;font-size:18px;font-weight:700;cursor:pointer;color:var(--primary)}
@@ -133,6 +132,7 @@
         #asistente-burbuja{background:white;border-radius:20px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.15);max-width:320px;margin-bottom:12px;display:none}
         #asistente-btn{background:var(--primary);color:white;border:none;width:55px;height:55px;border-radius:50%;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
         @media(min-width:640px){.products-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}.product-image{height:240px}.modal-body{grid-template-columns:1fr 1fr;gap:32px}}
+        @media(max-width:768px){.modal-body{grid-template-columns:1fr}.producto-imagen-modal{height:280px}}
     </style>
 </head>
 <body>
@@ -154,7 +154,35 @@
 </div>
 <footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">Casa Elegida</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p></div></div><div class="footer-bottom" style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2024 Casa Elegida. Todos los derechos reservados.</div></footer>
 
-<div class="modal" id="product-modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title"></h3><button class="modal-close" onclick="cerrarModal()">&times;</button></div><div class="modal-body"><div class="carrusel-container"><div class="carrusel-imagenes" id="carrusel-imagenes"></div><button class="carrusel-btn prev" onclick="moverCarrusel(-1)"><i class="fas fa-chevron-left"></i></button><button class="carrusel-btn next" onclick="moverCarrusel(1)"><i class="fas fa-chevron-right"></i></button><div class="carrusel-dots" id="carrusel-dots"></div></div><div class="modal-details"><h4 id="modal-name"></h4><p class="modal-description" id="modal-description"></p><div class="variant-selector" id="modal-variants"></div><div class="quantity-selector"><div class="quantity-control"><button onclick="cambiarCantidadModal(-1)">-</button><input type="number" id="modal-quantity" value="1" min="1" readonly><button onclick="cambiarCantidadModal(1)">+</button></div><span><i class="fas fa-box"></i> Stock: <span id="stock-value">0</span></span></div><div style="display:flex;align-items:baseline;gap:12px;margin-top:16px"><span style="font-size:24px;font-weight:800;color:var(--primary)" id="modal-price">$0</span><span style="font-size:12px;color:#FF8F00;font-weight:600" id="modal-price-mayorista"></span></div></div></div><div class="modal-footer"><button class="btn-secondary" onclick="cerrarModal()">Cancelar</button><button class="btn-primary" id="modal-add-btn" onclick="agregarDesdeModal()"><i class="fas fa-cart-plus"></i> Agregar al Pedido</button></div></div></div>
+<!-- MODAL SIN CARRUSEL -->
+<div class="modal" id="product-modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title"></h3><button class="modal-close" onclick="cerrarModal()">&times;</button></div><div class="modal-body">
+    <!-- Imagen única que cambia según la variante -->
+    <img id="modal-product-image" class="producto-imagen-modal" src="https://via.placeholder.com/400" alt="Producto" draggable="false" oncontextmenu="return false;" onmousedown="return false;" onselectstart="return false;">
+    <div class="modal-details">
+        <h4 id="modal-name"></h4>
+        <p class="modal-description" id="modal-description"></p>
+        
+        <!-- Selector de variantes -->
+        <div class="variant-selector" id="modal-variants"></div>
+        
+        <!-- Info de variante seleccionada -->
+        <div class="variant-info-seleccionada" id="variant-info">
+            <i class="fas fa-check-circle"></i> <span id="variant-selected-name"></span> - Stock: <strong id="variant-selected-stock">0</strong>
+        </div>
+        
+        <div class="quantity-selector">
+            <div class="quantity-control">
+                <button onclick="cambiarCantidadModal(-1)">-</button>
+                <input type="number" id="modal-quantity" value="1" min="1" readonly>
+                <button onclick="cambiarCantidadModal(1)">+</button>
+            </div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-top:16px">
+            <span style="font-size:24px;font-weight:800;color:var(--primary)" id="modal-price">$0</span>
+            <span style="font-size:12px;color:#FF8F00;font-weight:600" id="modal-price-mayorista"></span>
+        </div>
+    </div>
+</div><div class="modal-footer"><button class="btn-secondary" onclick="cerrarModal()">Cancelar</button><button class="btn-primary" id="modal-add-btn" onclick="agregarDesdeModal()"><i class="fas fa-cart-plus"></i> Agregar al Pedido</button></div></div></div>
 
 <div class="cart-overlay" id="cart-overlay" onclick="toggleCarrito()"></div>
 <div class="cart-sidebar" id="cart-sidebar"><div class="cart-header"><h3><i class="fas fa-shopping-bag"></i> Mi Pedido</h3><button class="cart-close" onclick="toggleCarrito()">&times;</button></div><div class="cart-items" id="cart-items"></div><div class="cart-footer"><div class="cart-total"><span>Total:</span><span id="cart-total">$0</span></div><button class="btn-checkout" id="checkout-btn" onclick="irACheckout()"><i class="fas fa-arrow-right"></i> Finalizar Compra</button></div></div>
@@ -168,12 +196,11 @@
 <script>
 let productos=[],categorias=[],carrito=[],configuracion={empresa:{},tienda:{},mayorista:{},redes:{},pagos:{}};
 let productoModalActual=null,varianteSeleccionada=0,categoriaSeleccionada=null,subcategoriaSeleccionada=null,busquedaActual='',ordenActual='default',usuarioActual=null;
-let carruselActual=0,carruselFotos=[];
 const fmt=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0});
 
 function mostrarToast(msg,tipo='success'){const t=document.createElement('div');t.className=`toast ${tipo}`;t.innerHTML=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>t.remove(),4000)}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}
-function sanitizarUrl(url){if(!url)return'https://via.placeholder.com/300';if(url.startsWith('/uploads/')||url.startsWith('http'))return url;return'https://via.placeholder.com/300'}
+function sanitizarUrl(url){if(!url)return'https://via.placeholder.com/400';if(url.startsWith('/uploads/')||url.startsWith('http'))return url;return'https://via.placeholder.com/400'}
 async function safeFetch(url,options={}){const token=localStorage.getItem('token');if(token)options.headers={...options.headers,'Authorization':`Bearer ${token}`};try{const res=await fetch(url,options);if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||`HTTP ${res.status}`);return await res.json()}catch(e){mostrarToast(e.message,'error');throw e}}
 
 function checkLogin(){const token=localStorage.getItem('token');const userBtn=document.getElementById('user-btn');if(token){userBtn.innerHTML='<i class="fas fa-user-check"></i>';try{usuarioActual=JSON.parse(localStorage.getItem('usuario'))}catch(e){usuarioActual=null}}else{usuarioActual=null;userBtn.innerHTML='<i class="fas fa-user"></i>'}}
@@ -183,7 +210,7 @@ function verMisPedidos(){window.location.href='/perfil#pedidos'}
 document.addEventListener('click',(e)=>{const menu=document.getElementById('user-menu');const btn=document.getElementById('user-btn');if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target))menu.style.display='none'})
 
 let pasoAsistente=0;
-const pasosAsistente=[{msg:'¿Querés ayuda para comprar?',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Buscá un producto en la lista o usá el buscador 🔍',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Hacé clic en "Ver" para ver los detalles del producto',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Seleccioná la variante y cantidad, luego "Agregar al Pedido"',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Cuando termines, hacé clic en el carrito 🛒 y luego "Finalizar Compra"',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Completá tus datos y elegí retiro o envío. ¡Listo! 🎉',accion:()=>{cerrarAsistente()}}];
+const pasosAsistente=[{msg:'¿Querés ayuda para comprar?',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Buscá un producto en la lista o usá el buscador 🔍',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Hacé clic en "Ver" para ver los detalles del producto',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Seleccioná la variante que más te guste y la cantidad',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Hacé clic en "Agregar al Pedido" para sumarlo a tu carrito',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Cuando termines, andá al carrito 🛒 y presioná "Finalizar Compra"',accion:()=>{pasoAsistente++;siguientePaso()}},{msg:'Completá tus datos y elegí cómo recibir tu pedido. ¡Listo! 🎉',accion:()=>{cerrarAsistente()}}];
 function iniciarAsistente(){pasoAsistente=0;document.getElementById('asistente-burbuja').style.display='block';siguientePaso()}
 function siguientePaso(){if(pasoAsistente<pasosAsistente.length){document.getElementById('asistente-mensaje').textContent=pasosAsistente[pasoAsistente].msg;document.getElementById('asistente-si').onclick=pasosAsistente[pasoAsistente].accion}}
 function cerrarAsistente(){document.getElementById('asistente-burbuja').style.display='none';pasoAsistente=0}
@@ -216,6 +243,7 @@ function getProductosFiltrados(){let f=productos.filter(p=>{if(categoriaSeleccio
 
 function renderizarProductos(){const g=document.getElementById('products-grid');const f=getProductosFiltrados();if(!f.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#666;grid-column:1/-1"><i class="fas fa-search" style="font-size:48px;margin-bottom:12px;opacity:0.4"></i><h3>No encontramos productos</h3></div>';return}let h='';f.forEach(p=>{if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];const stock=p.variantes.reduce((s,v)=>s+v.stock,0);const mayorista=p.precioMayor>0&&configuracion.mayorista?.habilitado;const stockBajo=stock<=2&&stock>0;h+=`<div class="product-card" onclick="abrirModalProducto(${p.id})">${mayorista?'<div class="product-badge"><span class="badge-mayorista"><i class="fas fa-tags"></i> Mayorista</span></div>':''}<span class="badge-stock ${stock<=5?'low':''} ${stockBajo?'ultimas':''}"><i class="fas fa-box"></i> ${stock} ${stockBajo?'⚡ ¡Últimas!':''}</span><img src="${sanitizarUrl(p.variantes[0].foto)}" class="product-image" onerror="this.src='https://via.placeholder.com/300'" draggable="false" oncontextmenu="return false;" onmousedown="return false;" onselectstart="return false;"><div class="product-info"><h3 class="product-name">${escapeHtml(p.nombre)}</h3><div class="product-prices"><span class="price-current">${fmt.format(p.precio)}</span>${mayorista?`<span class="price-mayorista">${fmt.format(p.precioMayor)}</span>`:''}</div><button class="btn-add-product" ${stock===0?'disabled':''} onclick="event.stopPropagation();abrirModalProducto(${p.id})"><i class="fas fa-eye"></i> Ver</button></div></div>`});g.innerHTML=h}
 
+// FUNCIÓN PARA ABRIR MODAL SIN CARRUSEL
 function abrirModalProducto(id){
     const p=productos.find(x=>x.id==id);
     if(!p)return;
@@ -223,23 +251,14 @@ function abrirModalProducto(id){
     varianteSeleccionada=0;
     if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];
     
-    // Construir el array de fotos para el carrusel con todas las fotos de variantes
-    carruselFotos=[];
-    p.variantes.forEach(v=>{
-        if(v.foto && v.foto.trim()!==''){
-            carruselFotos.push(v.foto);
-        }
-    });
-    if(carruselFotos.length===0)carruselFotos=['https://via.placeholder.com/400'];
-    
-    // Iniciar en la foto de la primera variante
-    carruselActual=0;
-    
     document.getElementById('modal-title').textContent=p.nombre;
     document.getElementById('modal-name').textContent=p.nombre;
     document.getElementById('modal-description').textContent=p.descripcion||'Producto de alta calidad';
     
-    // Renderizar variantes como chips cliqueables
+    // Mostrar imagen de la primera variante
+    actualizarImagenModal();
+    
+    // Renderizar chips de variantes
     document.getElementById('modal-variants').innerHTML=p.variantes.map((v,i)=>`
         <div class="variant-chip ${i===0?'active':''} ${v.stock===0?'disabled':''}" 
              onclick="${v.stock>0?`seleccionarVariante(${i})`:''}">
@@ -247,68 +266,47 @@ function abrirModalProducto(id){
         </div>
     `).join('');
     
-    actualizarCarrusel();
+    actualizarInfoVariante();
     actualizarInfoModal();
     document.getElementById('product-modal').classList.add('active');
 }
 
-function actualizarCarrusel(){
-    const c=document.getElementById('carrusel-imagenes');
-    const d=document.getElementById('carrusel-dots');
-    if(!c||!d)return;
-    
-    // Renderizar imágenes con protecciones anti-selección
-    c.innerHTML=carruselFotos.map(f=>`
-        <img src="${sanitizarUrl(f)}" 
-             draggable="false" 
-             oncontextmenu="return false;" 
-             onmousedown="return false;" 
-             onselectstart="return false;"
-             onerror="this.src='https://via.placeholder.com/400?text=Sin+Imagen'">
-    `).join('');
-    
-    c.style.transform=`translateX(-${carruselActual*100}%)`;
-    
-    // Dots de navegación
-    d.innerHTML=carruselFotos.map((_,i)=>`
-        <span class="${i===carruselActual?'active':''}" 
-              onclick="irADiapositiva(${i})">
-        </span>
-    `).join('');
+// Actualizar imagen según variante seleccionada
+function actualizarImagenModal(){
+    if(!productoModalActual)return;
+    const v=productoModalActual.variantes[varianteSeleccionada];
+    const img=document.getElementById('modal-product-image');
+    if(img){
+        img.style.opacity='0.4';
+        setTimeout(()=>{
+            img.src=sanitizarUrl(v.foto);
+            img.onerror=function(){this.src='https://via.placeholder.com/400?text=Sin+Imagen'};
+            img.style.opacity='1';
+        },150);
+    }
 }
 
-function irADiapositiva(index){
-    carruselActual=index;
-    actualizarCarrusel();
-}
-
-function moverCarrusel(dir){
-    carruselActual+=dir;
-    if(carruselActual<0)carruselActual=carruselFotos.length-1;
-    if(carruselActual>=carruselFotos.length)carruselActual=0;
-    actualizarCarrusel();
+// Actualizar información de variante seleccionada
+function actualizarInfoVariante(){
+    if(!productoModalActual)return;
+    const v=productoModalActual.variantes[varianteSeleccionada];
+    document.getElementById('variant-selected-name').textContent=v.nombre;
+    document.getElementById('variant-selected-stock').textContent=v.stock;
 }
 
 function seleccionarVariante(i){
     varianteSeleccionada=i;
     
-    // Actualizar visual de los chips
+    // Actualizar chips visualmente
     document.querySelectorAll('.variant-chip').forEach((c,j)=>{
         c.classList.toggle('active',j===i);
     });
     
-    // Buscar la foto de la variante seleccionada y mover el carrusel a esa foto
-    if(productoModalActual && productoModalActual.variantes[i]){
-        const fotoSeleccionada=productoModalActual.variantes[i].foto;
-        if(fotoSeleccionada && fotoSeleccionada.trim()!==''){
-            const posicionEnCarrusel=carruselFotos.findIndex(f=>f===fotoSeleccionada);
-            if(posicionEnCarrusel!==-1){
-                carruselActual=posicionEnCarrusel;
-                actualizarCarrusel();
-            }
-        }
-    }
+    // Cambiar imagen
+    actualizarImagenModal();
     
+    // Actualizar info
+    actualizarInfoVariante();
     actualizarInfoModal();
 }
 
@@ -317,8 +315,8 @@ function actualizarInfoModal(){
     const v=productoModalActual.variantes[varianteSeleccionada];
     document.getElementById('modal-price').textContent=fmt.format(productoModalActual.precio);
     document.getElementById('modal-price-mayorista').textContent=(productoModalActual.precioMayor>0&&configuracion.mayorista?.habilitado)?`Mayorista: ${fmt.format(productoModalActual.precioMayor)}`:'';
-    document.getElementById('stock-value').textContent=v.stock;
     document.getElementById('modal-quantity').max=v.stock;
+    if(parseInt(document.getElementById('modal-quantity').value)>v.stock)document.getElementById('modal-quantity').value=v.stock;
     const btn=document.getElementById('modal-add-btn');
     btn.disabled=v.stock===0;
     btn.innerHTML=v.stock===0?'<i class="fas fa-box"></i> Sin Stock':'<i class="fas fa-cart-plus"></i> Agregar al Pedido';
@@ -483,15 +481,10 @@ function recalcularPreciosMayoristas(){
 function guardarCarritoLocal(){localStorage.setItem('tienda_carrito',JSON.stringify(carrito))}
 function cargarCarritoLocal(){const g=localStorage.getItem('tienda_carrito');if(g){try{carrito=JSON.parse(g);recalcularPreciosMayoristas();renderizarCarrito()}catch(e){carrito=[]}}}
 
-// Prevenir selección global en imágenes del documento
 document.addEventListener('DOMContentLoaded',()=>{
     cargarDatos();
-    
-    // Prevenir selección y arrastre en todas las imágenes
     document.addEventListener('dragstart',(e)=>{if(e.target.tagName==='IMG')e.preventDefault()});
-    
     document.getElementById('search-input').addEventListener('keypress',e=>{if(e.key==='Enter')buscarProductos()});
-    
     document.addEventListener('keydown',e=>{
         if(e.key==='Escape'){
             cerrarModal();
