@@ -31,7 +31,8 @@ async function initDB() {
                 descripcion TEXT DEFAULT '',
                 "categoriaId" INTEGER,
                 subcategoria TEXT DEFAULT '',
-                "fechaCreacion" TEXT DEFAULT NOW()
+                "fechaCreacion" TEXT DEFAULT NOW(),
+                destacado INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
@@ -149,6 +150,26 @@ async function initDB() {
                 "totalEsperado" REAL DEFAULT 0,
                 "detallePagos" TEXT DEFAULT '{}'
             );
+            CREATE TABLE IF NOT EXISTS caja_profesional (
+                fecha TEXT PRIMARY KEY,
+                "aperturaTimestamp" BIGINT,
+                "abiertaPor" TEXT,
+                "cerradaPor" TEXT,
+                "montoInicialEfectivo" REAL DEFAULT 0,
+                "montoInicialTransferencia" REAL DEFAULT 0,
+                "ventasEfectivo" REAL DEFAULT 0,
+                "ventasTransferencia" REAL DEFAULT 0,
+                "ventasWebTransferencia" REAL DEFAULT 0,
+                "efectivoEntregado" REAL DEFAULT 0,
+                "transferenciaEntregada" REAL DEFAULT 0,
+                "totalEsperadoEfectivo" REAL DEFAULT 0,
+                "totalEsperadoTransferencia" REAL DEFAULT 0,
+                "diferenciaEfectivo" REAL DEFAULT 0,
+                "diferenciaTransferencia" REAL DEFAULT 0,
+                "cantidadVentas" INTEGER DEFAULT 0,
+                estado TEXT DEFAULT 'cerrada',
+                "cierreTimestamp" BIGINT
+            );
         `);
         console.log('✅ PostgreSQL listo');
     } finally {
@@ -166,7 +187,9 @@ const configInicial = {
     diseno: JSON.stringify({ colorPrimario: "#1a1a1a", colorSecundario: "#c9a96e", colorFondo: "#fafafa", colorTexto: "#1a1a1a" }),
     registroObligatorio: 'true',
     heroConfig: JSON.stringify({ titulo: "Casa Elegida", subtitulo: "Blanquería premium", badge: "✦ Precios especiales" }),
-    seccionesDestacadas: JSON.stringify([{ id: "dest-1", titulo: "Novedades", tipo: "categoria", valor: "Toallones", limite: 4 }])
+    seccionesDestacadas: JSON.stringify([{ id: "dest-1", titulo: "Novedades", tipo: "categoria", valor: "Toallones", limite: 4 }]),
+    plantilla: 'moderna',
+    icono: 'store'
 };
 
 async function initConfig() {
@@ -278,9 +301,7 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), async (req, res) => {
     const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
     const u = (await pool.query('SELECT "datosCompletos" FROM usuarios WHERE id=$1', [req.user.id])).rows[0];
-    if (u && u.datosCompletos == 0) {
-        return res.redirect(`/completar-datos?token=${token}`);
-    }
+    if (u && u.datosCompletos == 0) return res.redirect(`/completar-datos?token=${token}`);
     res.redirect(`/tienda?token=${token}`);
 });
 
@@ -365,9 +386,7 @@ app.post('/auth/login', async (req, res) => {
         if (!u?.password || !(await bcrypt.compare(password, u.password))) return res.status(401).json({ error: 'Credenciales inválidas' });
         await logActividad('Sistema', 'LOGIN_CLIENTE', `Cliente: ${email}`, req);
         const token = jwt.sign({ id: u.id, email: u.email, nombre: u.nombre, rol: u.rol }, JWT_SECRET, { expiresIn: '7d' });
-        if (u.datosCompletos == 0) {
-            return res.json({ success: true, token, completarDatos: true, usuario: { id: u.id, nombre: u.nombre, apellido: u.apellido, email: u.email } });
-        }
+        if (u.datosCompletos == 0) return res.json({ success: true, token, completarDatos: true, usuario: { id: u.id, nombre: u.nombre, apellido: u.apellido, email: u.email } });
         res.json({ success: true, token, usuario: { id: u.id, nombre: u.nombre, apellido: u.apellido, email: u.email } });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -408,9 +427,7 @@ app.post('/auth/update-profile', authMiddleware, async (req, res) => {
 app.post('/auth/completar-datos', authMiddleware, async (req, res) => {
     try {
         const { nombre, apellido, dni, telefono, direccion, provincia, localidad, cp } = req.body;
-        if (!nombre || !apellido || !dni || !telefono || !direccion || !provincia || !localidad || !cp) {
-            return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-        }
+        if (!nombre || !apellido || !dni || !telefono || !direccion || !provincia || !localidad || !cp) return res.status(400).json({ error: 'Todos los campos son obligatorios' });
         await pool.query('UPDATE usuarios SET nombre=$1, apellido=$2, dni=$3, telefono=$4, direccion=$5, provincia=$6, localidad=$7, cp=$8, "datosCompletos"=1 WHERE id=$9',
             [nombre, apellido, dni, telefono, direccion, provincia, localidad, cp, req.usuario.id]);
         res.json({ success: true });
@@ -431,12 +448,12 @@ app.post('/guardar-producto', async (req, res) => {
         if (!p.nombre?.trim() || p.precio <= 0) return res.status(400).json({ error: 'Datos inválidos' });
         const existe = (await pool.query('SELECT id FROM productos WHERE id=$1', [p.id])).rows[0];
         if (existe) {
-            await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6 WHERE id=$7',
-                [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'', p.id]);
+            await pool.query('UPDATE productos SET nombre=$1,precio=$2,"precioMayor"=$3,descripcion=$4,"categoriaId"=$5,subcategoria=$6,destacado=$7 WHERE id=$8',
+                [p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'', p.destacado||0, p.id]);
             await pool.query('DELETE FROM variantes WHERE "productoId"=$1', [p.id]);
         } else {
-            await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-                [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'']);
+            await pool.query('INSERT INTO productos (id,nombre,precio,"precioMayor",descripcion,"categoriaId",subcategoria,destacado) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+                [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId ? parseInt(p.categoriaId) : null, p.subcategoria||'', p.destacado||0]);
         }
         if (p.variantes?.length) {
             for (const v of p.variantes) {
@@ -455,25 +472,21 @@ app.post('/eliminar-producto', async (req, res) => {
 });
 
 app.post('/reordenar-productos', (req, res) => res.json({ success: true }));
-
 app.post('/verificar-stock', async (req, res) => {
     const v = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [req.body.productoId, req.body.varianteNombre])).rows[0];
     if (!v) return res.status(404).json({ error: 'No encontrada' });
     res.json({ stock: v.stock });
 });
-
 app.post('/stock-bajo', async (req, res) => {
     const vars = (await pool.query('SELECT v.*, p.nombre as "productoNombre" FROM variantes v JOIN productos p ON v."productoId"=p.id WHERE v.stock <= $1', [req.body.minimo||5])).rows;
     res.json({ stockBajo: vars });
 });
-
 app.post('/subir-imagen', upload.single('foto'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No imagen' });
     const r = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' });
     fs.unlinkSync(req.file.path);
     res.json({ url: r.secure_url });
 });
-
 app.post('/subir-logo', adminMiddleware('config'), upload.single('logo'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No imagen' });
     const r = await cloudinary.uploader.upload(req.file.path, { folder: 'casa-elegida' });
@@ -482,59 +495,44 @@ app.post('/subir-logo', adminMiddleware('config'), upload.single('logo'), async 
     await logActividad('Admin', 'SUBIR_LOGO', 'Logo actualizado', req);
     res.json({ success: true });
 });
-
 app.post('/eliminar-logo', adminMiddleware('config'), async (req, res) => { await setConfig('logo', ''); res.json({ success: true }); });
 
 app.post('/listar-categorias', async (req, res) => {
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
     res.json({ lista: cats.map(c => ({ ...c, subcategorias: JSON.parse(c.subcategorias||'[]') })) });
 });
-
 app.post('/guardar-categoria', async (req, res) => {
     const { id, nombre, subcategorias } = req.body;
     if (!nombre?.trim()) return res.status(400).json({ error: 'Nombre requerido' });
     const existe = (await pool.query('SELECT id FROM categorias WHERE id=$1', [id])).rows[0];
-    if (existe) {
-        await pool.query('UPDATE categorias SET nombre=$1,subcategorias=$2 WHERE id=$3', [nombre.trim(), JSON.stringify(subcategorias||[]), id]);
-    } else {
-        await pool.query('INSERT INTO categorias (id,nombre,subcategorias) VALUES ($1,$2,$3)', [id||Date.now(), nombre.trim(), JSON.stringify(subcategorias||[])]);
-    }
+    if (existe) await pool.query('UPDATE categorias SET nombre=$1,subcategorias=$2 WHERE id=$3', [nombre.trim(), JSON.stringify(subcategorias||[]), id]);
+    else await pool.query('INSERT INTO categorias (id,nombre,subcategorias) VALUES ($1,$2,$3)', [id||Date.now(), nombre.trim(), JSON.stringify(subcategorias||[])]);
     await logActividad('Admin', 'GUARDAR_CATEGORIA', `Categoría: ${nombre}`, req);
     res.json({ success: true });
 });
-
 app.post('/eliminar-categoria', async (req, res) => { await pool.query('DELETE FROM categorias WHERE id=$1', [req.body.id]); res.json({ success: true }); });
-
 app.post('/listar-metodos-envio', async (req, res) => {
     const metodos = (await pool.query('SELECT nombre FROM metodos_envio')).rows;
     res.json({ lista: metodos.map(m => m.nombre) });
 });
-
 app.post('/guardar-metodos-envio', async (req, res) => {
     await pool.query('DELETE FROM metodos_envio');
-    for (const m of (req.body.lista||[])) {
-        await pool.query('INSERT INTO metodos_envio (nombre) VALUES ($1)', [m]);
-    }
+    for (const m of (req.body.lista||[])) await pool.query('INSERT INTO metodos_envio (nombre) VALUES ($1)', [m]);
     res.json({ success: true });
 });
 
-app.post('/get-config', adminMiddleware('config'), async (req, res) => {
-    res.json(await getConfig());
-});
-
+app.post('/get-config', adminMiddleware('config'), async (req, res) => res.json(await getConfig()));
 app.post('/save-config', adminMiddleware('config'), async (req, res) => {
     ['empresa','horarios','redes','pagos'].forEach(async k => { if(req.body[k]) await setConfig(k, req.body[k]); });
     await logActividad('Admin', 'GUARDAR_CONFIG', 'Configuración actualizada', req);
     res.json({ success: true });
 });
-
 app.post('/save-tienda-config', adminMiddleware('config'), async (req, res) => { if(req.body.tienda) await setConfig('tienda', req.body.tienda); res.json({ success: true }); });
-
 app.post('/save-mayorista-config', adminMiddleware('config'), async (req, res) => { await setConfig('mayorista', req.body); await logActividad('Admin', 'GUARDAR_MAYORISTA', JSON.stringify(req.body), req); res.json({ success: true }); });
-
 app.post('/save-diseno-config', adminMiddleware('config'), async (req, res) => { if(req.body.diseno) await setConfig('diseno', req.body.diseno); res.json({ success: true }); });
-
 app.post('/save-home-config', adminMiddleware('config'), async (req, res) => { if(req.body.heroConfig) await setConfig('heroConfig', req.body.heroConfig); res.json({ success: true }); });
+app.post('/save-plantilla', adminMiddleware('web'), async (req, res) => { await setConfig('plantilla', req.body.plantilla); res.json({ success: true }); });
+app.post('/save-icono', adminMiddleware('web'), async (req, res) => { await setConfig('icono', req.body.icono); res.json({ success: true }); });
 
 app.post('/confirmar-venta', async (req, res) => {
     try {
@@ -543,14 +541,9 @@ app.post('/confirmar-venta', async (req, res) => {
         for (let it of carrito) {
             if (it.esManual) continue;
             const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [it.pId, it.vNom])).rows[0];
-            if (!stockActual || stockActual.stock < it.cant) {
-                return res.status(400).json({ error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` });
-            }
+            if (!stockActual || stockActual.stock < it.cant) return res.status(400).json({ error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` });
         }
-        for (let it of carrito) {
-            if(it.esManual) continue;
-            await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
-        }
+        for (let it of carrito) { if(it.esManual) continue; await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); }
         const id = 'FAC-' + Date.now();
         await pool.query("INSERT INTO ventas (id,fecha,\"fechaTimestamp\",items,total,\"metodoPago\",logistica,cliente,estado,origen) VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'completada','admin')",
             [id, Date.now(), JSON.stringify(carrito), pago.total, pago.metodo, logistica, JSON.stringify(cliente||{nombre:'Mostrador'})]);
@@ -559,12 +552,10 @@ app.post('/confirmar-venta', async (req, res) => {
         res.json({ success: true, ventaId: id });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/listar-ventas', async (req, res) => {
     const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
     res.json({ lista: ventas.map(v => ({ ...v, items: JSON.parse(v.items||'[]'), cliente: JSON.parse(v.cliente||'{}'), pago: { total: v.total, metodo: v["metodoPago"] } })) });
 });
-
 app.post('/corte-caja', async (req, res) => {
     const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as cantidad FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ total: v.total, cantidad: v.cantidad });
@@ -573,19 +564,11 @@ app.post('/corte-caja', async (req, res) => {
 app.post('/tienda/listar-productos', async (req, res) => {
     const c = await getConfig();
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
-    for (const p of prods) {
-        p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
-    }
+    for (const p of prods) p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
     const metodos = (await pool.query('SELECT nombre FROM metodos_envio')).rows;
-    res.json({
-        productos: prods,
-        categorias: cats.map(x => ({ ...x, subcategorias: JSON.parse(x.subcategorias||'[]') })),
-        metodosEnvio: metodos.map(m => m.nombre),
-        configuracion: c
-    });
+    res.json({ productos: prods, categorias: cats.map(x => ({ ...x, subcategorias: JSON.parse(x.subcategorias||'[]') })), metodosEnvio: metodos.map(m => m.nombre), configuracion: c });
 });
-
 app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
     try {
         const { carrito, cliente, total, tipoEntrega, metodoEnvio } = req.body;
@@ -595,14 +578,9 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         for (let it of carrito) {
             if (it.esManual) continue;
             const stockActual = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [it.pId, it.vNom])).rows[0];
-            if (!stockActual || stockActual.stock < it.cant) {
-                return res.status(400).json({ error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` });
-            }
+            if (!stockActual || stockActual.stock < it.cant) return res.status(400).json({ error: `Stock insuficiente: ${it.pNom} - ${it.vNom}. Disponible: ${stockActual?.stock || 0}` });
         }
-        for (let it of carrito) {
-            if(it.esManual) continue;
-            await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]);
-        }
+        for (let it of carrito) { if(it.esManual) continue; await pool.query('UPDATE variantes SET stock=stock-$1 WHERE "productoId"=$2 AND nombre=$3', [it.cant, it.pId, it.vNom]); }
         const id = 'PED-' + Date.now();
         await pool.query("INSERT INTO pedidos (id,fecha,\"fechaTimestamp\",items,total,cliente,\"tipoEntrega\",\"metodoEnvio\",estado,origen,\"usuarioId\") VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,$5,$6,$7,'pendiente','tienda',$8)",
             [id, Date.now(), JSON.stringify(carrito), total, JSON.stringify(cliente), tipoEntrega, metodoEnvio, u.id]);
@@ -611,12 +589,10 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         res.json({ success: true, pedidoId: id });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/tienda/listar-pedidos', async (req, res) => {
     const pedidos = (await pool.query('SELECT * FROM pedidos ORDER BY "fechaTimestamp" DESC')).rows;
     res.json({ lista: pedidos.map(p => ({ ...p, items: JSON.parse(p.items||'[]'), cliente: JSON.parse(p.cliente||'{}') })) });
 });
-
 app.post('/tienda/confirmar-pedido', async (req, res) => {
     try {
         const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND estado=$2', [req.body.pedidoId, 'pendiente'])).rows[0];
@@ -626,10 +602,11 @@ app.post('/tienda/confirmar-pedido', async (req, res) => {
             [vid, Date.now(), p.items, p.total, p["tipoEntrega"]==='envio'?'envio':'local', p.cliente, p.id]);
         await pool.query('UPDATE pedidos SET estado=$1,pin=$2,"ventaId"=$3 WHERE id=$4', ['confirmado', pin, vid, p.id]);
         await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id}`, req);
+        const cliente = JSON.parse(p.cliente||'{}');
+        if (cliente.email) await enviarEmail(cliente.email, `Pedido #${p.id} confirmado`, `<h1>Casa Elegida</h1><h2>¡Pedido confirmado!</h2><p>Tu PIN de retiro: <strong>${pin}</strong></p><p>Total: ${fmt.format(p.total)}</p>`);
         res.json({ success: true, ventaId: vid, pin });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND "usuarioId"=$2 AND estado=$3', [req.body.pedidoId, req.usuario.id, 'pendiente'])).rows[0];
     if (!p) return res.status(400).json({ error: 'No se puede cancelar' });
@@ -638,24 +615,17 @@ app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
     await logActividad('Sistema', 'CANCELAR_PEDIDO', `Pedido ${p.id} cancelado`, req);
     res.json({ success: true });
 });
-
 app.post('/tienda/marcar-abonado', async (req, res) => {
     await pool.query("UPDATE pedidos SET estado='abonado' WHERE id=$1", [req.body.pedidoId]);
     await logActividad('Admin', 'PEDIDO_ABONADO', `Pedido ${req.body.pedidoId} abonado`, req);
     res.json({ success: true });
 });
-
 app.post('/tienda/marcar-enviado', async (req, res) => {
     await pool.query("UPDATE pedidos SET estado='enviado' WHERE id=$1", [req.body.pedidoId]);
     await logActividad('Admin', 'PEDIDO_ENVIADO', `Pedido ${req.body.pedidoId} enviado`, req);
     res.json({ success: true });
 });
-
-app.post('/tienda/marcar-entregado', async (req, res) => {
-    await pool.query("UPDATE pedidos SET estado='entregado' WHERE id=$1", [req.body.pedidoId]);
-    res.json({ success: true });
-});
-
+app.post('/tienda/marcar-entregado', async (req, res) => { await pool.query("UPDATE pedidos SET estado='entregado' WHERE id=$1", [req.body.pedidoId]); res.json({ success: true }); });
 app.post('/tienda/cancelar-pedido-admin', async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1', [req.body.pedidoId])).rows[0];
     if (!p) return res.status(400).json({ error: 'No encontrado' });
@@ -663,7 +633,6 @@ app.post('/tienda/cancelar-pedido-admin', async (req, res) => {
     await pool.query("UPDATE pedidos SET estado='cancelado' WHERE id=$1", [p.id]);
     res.json({ success: true });
 });
-
 app.post('/tienda/retirar-pedido', async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND pin=$2', [req.body.pedidoId, req.body.pin])).rows[0];
     if (!p) return res.status(400).json({ error: 'PIN incorrecto' });
@@ -671,7 +640,6 @@ app.post('/tienda/retirar-pedido', async (req, res) => {
     await logActividad('Admin', 'RETIRO_PEDIDO', `Pedido ${req.body.pedidoId} retirado`, req);
     res.json({ success: true });
 });
-
 app.post('/tienda/verificar-pin', async (req, res) => {
     const p = (await pool.query("SELECT * FROM pedidos WHERE pin=$1 AND estado IN ('confirmado','abonado')", [req.body.pin])).rows[0];
     if (!p) return res.status(400).json({ error: 'PIN no encontrado' });
@@ -682,53 +650,113 @@ app.post('/dashboard/stats', async (req, res) => {
     const v = (await pool.query("SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ ventasHoy: v.c, totalHoy: v.t });
 });
-
 app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), async (req, res) => {
+    const mes = new Date().toLocaleDateString('es-AR').substring(3);
+    const ventasMes = (await pool.query("SELECT * FROM ventas WHERE fecha LIKE $1", [`%${mes}%`])).rows;
+    let efAdmin = 0, trAdmin = 0, efWeb = 0, trWeb = 0;
+    ventasMes.forEach(v => {
+        const items = JSON.parse(v.items||'[]');
+        if (v.origen === 'admin') {
+            if (v["metodoPago"] === 'efectivo') efAdmin += v.total;
+            if (v["metodoPago"] === 'transferencia') trAdmin += v.total;
+        }
+        if (v.origen === 'tienda') trWeb += v.total;
+    });
     res.json({
-        ventasHoy: 0, ventasMes: 0,
-        totalClientes: (await pool.query('SELECT COUNT(*) as c FROM usuarios')).rows[0].c,
+        ventasHoy: 0, ventasMes: 0, totalClientes: (await pool.query('SELECT COUNT(*) as c FROM usuarios')).rows[0].c,
         totalProductos: (await pool.query('SELECT COUNT(*) as c FROM productos')).rows[0].c,
         pedidosPendientes: (await pool.query("SELECT COUNT(*) as c FROM pedidos WHERE estado IN ('pendiente','confirmado','abonado')")).rows[0].c,
-        productosAgotados: 0
+        productosAgotados: 0,
+        rendimientoMensual: { efAdmin, trAdmin, efWeb, trWeb, total: efAdmin+trAdmin+efWeb+trWeb }
     });
 });
-
 app.post('/admin/buscar-clientes', adminMiddleware(), async (req, res) => {
     const q = `%${req.body.query||''}%`;
     const clientes = (await pool.query('SELECT id, nombre, apellido, email, telefono, dni FROM usuarios WHERE nombre ILIKE $1 OR apellido ILIKE $1 OR email ILIKE $1 OR dni ILIKE $1 LIMIT 20', [q])).rows;
     res.json({ lista: clientes });
 });
-
 app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
-    let csv = '\uFEFFFecha;ID;Cliente;Total\n';
+    let csv = '\uFEFFFecha;ID;Cliente;Total;Pago;Origen\n';
     const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
-    ventas.forEach(v => { const c = JSON.parse(v.cliente||'{}'); csv += `"${v.fecha}";"${v.id}";"${c.nombre||'Mostrador'}";"${v.total}"\n`; });
+    ventas.forEach(v => { const c = JSON.parse(v.cliente||'{}'); csv += `"${v.fecha}";"${v.id}";"${c.nombre||'Mostrador'}";"${v.total}";"${v["metodoPago"]}";"${v.origen}"\n`; });
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=ventas.csv');
     res.send(csv);
 });
 
-app.post('/admin/apertura-caja', adminMiddleware('ventas'), async (req, res) => {
-    await pool.query("INSERT INTO caja_diaria (fecha, \"montoInicial\", \"abiertaPor\", estado, \"aperturaTimestamp\") VALUES (TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY'), $1, $2, 'abierta', $3) ON CONFLICT (fecha) DO UPDATE SET estado='abierta', \"montoInicial\"=$1, \"abiertaPor\"=$2, \"aperturaTimestamp\"=$3",
-        [req.body.montoInicial||0, req.admin.nombre, Date.now()]);
-    await logActividad(req.admin.nombre, 'APERTURA_CAJA', `Monto inicial: ${fmt.format(req.body.montoInicial||0)}`, req);
-    res.json({ success: true });
-});
-
-app.post('/admin/cierre-caja', adminMiddleware('ventas'), async (req, res) => {
-    const v = (await pool.query("SELECT COALESCE(SUM(total),0) as t, COUNT(*) as c FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
-    await pool.query("UPDATE caja_diaria SET estado='cerrada', \"totalVentas\"=$1, \"totalEsperado\"=$2 WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado='abierta'",
-        [v.t, ((await pool.query("SELECT \"montoInicial\" FROM caja_diaria WHERE fecha=TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY')")).rows[0]?.["montoInicial"]||0)+v.t]);
-    await logActividad(req.admin.nombre, 'CIERRE_CAJA', `Total: ${fmt.format(v.t)}`, req);
-    res.json({ success: true, resumen: { totalVentas: v.t, cantidadVentas: v.c } });
-});
-
-app.post('/admin/estado-caja', async (req, res) => {
+// ==================== CAJA PROFESIONAL ====================
+app.post('/admin/apertura-caja-profesional', adminMiddleware('ventas'), async (req, res) => {
     try {
-        const caja = (await pool.query("SELECT * FROM caja_diaria WHERE fecha = TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') AND estado = 'abierta'")).rows[0];
+        const { montoEfectivo, montoTransferencia } = req.body;
+        const hoy = new Date().toLocaleDateString('es-AR');
+        const existe = await pool.query('SELECT * FROM caja_profesional WHERE fecha = $1', [hoy]);
+        if (existe.rows.length > 0) return res.status(400).json({ error: 'La caja ya fue abierta hoy' });
+        await pool.query(`INSERT INTO caja_profesional (fecha, "aperturaTimestamp", "abiertaPor", "montoInicialEfectivo", "montoInicialTransferencia", estado) VALUES ($1,$2,$3,$4,$5,'abierta')`,
+            [hoy, Date.now(), req.admin.nombre, montoEfectivo||0, montoTransferencia||0]);
+        await logActividad(req.admin.nombre, 'APERTURA_CAJA', `Ef: ${fmt.format(montoEfectivo||0)} | Transf: ${fmt.format(montoTransferencia||0)}`, req);
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/admin/cierre-caja-profesional', adminMiddleware('ventas'), async (req, res) => {
+    try {
+        const { efectivoEntregado, transferenciaEntregada } = req.body;
+        const hoy = new Date().toLocaleDateString('es-AR');
+        const caja = (await pool.query("SELECT * FROM caja_profesional WHERE fecha = $1 AND estado = 'abierta'", [hoy])).rows[0];
+        if (!caja) return res.status(400).json({ error: 'No hay caja abierta hoy' });
+        const ventasAdmin = (await pool.query("SELECT * FROM ventas WHERE fecha LIKE $1", [`%${hoy}%`])).rows;
+        let ventasEfectivo = 0, ventasTransferencia = 0, ventasWebTransferencia = 0;
+        ventasAdmin.forEach(v => {
+            if (v.origen === 'admin') {
+                if (v["metodoPago"] === 'efectivo') ventasEfectivo += v.total;
+                if (v["metodoPago"] === 'transferencia') ventasTransferencia += v.total;
+            }
+            if (v.origen === 'tienda') ventasWebTransferencia += v.total;
+        });
+        const totalEsperadoEfectivo = caja.montoinicialefectivo + ventasEfectivo;
+        const diferenciaEfectivo = (efectivoEntregado||0) - totalEsperadoEfectivo;
+        const totalEsperadoTransferencia = caja.montoinicialtransferencia + ventasTransferencia + ventasWebTransferencia;
+        const diferenciaTransferencia = (transferenciaEntregada||0) - totalEsperadoTransferencia;
+        await pool.query(`UPDATE caja_profesional SET estado='cerrada', "cerradaPor"=$1, "cierreTimestamp"=$2,
+            "efectivoEntregado"=$3, "transferenciaEntregada"=$4, "ventasEfectivo"=$5, "ventasTransferencia"=$6,
+            "ventasWebTransferencia"=$7, "totalEsperadoEfectivo"=$8, "totalEsperadoTransferencia"=$9,
+            "diferenciaEfectivo"=$10, "diferenciaTransferencia"=$11, "cantidadVentas"=$12 WHERE fecha=$13 AND estado='abierta'`,
+            [req.admin.nombre, Date.now(), efectivoEntregado||0, transferenciaEntregada||0, ventasEfectivo, ventasTransferencia,
+             ventasWebTransferencia, totalEsperadoEfectivo, totalEsperadoTransferencia, diferenciaEfectivo, diferenciaTransferencia,
+             ventasAdmin.length, hoy]);
+        await logActividad(req.admin.nombre, 'CIERRE_CAJA', `Dif Ef: ${fmt.format(diferenciaEfectivo)} | Dif Transf: ${fmt.format(diferenciaTransferencia)}`, req);
+        res.json({ success: true, resumen: { ventasEfectivo, ventasTransferencia, ventasWebTransferencia, totalEsperadoEfectivo, totalEsperadoTransferencia, diferenciaEfectivo, diferenciaTransferencia, cantidadVentas: ventasAdmin.length, montoInicialEfectivo: caja.montoinicialefectivo, montoInicialTransferencia: caja.montoinicialtransferencia } });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/admin/estado-caja-profesional', adminMiddleware('ventas'), async (req, res) => {
+    try {
+        const hoy = new Date().toLocaleDateString('es-AR');
+        const caja = (await pool.query("SELECT * FROM caja_profesional WHERE fecha = $1 AND estado = 'abierta'", [hoy])).rows[0];
         if (!caja) return res.json({ abierta: false });
-        const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as count FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
-        res.json({ abierta: true, montoInicial: caja["montoInicial"], totalVentas: v.total, cantidadVentas: v.count, abiertaPor: caja["abiertaPor"], totalEsperado: caja["montoInicial"] + v.total });
+        const ventasAdmin = (await pool.query("SELECT * FROM ventas WHERE fecha LIKE $1", [`%${hoy}%`])).rows;
+        let ventasEfectivo = 0, ventasTransferencia = 0, ventasWeb = 0;
+        ventasAdmin.forEach(v => {
+            if (v.origen === 'admin') {
+                if (v["metodoPago"] === 'efectivo') ventasEfectivo += v.total;
+                if (v["metodoPago"] === 'transferencia') ventasTransferencia += v.total;
+            }
+            if (v.origen === 'tienda') ventasWeb += v.total;
+        });
+        res.json({ abierta: true, abiertaPor: caja.abiertapor, montoInicialEfectivo: caja.montoinicialefectivo, montoInicialTransferencia: caja.montoinicialtransferencia, ventasEfectivo, ventasTransferencia, ventasWeb, totalEsperadoEfectivo: caja.montoinicialefectivo + ventasEfectivo, totalEsperadoTransferencia: caja.montoinicialtransferencia + ventasTransferencia + ventasWeb, cantidadVentas: ventasAdmin.length });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/admin/historial-cajas', adminMiddleware('dashboard'), async (req, res) => {
+    try {
+        const { desde, hasta } = req.body;
+        let query = "SELECT * FROM caja_profesional WHERE estado = 'cerrada'";
+        let params = [];
+        if (desde) { query += " AND fecha >= $" + (params.length+1); params.push(desde); }
+        if (hasta) { query += " AND fecha <= $" + (params.length+1); params.push(hasta); }
+        query += " ORDER BY fecha DESC LIMIT 100";
+        const cajas = (await pool.query(query, params)).rows;
+        res.json({ lista: cajas });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -739,26 +767,13 @@ app.post('/admin/estadisticas-vendedor', adminMiddleware('dashboard'), async (re
     res.json({ lista: Object.values(v) });
 });
 
-app.post('/notificaciones', async (req, res) => {
-    const notifs = (await pool.query('SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT 50')).rows;
-    res.json({ lista: notifs });
-});
-
-app.post('/notificaciones/leer', async (req, res) => {
-    await pool.query('UPDATE notificaciones SET leida=1 WHERE id=$1', [req.body.id]);
-    res.json({ success: true });
-});
-
-app.post('/notificaciones/leer-todas', async (req, res) => {
-    await pool.query('UPDATE notificaciones SET leida=1');
-    res.json({ success: true });
-});
+app.post('/notificaciones', async (req, res) => { res.json({ lista: (await pool.query('SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT 50')).rows }); });
+app.post('/notificaciones/leer', async (req, res) => { await pool.query('UPDATE notificaciones SET leida=1 WHERE id=$1', [req.body.id]); res.json({ success: true }); });
+app.post('/notificaciones/leer-todas', async (req, res) => { await pool.query('UPDATE notificaciones SET leida=1'); res.json({ success: true }); });
 
 app.post('/logs/admin', async (req, res) => {
     const { filtro, desde, hasta } = req.body;
-    let query = 'SELECT * FROM logs_admin';
-    let params = [];
-    let conditions = [];
+    let query = 'SELECT * FROM logs_admin'; let params = []; let conditions = [];
     if (filtro) { conditions.push('(admin ILIKE $1 OR accion ILIKE $1 OR detalles ILIKE $1)'); params.push(`%${filtro}%`); }
     if (desde) { conditions.push(`fecha::date >= $${params.length+1}`); params.push(desde); }
     if (hasta) { conditions.push(`fecha::date <= $${params.length+1}`); params.push(hasta); }
@@ -783,8 +798,6 @@ async function start() {
     await initAdmin();
     app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n`));
 }
-
 start();
-
 process.on('SIGTERM', () => { pool.end(); process.exit(0); });
 process.on('SIGINT', () => { pool.end(); process.exit(0); });
