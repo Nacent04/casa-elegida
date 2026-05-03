@@ -78,7 +78,11 @@
         .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-light)}
         .modal-body{padding:20px;display:grid;grid-template-columns:1fr;gap:20px}
         .carrusel-container{position:relative;overflow:hidden;border-radius:16px;background:#f5f5f5}
-        .carrusel-imagenes{display:flex;transition:transform 0.3s ease}
+        
+        /* IMAGEN NO SELECCIONABLE */
+        .carrusel-imagenes{display:flex;transition:transform 0.3s ease;user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
+        .carrusel-imagenes img{width:100%;min-width:100%;height:300px;object-fit:cover;flex-shrink:0;pointer-events:none;-webkit-user-drag:none;user-select:none}
+        
         .carrusel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:white;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;z-index:5}
         .carrusel-btn.prev{left:10px}.carrusel-btn.next{right:10px}
         .carrusel-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
@@ -87,9 +91,10 @@
         .modal-details h4{font-size:22px;font-weight:700;margin-bottom:8px}
         .modal-description{color:var(--text-light);margin-bottom:16px;font-size:14px}
         .variant-selector{display:flex;flex-wrap:wrap;gap:8px}
-        .variant-chip{padding:10px 16px;background:#f5f5f5;border:2px solid transparent;border-radius:50px;cursor:pointer;font-size:13px;font-weight:500}
-        .variant-chip.active{background:var(--primary);color:white}
-        .variant-chip.disabled{opacity:0.5;cursor:not-allowed}
+        .variant-chip{padding:10px 16px;background:#f5f5f5;border:2px solid transparent;border-radius:50px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s}
+        .variant-chip:hover{border-color:var(--primary);background:#e8e8e8}
+        .variant-chip.active{background:var(--primary);color:white;border-color:var(--primary)}
+        .variant-chip.disabled{opacity:0.5;cursor:not-allowed;border-color:transparent}
         .quantity-selector{display:flex;align-items:center;gap:16px;margin:20px 0}
         .quantity-control{display:flex;align-items:center;background:#f5f5f5;border-radius:50px}
         .quantity-control button{width:36px;height:36px;border:none;background:transparent;font-size:18px;font-weight:700;cursor:pointer;color:var(--primary)}
@@ -209,13 +214,132 @@ function getProductosFiltrados(){let f=productos.filter(p=>{if(categoriaSeleccio
 
 function renderizarProductos(){const g=document.getElementById('products-grid');const f=getProductosFiltrados();if(!f.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#666;grid-column:1/-1"><i class="fas fa-search" style="font-size:48px;margin-bottom:12px;opacity:0.4"></i><h3>No encontramos productos</h3></div>';return}let h='';f.forEach(p=>{if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];const stock=p.variantes.reduce((s,v)=>s+v.stock,0);const mayorista=p.precioMayor>0&&configuracion.mayorista?.habilitado;const stockBajo=stock<=2&&stock>0;h+=`<div class="product-card" onclick="abrirModalProducto(${p.id})">${mayorista?'<div class="product-badge"><span class="badge-mayorista"><i class="fas fa-tags"></i> Mayorista</span></div>':''}<span class="badge-stock ${stock<=5?'low':''} ${stockBajo?'ultimas':''}"><i class="fas fa-box"></i> ${stock} ${stockBajo?'⚡ ¡Últimas!':''}</span><img src="${sanitizarUrl(p.variantes[0].foto)}" class="product-image" onerror="this.src='https://via.placeholder.com/300'"><div class="product-info"><h3 class="product-name">${escapeHtml(p.nombre)}</h3><div class="product-prices"><span class="price-current">${fmt.format(p.precio)}</span>${mayorista?`<span class="price-mayorista">${fmt.format(p.precioMayor)}</span>`:''}</div><button class="btn-add-product" ${stock===0?'disabled':''} onclick="event.stopPropagation();abrirModalProducto(${p.id})"><i class="fas fa-eye"></i> Ver</button></div></div>`});g.innerHTML=h}
 
-function abrirModalProducto(id){const p=productos.find(x=>x.id==id);if(!p)return;productoModalActual=p;varianteSeleccionada=0;if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];carruselFotos=p.variantes.filter(v=>v.foto).map(v=>v.foto);if(carruselFotos.length===0)carruselFotos=['https://via.placeholder.com/400'];carruselActual=0;document.getElementById('modal-title').textContent=p.nombre;document.getElementById('modal-name').textContent=p.nombre;document.getElementById('modal-description').textContent=p.descripcion||'Producto de alta calidad';document.getElementById('modal-variants').innerHTML=p.variantes.map((v,i)=>`<div class="variant-chip ${i===0?'active':''} ${v.stock===0?'disabled':''}" onclick="${v.stock>0?`seleccionarVariante(${i})`:''}">${escapeHtml(v.nombre)} ${v.stock===0?'(Sin stock)':''}</div>`).join('');actualizarCarrusel();actualizarInfoModal();document.getElementById('product-modal').classList.add('active')}
-function actualizarCarrusel(){const c=document.getElementById('carrusel-imagenes');const d=document.getElementById('carrusel-dots');if(!c||!d)return;c.innerHTML=carruselFotos.map(f=>`<img src="${sanitizarUrl(f)}" style="width:100%;min-width:100%;height:300px;object-fit:cover;flex-shrink:0">`).join('');c.style.transform=`translateX(-${carruselActual*100}%)`;d.innerHTML=carruselFotos.map((_,i)=>`<span class="${i===carruselActual?'active':''}" onclick="carruselActual=${i};actualizarCarrusel()"></span>`).join('')}
-function moverCarrusel(dir){carruselActual+=dir;if(carruselActual<0)carruselActual=carruselFotos.length-1;if(carruselActual>=carruselFotos.length)carruselActual=0;actualizarCarrusel()}
-function seleccionarVariante(i){varianteSeleccionada=i;document.querySelectorAll('.variant-chip').forEach((c,j)=>c.classList.toggle('active',j===i));actualizarInfoModal()}
-function actualizarInfoModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];document.getElementById('modal-price').textContent=fmt.format(productoModalActual.precio);document.getElementById('modal-price-mayorista').textContent=(productoModalActual.precioMayor>0&&configuracion.mayorista?.habilitado)?`Mayorista: ${fmt.format(productoModalActual.precioMayor)}`:'';document.getElementById('stock-value').textContent=v.stock;document.getElementById('modal-quantity').max=v.stock;const btn=document.getElementById('modal-add-btn');btn.disabled=v.stock===0;btn.innerHTML=v.stock===0?'<i class="fas fa-box"></i> Sin Stock':'<i class="fas fa-cart-plus"></i> Agregar'}
-function cambiarCantidadModal(d){const i=document.getElementById('modal-quantity');i.value=Math.max(1,Math.min(parseInt(i.value)+d,productoModalActual?.variantes[varianteSeleccionada]?.stock||1))}
-function agregarDesdeModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada],cant=parseInt(document.getElementById('modal-quantity').value);if(v.stock<cant){mostrarToast('Stock insuficiente','error');return}const precio=productoModalActual.precio;const exist=carrito.find(i=>i.pId===productoModalActual.id&&i.vNom===v.nombre);if(exist){if(v.stock<exist.cant+cant){mostrarToast('Stock insuficiente','error');return}exist.cant+=cant}else carrito.push({pId:productoModalActual.id,pNom:productoModalActual.nombre,vNom:v.nombre,vFoto:v.foto,precio,precioOriginal:productoModalActual.precio,cant,esManual:false});recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();cerrarModal();mostrarToast('✅ Agregado')}
+// FUNCIÓN MODIFICADA: Ahora construye el carrusel con TODAS las fotos reales
+function abrirModalProducto(id){
+    const p=productos.find(x=>x.id==id);
+    if(!p)return;
+    productoModalActual=p;
+    varianteSeleccionada=0;
+    if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];
+    
+    // Construir carrusel con fotos reales de todas las variantes
+    carruselFotos=[];
+    p.variantes.forEach(v=>{
+        if(v.foto && v.foto.trim()!==''){
+            carruselFotos.push(v.foto);
+        }
+    });
+    // Si no hay fotos, usar placeholder
+    if(carruselFotos.length===0)carruselFotos=['https://via.placeholder.com/400'];
+    
+    // Posicionar el carrusel en la foto de la primera variante
+    carruselActual=0;
+    
+    document.getElementById('modal-title').textContent=p.nombre;
+    document.getElementById('modal-name').textContent=p.nombre;
+    document.getElementById('modal-description').textContent=p.descripcion||'Producto de alta calidad';
+    
+    // Renderizar chips de variantes
+    document.getElementById('modal-variants').innerHTML=p.variantes.map((v,i)=>`
+        <div class="variant-chip ${i===0?'active':''} ${v.stock===0?'disabled':''}" 
+             onclick="${v.stock>0?`seleccionarVariante(${i})`:''}">
+            ${escapeHtml(v.nombre)} ${v.stock===0?'(Sin stock)':''}
+        </div>
+    `).join('');
+    
+    actualizarCarrusel();
+    actualizarInfoModal();
+    document.getElementById('product-modal').classList.add('active');
+}
+
+// FUNCIÓN MODIFICADA: Actualiza el carrusel con las imágenes
+function actualizarCarrusel(){
+    const c=document.getElementById('carrusel-imagenes');
+    const d=document.getElementById('carrusel-dots');
+    if(!c||!d)return;
+    
+    // Renderizar imágenes del carrusel con atributos para prevenir selección
+    c.innerHTML=carruselFotos.map(f=>`
+        <img src="${sanitizarUrl(f)}" 
+             draggable="false"
+             oncontextmenu="return false;"
+             onerror="this.src='https://via.placeholder.com/400?text=Sin+Imagen'">
+    `).join('');
+    
+    c.style.transform=`translateX(-${carruselActual*100}%)`;
+    
+    // Renderizar dots de navegación
+    d.innerHTML=carruselFotos.map((_,i)=>`
+        <span class="${i===carruselActual?'active':''}" 
+              onclick="irACarruselSlide(${i})">
+        </span>
+    `).join('');
+}
+
+// Nueva función para ir a un slide específico
+function irACarruselSlide(index){
+    carruselActual=index;
+    actualizarCarrusel();
+}
+
+function moverCarrusel(dir){
+    carruselActual+=dir;
+    if(carruselActual<0)carruselActual=carruselFotos.length-1;
+    if(carruselActual>=carruselFotos.length)carruselActual=0;
+    actualizarCarrusel();
+}
+
+// FUNCIÓN MODIFICADA: Al seleccionar variante, el carrusel muestra su foto
+function seleccionarVariante(i){
+    varianteSeleccionada=i;
+    
+    // Actualizar chips visualmente
+    document.querySelectorAll('.variant-chip').forEach((c,j)=>c.classList.toggle('active',j===i));
+    
+    // Buscar la foto de la variante seleccionada y posicionar el carrusel
+    if(productoModalActual && productoModalActual.variantes[i]){
+        const fotoVariante=productoModalActual.variantes[i].foto;
+        if(fotoVariante && fotoVariante.trim()!==''){
+            // Buscar el índice de esta foto en el carrusel
+            const idxEnCarrusel=carruselFotos.findIndex(f=>f===fotoVariante);
+            if(idxEnCarrusel!==-1){
+                carruselActual=idxEnCarrusel;
+                actualizarCarrusel();
+            }
+        }
+    }
+    
+    actualizarInfoModal();
+}
+
+function actualizarInfoModal(){
+    if(!productoModalActual)return;
+    const v=productoModalActual.variantes[varianteSeleccionada];
+    document.getElementById('modal-price').textContent=fmt.format(productoModalActual.precio);
+    document.getElementById('modal-price-mayorista').textContent=(productoModalActual.precioMayor>0&&configuracion.mayorista?.habilitado)?`Mayorista: ${fmt.format(productoModalActual.precioMayor)}`:'';
+    document.getElementById('stock-value').textContent=v.stock;
+    document.getElementById('modal-quantity').max=v.stock;
+    const btn=document.getElementById('modal-add-btn');
+    btn.disabled=v.stock===0;
+    btn.innerHTML=v.stock===0?'<i class="fas fa-box"></i> Sin Stock':'<i class="fas fa-cart-plus"></i> Agregar al Pedido';
+}
+
+function cambiarCantidadModal(d){
+    const i=document.getElementById('modal-quantity');
+    i.value=Math.max(1,Math.min(parseInt(i.value)+d,productoModalActual?.variantes[varianteSeleccionada]?.stock||1));
+}
+
+function agregarDesdeModal(){
+    if(!productoModalActual)return;
+    const v=productoModalActual.variantes[varianteSeleccionada],cant=parseInt(document.getElementById('modal-quantity').value);
+    if(v.stock<cant){mostrarToast('Stock insuficiente','error');return}
+    const precio=productoModalActual.precio;
+    const exist=carrito.find(i=>i.pId===productoModalActual.id&&i.vNom===v.nombre);
+    if(exist){if(v.stock<exist.cant+cant){mostrarToast('Stock insuficiente','error');return}exist.cant+=cant}
+    else carrito.push({pId:productoModalActual.id,pNom:productoModalActual.nombre,vNom:v.nombre,vFoto:v.foto,precio,precioOriginal:productoModalActual.precio,cant,esManual:false});
+    recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();cerrarModal();mostrarToast('✅ Agregado al pedido');
+}
+
 function cerrarModal(){document.getElementById('product-modal').classList.remove('active');productoModalActual=null}
 
 function toggleCarrito(){document.getElementById('cart-sidebar').classList.toggle('active');document.getElementById('cart-overlay').classList.toggle('active')}
