@@ -104,6 +104,9 @@
         .variante-item{background:white;border-radius:16px;padding:16px;border:1px solid #e2e8f0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
         .btn-toggle-variantes{margin-top:12px;padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:12px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:8px;transition:all 0.2s}
         .btn-toggle-variantes:hover{background:#4f46e5}
+        .miniatura-variante{transition:all 0.3s ease}
+        .miniatura-variante.activa{border-color:#6366f1 !important;transform:scale(1.05);box-shadow:0 4px 12px rgba(99,102,241,0.3)}
+        .miniatura-variante:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
         @media(max-width:1024px){.layout-con-carrito{grid-template-columns:1fr}body{padding:16px}}
         @media(max-width:768px){.form-row{grid-template-columns:1fr}.producto-header{flex-direction:column}}
     </style>
@@ -227,8 +230,120 @@ async function cargarCategorias() { try { const d=await safeFetch('/listar-categ
 async function cargarMetodosEnvio() { try { const d=await safeFetch('/listar-metodos-envio',{method:'POST'}); metodosEnvio=d.lista||[]; } catch(e){} }
 async function cargarConfiguracion() { try { const d=await safeFetch('/get-config',{method:'POST'}); configuracion=d; if(d.logo){ document.getElementById('logo-preview-img').src=d.logo; document.getElementById('logo-preview-img').style.display='block'; document.getElementById('logo-placeholder').style.display='none'; } document.getElementById('empresa-nombre').value=d.empresa?.nombre||''; document.getElementById('empresa-telefono').value=d.empresa?.telefono||''; document.getElementById('empresa-email').value=d.empresa?.email||''; document.getElementById('empresa-direccion').value=d.empresa?.direccion||''; if(d.horarios){ document.getElementById('horario-lv').value=d.horarios.lunesViernes||''; document.getElementById('horario-sab').value=d.horarios.sabados||''; document.getElementById('horario-dom').value=d.horarios.domingos||''; } if(d.redes){ document.getElementById('red-instagram').value=d.redes.instagram||''; document.getElementById('red-facebook').value=d.redes.facebook||''; document.getElementById('red-tiktok').value=d.redes.tiktok||''; document.getElementById('red-whatsapp').value=d.redes.whatsapp||''; } if(d.pagos){ document.getElementById('pago-alias').value=d.pagos.alias||''; document.getElementById('pago-cbu').value=d.pagos.cbu||''; document.getElementById('pago-banco').value=d.pagos.banco||''; document.getElementById('pago-titular').value=d.pagos.titular||''; } if(d.diseno){ document.getElementById('tienda-color-primary').value=d.diseno.colorPrimario||'#1a1a1a'; document.getElementById('tienda-color-secondary').value=d.diseno.colorSecundario||'#c9a96e'; document.getElementById('tienda-color-bg').value=d.diseno.colorFondo||'#fafafa'; document.getElementById('tienda-color-text').value=d.diseno.colorTexto||'#1a1a1a'; } if(d.tienda){ document.getElementById('tienda-titulo').value=d.tienda.titulo||''; document.getElementById('tienda-mensaje').value=d.tienda.mensajeBienvenida||''; setTiendaHabilitada(d.tienda.habilitada!==false); } if(d.mayorista){ mayoristaHabilitado=d.mayorista.habilitado||false; mayoristaModo=d.mayorista.modo||'cantidad'; document.getElementById('mayoristaCantidad').value=d.mayorista.valorCantidad||3; document.getElementById('mayoristaMonto').value=formatearNumero(d.mayorista.valorMonto||80000); selectMayoristaModo(mayoristaModo); if(!mayoristaHabilitado){ document.getElementById('mayoristaPanel').style.display='none'; const btn=document.getElementById('btnMayoristaToggle'); btn.innerHTML='<i class="fas fa-toggle-off"></i> Desactivado'; btn.style.background='#64748b'; } } if(d.metodosEnvio&&document.getElementById('metodos-envio-lista')) document.getElementById('metodos-envio-lista').value=d.metodosEnvio.join('\n'); } catch(e){} }
 
-function renderProductosVenta() { const g=document.getElementById('grid-prods'); if(!g) return; g.innerHTML=''; productos.forEach(p=>{ if(!p.variantes?.length) p.variantes=[{nombre:"Unica",stock:0,foto:""}]; if(!varianteSeleccionada[p.id]) varianteSeleccionada[p.id]=0; let idx=varianteSeleccionada[p.id]; let v=p.variantes[idx]; g.innerHTML+=`<div class="card" data-nombre="${p.nombre.toLowerCase()}" data-id="${p.id}"><div><span class="stock-badge ${v.stock<=5?'stock-bajo':''}"><i class="fas fa-box"></i> Stock: ${v.stock}</span></div><img src="${sanitizarUrl(p.variantes[idx]?.foto)}" onerror="this.src='https://via.placeholder.com/180'" style="width:100%;height:180px;object-fit:cover;border-radius:20px"><h4>${escapeHtml(p.nombre)}</h4><div class="precio-producto">${fmt.format(p.precio)}</div>${p.precioMayor>0?`<div class="precio-mayor">Mayorista: ${fmt.format(p.precioMayor)}</div>`:''}<select class="variante-select" onchange="cambiarVariante(${p.id},this.value)">${p.variantes.map((x,i)=>`<option value="${i}" ${i===idx?'selected':''}>${escapeHtml(x.nombre)} (${x.stock})</option>`).join('')}</select><div class="cantidad-selector"><button class="cantidad-btn" onclick="cambiarCantidad(${p.id},-1)">-</button><input type="number" id="q-${p.id}" value="1" min="1" max="${v.stock}" class="cantidad-input"><button class="cantidad-btn" onclick="cambiarCantidad(${p.id},1)">+</button></div><button class="btn-add" onclick="addAlCarrito(${p.id})" ${v.stock===0?'disabled':''}>${v.stock===0?'Sin Stock':'Agregar'}</button></div>`; }); }
-function cambiarVariante(id,idx){ varianteSeleccionada[id]=parseInt(idx); const p=productos.find(x=>x.id==id); if(!p)return; document.getElementById(`q-${id}`).max=p.variantes[idx].stock; }
+function renderProductosVenta() {
+    const g = document.getElementById('grid-prods');
+    if (!g) return;
+    g.innerHTML = '';
+    productos.forEach(p => {
+        if (!p.variantes?.length) p.variantes = [{ nombre: "Unica", stock: 0, foto: "" }];
+        if (!varianteSeleccionada[p.id]) varianteSeleccionada[p.id] = 0;
+        let idx = varianteSeleccionada[p.id];
+        let v = p.variantes[idx];
+        
+        g.innerHTML += `
+        <div class="card" data-nombre="${p.nombre.toLowerCase()}" data-id="${p.id}">
+            <div><span class="stock-badge ${v.stock <= 5 ? 'stock-bajo' : ''}"><i class="fas fa-box"></i> Stock: ${v.stock}</span></div>
+            <img id="img-principal-${p.id}" 
+                 src="${sanitizarUrl(p.variantes[idx]?.foto)}" 
+                 onerror="this.src='https://via.placeholder.com/180'" 
+                 style="width:100%;height:180px;object-fit:cover;border-radius:20px;transition:all 0.3s">
+            <h4>${escapeHtml(p.nombre)}</h4>
+            <div class="precio-producto">${fmt.format(p.precio)}</div>
+            ${p.precioMayor > 0 ? `<div class="precio-mayor">Mayorista: ${fmt.format(p.precioMayor)}</div>` : ''}
+            
+            <!-- Miniaturas de variantes para selección visual -->
+            <div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0;margin-bottom:8px;justify-content:center">
+                ${p.variantes.map((vr, i) => `
+                    <div onclick="seleccionarVarianteVisual(${p.id}, ${i})" 
+                         class="miniatura-variante ${i === idx ? 'activa' : ''}" 
+                         id="mini-${p.id}-${i}"
+                         style="cursor:pointer;border-radius:12px;overflow:hidden;border:3px solid ${i === idx ? '#6366f1' : '#e2e8f0'};transition:all 0.2s;min-width:50px;text-align:center"
+                         onmouseenter="this.style.borderColor='#6366f1'" 
+                         onmouseleave="if(!this.classList.contains('activa')) this.style.borderColor='#e2e8f0'">
+                        <img src="${sanitizarUrl(vr.foto)}" 
+                             onerror="this.src='https://via.placeholder.com/50'"
+                             style="width:50px;height:50px;object-fit:cover;display:block">
+                        <span style="font-size:10px;display:block;padding:2px 4px;background:#f8fafc;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px">${escapeHtml(vr.nombre)}</span>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div style="color:#10b981;font-size:11px;margin-bottom:4px;font-weight:600">
+                📦 ${escapeHtml(v.nombre)} - Stock: ${v.stock}
+            </div>
+            
+            <div class="cantidad-selector">
+                <button class="cantidad-btn" onclick="cambiarCantidad(${p.id},-1)">-</button>
+                <input type="number" id="q-${p.id}" value="1" min="1" max="${v.stock}" class="cantidad-input">
+                <button class="cantidad-btn" onclick="cambiarCantidad(${p.id},1)">+</button>
+            </div>
+            <button class="btn-add" onclick="addAlCarrito(${p.id})" ${v.stock === 0 ? 'disabled' : ''}>
+                ${v.stock === 0 ? 'Sin Stock' : 'Agregar'}
+            </button>
+        </div>`;
+    });
+}
+
+function seleccionarVarianteVisual(id, idx) {
+    const p = productos.find(x => x.id == id);
+    if (!p) return;
+    
+    // Actualizar el índice seleccionado
+    varianteSeleccionada[id] = idx;
+    const v = p.variantes[idx];
+    
+    // Cambiar la imagen principal
+    const imgPrincipal = document.getElementById(`img-principal-${id}`);
+    if (imgPrincipal) {
+        imgPrincipal.src = sanitizarUrl(v.foto);
+        imgPrincipal.onerror = function() { this.src = 'https://via.placeholder.com/180'; };
+    }
+    
+    // Actualizar el máximo de stock en el input
+    const inputCantidad = document.getElementById(`q-${id}`);
+    if (inputCantidad) {
+        inputCantidad.max = v.stock;
+        if (parseInt(inputCantidad.value) > v.stock) inputCantidad.value = v.stock;
+    }
+    
+    // Actualizar el badge de stock
+    const card = document.querySelector(`.card[data-id="${id}"]`);
+    if (card) {
+        const badge = card.querySelector('.stock-badge');
+        if (badge) {
+            badge.innerHTML = `<i class="fas fa-box"></i> Stock: ${v.stock}`;
+            badge.className = `stock-badge ${v.stock <= 5 ? 'stock-bajo' : ''}`;
+        }
+        // Actualizar texto de variante seleccionada
+        const variantTexto = card.querySelector('div[style*="color:#10b981"]');
+        if (variantTexto) variantTexto.innerHTML = `📦 ${escapeHtml(v.nombre)} - Stock: ${v.stock}`;
+    }
+    
+    // Remover clase activa de todas las miniaturas
+    document.querySelectorAll(`[id^="mini-${id}-"]`).forEach(el => {
+        el.classList.remove('activa');
+        el.style.borderColor = '#e2e8f0';
+    });
+    
+    // Agregar clase activa a la miniatura seleccionada
+    const miniatura = document.getElementById(`mini-${id}-${idx}`);
+    if (miniatura) {
+        miniatura.classList.add('activa');
+        miniatura.style.borderColor = '#6366f1';
+    }
+    
+    // Actualizar botón de agregar
+    const btnAdd = card?.querySelector('.btn-add');
+    if (btnAdd) {
+        btnAdd.disabled = v.stock === 0;
+        btnAdd.textContent = v.stock === 0 ? 'Sin Stock' : 'Agregar';
+    }
+}
+
+function cambiarVariante(id, idx) {
+    seleccionarVarianteVisual(id, parseInt(idx));
+}
+
 function cambiarCantidad(id,d){ const i=document.getElementById('q-'+id); if(i) i.value=Math.max(1,Math.min((parseInt(i.value)||1)+d,parseInt(i.max)||999)); }
 
 async function addAlCarrito(id){ let p=productos.find(x=>x.id==id); if(!p)return; let idx=varianteSeleccionada[id]||0; let v=p.variantes[idx]; if(!v)return; let c=parseInt(document.getElementById('q-'+id).value); try { const res=await fetch('/verificar-stock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productoId:id,varianteNombre:v.nombre})}); const data=await res.json(); if(data.stock!==undefined){ v.stock=data.stock; const badge=document.querySelector(`.card[data-id="${id}"] .stock-badge`); if(badge){ badge.innerHTML=`<i class="fas fa-box"></i> Stock: ${v.stock}`; badge.classList.toggle('stock-bajo',v.stock<=5); } } } catch(e){} if(v.stock<c){ mostrarToast('❌ Stock insuficiente. Disponible: '+v.stock,true); return; } let e=carrito.find(i=>i.pId===id&&i.vNom===v.nombre&&!i.esManual); if(e){ if(v.stock<e.cant+c){ mostrarToast('❌ Stock insuficiente',true); return; } e.cant+=c; } else { carrito.push({pId:id,pNom:p.nombre,vNom:v.nombre,vFoto:v.foto||'',precio:p.precio,precioMayor:p.precioMayor||0,cant:c,esManual:false}); } calcularPreciosMayoristaEnVivo(); renderCart(); localStorage.setItem('pos_carrito',JSON.stringify(carrito)); mostrarToast('✅ Agregado'); }
