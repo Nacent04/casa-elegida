@@ -275,36 +275,160 @@ app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: fals
 app.use(passport.initialize()); app.use(passport.session());
 app.use('/uploads', express.static('uploads')); app.use(express.static('public'));
 
-passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback' },
+// ============ CONFIGURACIÓN DE PASSPORT GOOGLE ============
+passport.use(new GoogleStrategy({ 
+    clientID: GOOGLE_CLIENT_ID, 
+    clientSecret: GOOGLE_CLIENT_SECRET, 
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'https://casa-elegida.onrender.com/auth/google/callback' 
+},
     async (accessToken, refreshToken, profile, done) => {
         try {
+            console.log('📥 Perfil de Google recibido:', profile.emails[0].value);
+            
+            // Buscar por email primero
             let u = (await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
-            if (!u) {
+            
+            if (u) {
+                // Usuario existe, actualizar googleId si no lo tiene
+                if (!u.googleId) {
+                    await pool.query('UPDATE usuarios SET "googleId"=$1, foto=$2 WHERE id=$3', 
+                        [profile.id, profile.photos?.[0]?.value || '', u.id]);
+                    console.log('🔗 Cuenta vinculada con Google:', u.email);
+                } else {
+                    console.log('✅ Usuario existente encontrado:', u.email);
+                }
+            } else {
+                // Crear nuevo usuario
                 const id = 'USR-' + Date.now();
-                await pool.query('INSERT INTO usuarios (id, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,0)',
-                    [id, profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
+                await pool.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,0)',
+                    [id, profile.displayName || '', '', profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '', 'cliente']);
                 u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
+                console.log('🆕 Nuevo usuario creado:', u.email);
             }
+            
             return done(null, u);
-        } catch(e) { return done(e, null); }
-    }));
+        } catch(e) { 
+            console.error('❌ Error en Google Strategy:', e);
+            return done(e, null); 
+        }
+    }
+));
+
 passport.serializeUser((u, d) => d(null, u.id));
-passport.deserializeUser(async (id, d) => { const u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0]; d(null, u || null); });
-
-const authMiddleware = (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { req.usuario = jwt.verify(t, JWT_SECRET); next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
-const adminMiddleware = (permiso = null) => (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { const d = jwt.verify(t, JWT_SECRET); if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); if (d.rol === 'admin') { req.admin = d; return next(); } if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); req.admin = d; next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
-const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
-
-['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos','completar-datos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
-app.get('/', (req, res) => res.redirect('/tienda'));
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), async (req, res) => {
-    const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
-    const u = (await pool.query('SELECT "datosCompletos" FROM usuarios WHERE id=$1', [req.user.id])).rows[0];
-    if (u && u.datosCompletos == 0) return res.redirect(`/completar-datos?token=${token}`);
-    res.redirect(`/tienda?token=${token}`);
+passport.deserializeUser(async (id, d) => { 
+    try {
+        const u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0]; 
+        d(null, u || null); 
+    } catch(e) { d(e, null); }
 });
 
+// ============ MIDDLEWARES ============
+const authMiddleware = (req, res, next) => { 
+    const t = req.headers.authorization?.replace('Bearer ', ''); 
+    if (!t) return res.status(401).json({ error: 'No autorizado' }); 
+    try { 
+        req.usuario = jwt.verify(t, JWT_SECRET); 
+        next(); 
+    } catch(e) { 
+        return res.status(401).json({ error: 'Token inválido o expirado' }); 
+    } 
+};
+
+const adminMiddleware = (permiso = null) => (req, res, next) => { 
+    const t = req.headers.authorization?.replace('Bearer ', ''); 
+    if (!t) return res.status(401).json({ error: 'No autorizado' }); 
+    try { 
+        const d = jwt.verify(t, JWT_SECRET); 
+        if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); 
+        if (d.rol === 'admin') { req.admin = d; return next(); } 
+        if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); 
+        req.admin = d; 
+        next(); 
+    } catch(e) { 
+        return res.status(401).json({ error: 'Token inválido' }); 
+    } 
+};
+
+const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+// ============ RUTAS DE PÁGINAS HTML ============
+['login','registro','perfil','recuperar','completar-datos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
+app.get('/', (req, res) => res.redirect('/tienda'));
+app.get('/tienda', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tienda.html')));
+app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+
+// ============ RUTAS DE GOOGLE OAUTH ============
+app.get('/auth/google', (req, res, next) => {
+    console.log('🚀 Iniciando autenticación con Google...');
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account'  // Forzar selección de cuenta
+    })(req, res, next);
+});
+
+// ============ CALLBACK DE GOOGLE CORREGIDO ============
+app.get('/auth/google/callback', (req, res, next) => {
+    console.log('📥 Callback de Google recibido');
+    
+    passport.authenticate('google', { 
+        failureRedirect: '/login?error=auth_failed',
+        session: true 
+    }, async (err, user, info) => {
+        if (err) {
+            console.error('❌ Error en autenticación Google:', err);
+            return res.redirect('/login?error=server_error');
+        }
+        
+        if (!user) {
+            console.error('❌ No se encontró usuario');
+            return res.redirect('/login?error=no_user');
+        }
+        
+        try {
+            // Iniciar sesión con Passport
+            req.login(user, { session: true }, async (loginErr) => {
+                if (loginErr) {
+                    console.error('❌ Error en req.login:', loginErr);
+                    return res.redirect('/login?error=login_failed');
+                }
+                
+                // Generar token JWT
+                const token = jwt.sign(
+                    { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol },
+                    JWT_SECRET,
+                    { expiresIn: '7d' }
+                );
+                
+                // Datos del usuario para enviar
+                const usuarioData = JSON.stringify({
+                    id: user.id,
+                    nombre: user.nombre || 'Usuario',
+                    apellido: user.apellido || '',
+                    email: user.email,
+                    rol: user.rol || 'cliente'
+                });
+                
+                console.log('✅ Autenticación exitosa, redirigiendo con token...');
+                
+                // Verificar si necesita completar datos
+                if (user.datosCompletos == 0) {
+                    return res.redirect(`/completar-datos?token=${token}&usuario=${encodeURIComponent(usuarioData)}`);
+                }
+                
+                // REDIRIGIR A LOGIN CON TOKEN (CORREGIDO)
+                const redirectUrl = `/login?token=${token}&usuario=${encodeURIComponent(usuarioData)}`;
+                console.log('🔄 Redirigiendo a:', redirectUrl);
+                return res.redirect(redirectUrl);
+            });
+        } catch (error) {
+            console.error('❌ Error generando token:', error);
+            return res.redirect('/login?error=token_error');
+        }
+    })(req, res, next);
+});
+
+// ============ ADMIN ============
 app.post('/admin/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
@@ -366,6 +490,7 @@ app.post('/admin/editar-perfil', adminMiddleware(), async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ============ AUTH CLIENTES ============
 app.post('/auth/registro', async (req, res) => {
     try {
         const { nombre, apellido, email, dni, telefono, password } = req.body;
@@ -434,6 +559,7 @@ app.post('/auth/completar-datos', authMiddleware, async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ============ PRODUCTOS ============
 app.post('/listar', async (req, res) => {
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
     for (const p of prods) {
@@ -493,10 +619,11 @@ app.post('/subir-logo', adminMiddleware('config'), upload.single('logo'), async 
     fs.unlinkSync(req.file.path);
     await setConfig('logo', r.secure_url);
     await logActividad('Admin', 'SUBIR_LOGO', 'Logo actualizado', req);
-    res.json({ success: true });
+    res.json({ success: true, url: r.secure_url });
 });
 app.post('/eliminar-logo', adminMiddleware('config'), async (req, res) => { await setConfig('logo', ''); res.json({ success: true }); });
 
+// ============ CATEGORÍAS Y ENVÍOS ============
 app.post('/listar-categorias', async (req, res) => {
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
     res.json({ lista: cats.map(c => ({ ...c, subcategorias: JSON.parse(c.subcategorias||'[]') })) });
@@ -521,6 +648,7 @@ app.post('/guardar-metodos-envio', async (req, res) => {
     res.json({ success: true });
 });
 
+// ============ CONFIGURACIÓN ============
 app.post('/get-config', adminMiddleware('config'), async (req, res) => res.json(await getConfig()));
 app.post('/save-config', adminMiddleware('config'), async (req, res) => {
     ['empresa','horarios','redes','pagos'].forEach(async k => { if(req.body[k]) await setConfig(k, req.body[k]); });
@@ -534,6 +662,7 @@ app.post('/save-home-config', adminMiddleware('config'), async (req, res) => { i
 app.post('/save-plantilla', adminMiddleware('web'), async (req, res) => { await setConfig('plantilla', req.body.plantilla); res.json({ success: true }); });
 app.post('/save-icono', adminMiddleware('web'), async (req, res) => { await setConfig('icono', req.body.icono); res.json({ success: true }); });
 
+// ============ VENTAS ============
 app.post('/confirmar-venta', async (req, res) => {
     try {
         const { carrito, pago, logistica, cliente } = req.body;
@@ -561,6 +690,7 @@ app.post('/corte-caja', async (req, res) => {
     res.json({ total: v.total, cantidad: v.cantidad });
 });
 
+// ============ TIENDA ============
 app.post('/tienda/listar-productos', async (req, res) => {
     const c = await getConfig();
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
@@ -646,6 +776,7 @@ app.post('/tienda/verificar-pin', async (req, res) => {
     res.json({ success: true, pedido: { ...p, cliente: JSON.parse(p.cliente||'{}'), items: JSON.parse(p.items||'[]') } });
 });
 
+// ============ DASHBOARD Y ESTADÍSTICAS ============
 app.post('/dashboard/stats', async (req, res) => {
     const v = (await pool.query("SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ ventasHoy: v.c, totalHoy: v.t });
@@ -662,11 +793,15 @@ app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), async (r
         }
         if (v.origen === 'tienda') trWeb += v.total;
     });
+    const ventasHoy = (await pool.query("SELECT COALESCE(SUM(total),0) as t, COUNT(*) as c FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({
-        ventasHoy: 0, ventasMes: 0, totalClientes: (await pool.query('SELECT COUNT(*) as c FROM usuarios')).rows[0].c,
+        ventasHoy: ventasHoy.t || 0, cantidadHoy: parseInt(ventasHoy.c) || 0,
+        ventasMes: efAdmin + trAdmin + trWeb, cantidadMes: ventasMes.length,
+        ticketPromedio: ventasMes.length > 0 ? Math.round((efAdmin + trAdmin + trWeb) / ventasMes.length) : 0,
+        totalClientes: (await pool.query('SELECT COUNT(*) as c FROM usuarios')).rows[0].c,
         totalProductos: (await pool.query('SELECT COUNT(*) as c FROM productos')).rows[0].c,
         pedidosPendientes: (await pool.query("SELECT COUNT(*) as c FROM pedidos WHERE estado IN ('pendiente','confirmado','abonado')")).rows[0].c,
-        productosAgotados: 0,
+        productosAgotados: (await pool.query('SELECT COUNT(*) as c FROM variantes WHERE stock = 0')).rows[0].c,
         rendimientoMensual: { efAdmin, trAdmin, efWeb, trWeb, total: efAdmin+trAdmin+efWeb+trWeb }
     });
 });
@@ -683,8 +818,14 @@ app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename=ventas.csv');
     res.send(csv);
 });
+app.post('/admin/estadisticas-vendedor', adminMiddleware('dashboard'), async (req, res) => {
+    const logs = (await pool.query("SELECT admin, accion, COUNT(*) as c FROM logs_admin WHERE accion IN ('VENTA','CONFIRMAR_PEDIDO') GROUP BY admin, accion")).rows;
+    const v = {};
+    logs.forEach(l => { if(!v[l.admin]) v[l.admin]={nombre:l.admin,ventas:0,pedidos:0}; if(l.accion==='VENTA')v[l.admin].ventas+=parseInt(l.c); else v[l.admin].pedidos+=parseInt(l.c); });
+    res.json({ lista: Object.values(v) });
+});
 
-// ==================== CAJA PROFESIONAL ====================
+// ============ CAJA PROFESIONAL ============
 app.post('/admin/apertura-caja-profesional', adminMiddleware('ventas'), async (req, res) => {
     try {
         const { montoEfectivo, montoTransferencia } = req.body;
@@ -743,7 +884,7 @@ app.post('/admin/estado-caja-profesional', adminMiddleware('ventas'), async (req
             }
             if (v.origen === 'tienda') ventasWeb += v.total;
         });
-        res.json({ abierta: true, abiertaPor: caja.abiertapor, montoInicialEfectivo: caja.montoinicialefectivo, montoInicialTransferencia: caja.montoinicialtransferencia, ventasEfectivo, ventasTransferencia, ventasWeb, totalEsperadoEfectivo: caja.montoinicialefectivo + ventasEfectivo, totalEsperadoTransferencia: caja.montoinicialtransferencia + ventasTransferencia + ventasWeb, cantidadVentas: ventasAdmin.length });
+        res.json({ abierta: true, abiertaPor: caja.abiertapor, montoInicialEfectivo: caja.montoinicialefectivo, montoInicialTransferencia: caja.montoinicialtransferencia, ventasEfectivo, ventasTransferencia, ventasWebTransferencia: ventasWeb, totalEsperadoEfectivo: caja.montoinicialefectivo + ventasEfectivo, totalEsperadoTransferencia: caja.montoinicialtransferencia + ventasTransferencia + ventasWeb, cantidadVentas: ventasAdmin.length });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -760,13 +901,7 @@ app.post('/admin/historial-cajas', adminMiddleware('dashboard'), async (req, res
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/admin/estadisticas-vendedor', adminMiddleware('dashboard'), async (req, res) => {
-    const logs = (await pool.query("SELECT admin, accion, COUNT(*) as c FROM logs_admin WHERE accion IN ('VENTA','CONFIRMAR_PEDIDO') GROUP BY admin, accion")).rows;
-    const v = {};
-    logs.forEach(l => { if(!v[l.admin]) v[l.admin]={nombre:l.admin,ventas:0,pedidos:0}; if(l.accion==='VENTA')v[l.admin].ventas+=l.c; else v[l.admin].pedidos+=l.c; });
-    res.json({ lista: Object.values(v) });
-});
-
+// ============ NOTIFICACIONES Y LOGS ============
 app.post('/notificaciones', async (req, res) => { res.json({ lista: (await pool.query('SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT 50')).rows }); });
 app.post('/notificaciones/leer', async (req, res) => { await pool.query('UPDATE notificaciones SET leida=1 WHERE id=$1', [req.body.id]); res.json({ success: true }); });
 app.post('/notificaciones/leer-todas', async (req, res) => { await pool.query('UPDATE notificaciones SET leida=1'); res.json({ success: true }); });
@@ -783,21 +918,28 @@ app.post('/logs/admin', async (req, res) => {
     res.json({ lista: logs });
 });
 
+// ============ PEDIDOS DE CLIENTE ============
 app.get('/api/mis-pedidos', authMiddleware, async (req, res) => {
     const pedidos = (await pool.query('SELECT * FROM pedidos WHERE "usuarioId"=$1 ORDER BY "fechaTimestamp" DESC', [req.usuario.id])).rows;
     res.json({ lista: pedidos.map(p => ({ ...p, items: JSON.parse(p.items||'[]'), cliente: JSON.parse(p.cliente||'{}') })) });
 });
 
+// ============ ERROR HANDLERS ============
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
-app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Error interno' }); });
+app.use((err, req, res, next) => { 
+    console.error('🔥 Error no manejado:', err.stack); 
+    res.status(500).json({ error: 'Error interno del servidor' }); 
+});
 
+// ============ INICIAR SERVIDOR ============
 async function start() {
     await initDB();
     await initConfig();
     await initMetodosEnvio();
     await initAdmin();
-    app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n`));
+    app.listen(PORT, '0.0.0.0', () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n`));
 }
 start();
+
 process.on('SIGTERM', () => { pool.end(); process.exit(0); });
 process.on('SIGINT', () => { pool.end(); process.exit(0); });
