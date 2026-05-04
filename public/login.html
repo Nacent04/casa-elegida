@@ -84,19 +84,20 @@
     <div id="toast-container"></div>
     
     <script>
-        // Obtener URL de retorno
+        // ============ CONFIGURACIÓN INICIAL ============
         const urlParams = new URLSearchParams(window.location.search);
+        
+        // Obtener URL de retorno de múltiples fuentes
         let returnUrl = urlParams.get('return') || localStorage.getItem('returnUrl') || '/tienda';
         
-        // Guardar en localStorage para persistencia
-        if (returnUrl) {
+        // Guardar en localStorage para persistencia entre redirecciones
+        if (returnUrl && returnUrl !== '/login') {
             localStorage.setItem('returnUrl', returnUrl);
-        } else {
-            returnUrl = '/tienda';
         }
         
-        console.log('URL de retorno:', returnUrl);
+        console.log('🔗 URL de retorno:', returnUrl);
         
+        // ============ FUNCIONES DE UI ============
         function mostrarToast(msg, error = false) {
             const t = document.createElement('div'); 
             t.className = `toast ${error ? 'error' : ''}`;
@@ -116,100 +117,121 @@
             document.getElementById('login-alert').style.display = 'none';
         }
         
-        // Verificar si ya hay sesión activa
+        // ============ VERIFICAR SI YA HAY SESIÓN ACTIVA ============
         function verificarSesionExistente() {
             const token = localStorage.getItem('token');
             if (token) {
-                // Verificar que el token sea válido
+                console.log('🔍 Verificando sesión existente...');
+                
                 fetch('/auth/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 .then(r => r.json())
                 .then(user => {
                     if (user && user.id) {
-                        // Sesión válida, redirigir
-                        console.log('Sesión activa encontrada, redirigiendo...');
-                        window.location.href = returnUrl;
+                        // Sesión válida, redirigir a tienda
+                        console.log('✅ Sesión válida encontrada, redirigiendo...');
+                        const finalUrl = localStorage.getItem('returnUrl') || '/tienda';
+                        localStorage.removeItem('returnUrl');
+                        window.location.href = finalUrl;
                     } else {
                         // Token inválido, limpiar
-                        console.log('Token inválido, limpiando...');
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('usuario');
-                        localStorage.removeItem('returnUrl');
+                        console.log('❌ Token inválido, limpiando...');
+                        limpiarSesion();
                     }
                 })
                 .catch(() => {
-                    // Error al verificar, asumir que no hay sesión
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('usuario');
+                    console.log('❌ Error al verificar token, limpiando...');
+                    limpiarSesion();
                 });
             }
         }
         
-        // Verificar si viene de un callback de Google con token
+        function limpiarSesion() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuario');
+        }
+        
+        // ============ MANEJAR CALLBACK DE GOOGLE ============
         function verificarCallbackGoogle() {
             const token = urlParams.get('token');
             const usuario = urlParams.get('usuario');
             const error = urlParams.get('error');
             
+            // Si hay error, mostrarlo
             if (error) {
-                mostrarAlerta('Error al iniciar sesión con Google. Intentá nuevamente.', 'error');
-                // Limpiar URL
-                window.history.replaceState({}, document.title, window.location.pathname);
+                console.error('❌ Error en callback de Google:', error);
+                mostrarAlerta('Error al iniciar sesión con Google. Por favor, intentá nuevamente.', 'error');
+                limpiarURL();
                 return;
             }
             
+            // Si hay token, procesarlo
             if (token) {
-                console.log('Token recibido de Google, guardando...');
+                console.log('✅ Token recibido de Google callback');
                 
-                // Guardar token
+                // Guardar token inmediatamente
                 localStorage.setItem('token', token);
                 
-                // Si viene usuario en URL, guardarlo
+                // Si viene usuario en la URL, guardarlo
                 if (usuario) {
                     try {
-                        const userData = JSON.parse(decodeURIComponent(usuario));
-                        localStorage.setItem('usuario', JSON.stringify(userData));
-                        console.log('Usuario guardado:', userData);
+                        const usuarioData = JSON.parse(decodeURIComponent(usuario));
+                        localStorage.setItem('usuario', JSON.stringify(usuarioData));
+                        console.log('👤 Usuario guardado desde URL:', usuarioData);
                     } catch (e) {
-                        console.error('Error al parsear datos de usuario:', e);
+                        console.error('❌ Error parseando usuario de URL:', e);
                     }
                 }
                 
-                // También intentar obtener datos del usuario desde el servidor
+                // Verificar/obtener datos del usuario desde el servidor
+                console.log('🔍 Obteniendo datos del usuario desde /auth/me...');
+                
                 fetch('/auth/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP ${r.status}`);
+                    }
+                    return r.json();
+                })
                 .then(userData => {
                     if (userData && userData.id) {
                         localStorage.setItem('usuario', JSON.stringify(userData));
-                        console.log('Datos de usuario obtenidos del servidor:', userData);
+                        console.log('✅ Datos de usuario obtenidos del servidor:', userData.email);
                     }
                 })
                 .catch(err => {
-                    console.error('Error al obtener datos del usuario:', err);
+                    console.error('❌ Error obteniendo datos del usuario:', err);
+                    // No es crítico si falla, ya tenemos el token
                 })
                 .finally(() => {
-                    // Limpiar parámetros de URL
-                    if (window.history.replaceState) {
-                        const cleanUrl = window.location.pathname;
-                        window.history.replaceState({}, document.title, cleanUrl);
-                    }
+                    // Limpiar parámetros de la URL
+                    limpiarURL();
                     
-                    // Redirigir después de un breve delay
-                    mostrarToast('✅ ¡Inicio de sesión exitoso!');
-                    const finalReturnUrl = localStorage.getItem('returnUrl') || returnUrl;
+                    // Redirigir a la tienda
+                    const finalUrl = localStorage.getItem('returnUrl') || '/tienda';
                     localStorage.removeItem('returnUrl');
                     
+                    console.log('🔄 Redirigiendo a:', finalUrl);
+                    mostrarToast('✅ ¡Inicio de sesión exitoso!');
+                    
                     setTimeout(() => {
-                        window.location.href = finalReturnUrl;
-                    }, 1000);
+                        window.location.href = finalUrl;
+                    }, 800);
                 });
             }
         }
         
-        // Login tradicional con email/contraseña
+        function limpiarURL() {
+            if (window.history && window.history.replaceState) {
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        }
+        
+        // ============ LOGIN TRADICIONAL (EMAIL/CONTRASEÑA) ============
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             ocultarAlerta();
@@ -242,14 +264,15 @@
                         localStorage.setItem('usuario', JSON.stringify(data.usuario));
                     }
                     
-                    console.log('Login exitoso:', data.usuario);
-                    mostrarToast('✅ ¡Bienvenido! Redirigiendo...');
+                    console.log('✅ Login exitoso:', data.usuario?.email);
                     
-                    const finalReturnUrl = localStorage.getItem('returnUrl') || returnUrl;
+                    const finalUrl = localStorage.getItem('returnUrl') || returnUrl;
                     localStorage.removeItem('returnUrl');
                     
+                    mostrarToast('✅ ¡Bienvenido! Redirigiendo...');
+                    
                     setTimeout(() => {
-                        window.location.href = finalReturnUrl;
+                        window.location.href = finalUrl;
                     }, 800);
                 } else {
                     mostrarAlerta(data.error || 'Email o contraseña incorrectos', 'error');
@@ -257,50 +280,50 @@
                     btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
                 }
             } catch (e) {
-                console.error('Error de conexión:', e);
+                console.error('❌ Error de conexión:', e);
                 mostrarAlerta('Error de conexión. Verificá tu internet.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
             }
         });
         
-        // Login con Google
+        // ============ LOGIN CON GOOGLE ============
         function loginConGoogle() {
             const btn = document.getElementById('google-btn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading-spinner" style="border-color: rgba(0,0,0,0.2); border-top-color: #DB4437;"></span> Conectando...';
+            btn.innerHTML = '<span class="loading-spinner" style="border-color: rgba(0,0,0,0.2); border-top-color: #DB4437;"></span> Conectando con Google...';
             
             // Guardar URL de retorno antes de redirigir
             const urlToSave = urlParams.get('return') || localStorage.getItem('returnUrl') || '/tienda';
             localStorage.setItem('returnUrl', urlToSave);
-            console.log('Guardando returnUrl para Google:', urlToSave);
+            console.log('💾 returnUrl guardado para Google:', urlToSave);
             
-            // Redirigir a Google OAuth (usando función en lugar de enlace para asegurar que se guarde)
+            // Redirigir a Google
             setTimeout(() => {
                 window.location.href = '/auth/google';
             }, 300);
         }
         
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', () => {
-            // Primero verificar si hay callback de Google
-            verificarCallbackGoogle();
+        // ============ INICIALIZACIÓN ============
+        (function() {
+            console.log('🚀 Inicializando página de login...');
             
-            // Si no hay callback, verificar sesión existente
-            if (!urlParams.get('token')) {
-                verificarSesionExistente();
+            // PRIMERO: Verificar si es un callback de Google
+            if (urlParams.get('token')) {
+                console.log('📥 Detectado callback de Google');
+                verificarCallbackGoogle();
+                return; // No verificar sesión existente si es callback
             }
             
-            // Enfocar el campo de email
+            // SEGUNDO: Verificar si hay sesión existente
+            verificarSesionExistente();
+            
+            // TERCERO: Enfocar campo de email
             setTimeout(() => {
-                document.getElementById('email').focus();
+                const emailInput = document.getElementById('email');
+                if (emailInput) emailInput.focus();
             }, 500);
-        });
-        
-        // También verificar al cargar la página (por si acaso)
-        if (document.readyState === 'complete') {
-            verificarCallbackGoogle();
-        }
+        })();
     </script>
 </body>
 </html>
