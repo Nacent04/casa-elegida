@@ -26,6 +26,8 @@
         .btn-google { width: 100%; padding: 14px; background: white; color: #3E2A1E; border: 2px solid #F0E6DC; border-radius: 50px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s; margin-bottom: 20px; text-decoration: none; }
         .btn-google:hover { background: #f8fafc; border-color: var(--primary); }
         .btn-google i { color: #DB4437; font-size: 18px; }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #9CA3AF; font-size: 12px; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #E5E7EB; }
         .register-link { text-align: center; font-size: 14px; color: #7B6B5A; }
         .register-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
         .back-link { text-align: center; margin-top: 16px; }
@@ -35,6 +37,9 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .alert { padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .alert-error { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .alert-success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
     </style>
 </head>
 <body>
@@ -45,6 +50,9 @@
                 <h2>Bienvenido</h2>
                 <p style="color: #7B6B5A; margin-top: 8px;">Iniciá sesión para continuar</p>
             </div>
+            
+            <!-- Mensaje de error si existe -->
+            <div id="login-alert" style="display:none;"></div>
             
             <form id="login-form">
                 <div class="form-group">
@@ -63,9 +71,11 @@
                 </button>
             </form>
             
-            <a href="/auth/google" class="btn-google">
+            <div class="divider">o continuá con</div>
+            
+            <button onclick="loginConGoogle()" class="btn-google" id="google-btn">
                 <i class="fab fa-google"></i> Continuar con Google
-            </a>
+            </button>
             
             <p class="register-link">¿No tenés cuenta? <a href="/registro">Registrate aquí</a></p>
             <p class="back-link"><a href="/tienda"><i class="fas fa-arrow-left"></i> Volver a la tienda</a></p>
@@ -74,6 +84,19 @@
     <div id="toast-container"></div>
     
     <script>
+        // Obtener URL de retorno
+        const urlParams = new URLSearchParams(window.location.search);
+        let returnUrl = urlParams.get('return') || localStorage.getItem('returnUrl') || '/tienda';
+        
+        // Guardar en localStorage para persistencia
+        if (returnUrl) {
+            localStorage.setItem('returnUrl', returnUrl);
+        } else {
+            returnUrl = '/tienda';
+        }
+        
+        console.log('URL de retorno:', returnUrl);
+        
         function mostrarToast(msg, error = false) {
             const t = document.createElement('div'); 
             t.className = `toast ${error ? 'error' : ''}`;
@@ -82,22 +105,121 @@
             setTimeout(() => t.remove(), 4000);
         }
         
-        // Guardar URL de retorno
-        const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('return') || localStorage.getItem('returnUrl') || '/tienda';
-        if (!urlParams.get('return') && localStorage.getItem('returnUrl')) {
-            // Limpiar después de leer
-            localStorage.removeItem('returnUrl');
+        function mostrarAlerta(msg, tipo = 'error') {
+            const alert = document.getElementById('login-alert');
+            alert.style.display = 'block';
+            alert.className = `alert alert-${tipo}`;
+            alert.innerHTML = `<i class="fas fa-${tipo === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${msg}`;
         }
         
+        function ocultarAlerta() {
+            document.getElementById('login-alert').style.display = 'none';
+        }
+        
+        // Verificar si ya hay sesión activa
+        function verificarSesionExistente() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Verificar que el token sea válido
+                fetch('/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(r => r.json())
+                .then(user => {
+                    if (user && user.id) {
+                        // Sesión válida, redirigir
+                        console.log('Sesión activa encontrada, redirigiendo...');
+                        window.location.href = returnUrl;
+                    } else {
+                        // Token inválido, limpiar
+                        console.log('Token inválido, limpiando...');
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('usuario');
+                        localStorage.removeItem('returnUrl');
+                    }
+                })
+                .catch(() => {
+                    // Error al verificar, asumir que no hay sesión
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('usuario');
+                });
+            }
+        }
+        
+        // Verificar si viene de un callback de Google con token
+        function verificarCallbackGoogle() {
+            const token = urlParams.get('token');
+            const usuario = urlParams.get('usuario');
+            const error = urlParams.get('error');
+            
+            if (error) {
+                mostrarAlerta('Error al iniciar sesión con Google. Intentá nuevamente.', 'error');
+                // Limpiar URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+            
+            if (token) {
+                console.log('Token recibido de Google, guardando...');
+                
+                // Guardar token
+                localStorage.setItem('token', token);
+                
+                // Si viene usuario en URL, guardarlo
+                if (usuario) {
+                    try {
+                        const userData = JSON.parse(decodeURIComponent(usuario));
+                        localStorage.setItem('usuario', JSON.stringify(userData));
+                        console.log('Usuario guardado:', userData);
+                    } catch (e) {
+                        console.error('Error al parsear datos de usuario:', e);
+                    }
+                }
+                
+                // También intentar obtener datos del usuario desde el servidor
+                fetch('/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(r => r.json())
+                .then(userData => {
+                    if (userData && userData.id) {
+                        localStorage.setItem('usuario', JSON.stringify(userData));
+                        console.log('Datos de usuario obtenidos del servidor:', userData);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error al obtener datos del usuario:', err);
+                })
+                .finally(() => {
+                    // Limpiar parámetros de URL
+                    if (window.history.replaceState) {
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }
+                    
+                    // Redirigir después de un breve delay
+                    mostrarToast('✅ ¡Inicio de sesión exitoso!');
+                    const finalReturnUrl = localStorage.getItem('returnUrl') || returnUrl;
+                    localStorage.removeItem('returnUrl');
+                    
+                    setTimeout(() => {
+                        window.location.href = finalReturnUrl;
+                    }, 1000);
+                });
+            }
+        }
+        
+        // Login tradicional con email/contraseña
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            ocultarAlerta();
+            
             const btn = document.getElementById('login-btn');
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             
             if (!email || !password) {
-                mostrarToast('Completá todos los campos', true);
+                mostrarAlerta('Completá todos los campos', 'error');
                 return;
             }
             
@@ -110,41 +232,74 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                
                 const data = await res.json();
                 
                 if (data.success) {
+                    // Guardar datos de sesión
                     localStorage.setItem('token', data.token);
-                    localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                    if (data.usuario) {
+                        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                    }
+                    
+                    console.log('Login exitoso:', data.usuario);
                     mostrarToast('✅ ¡Bienvenido! Redirigiendo...');
+                    
+                    const finalReturnUrl = localStorage.getItem('returnUrl') || returnUrl;
+                    localStorage.removeItem('returnUrl');
+                    
                     setTimeout(() => {
-                        window.location.href = returnUrl;
+                        window.location.href = finalReturnUrl;
                     }, 800);
                 } else {
-                    mostrarToast(data.error || 'Error al iniciar sesión', true);
+                    mostrarAlerta(data.error || 'Email o contraseña incorrectos', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
                 }
             } catch (e) {
-                mostrarToast('Error de conexión', true);
+                console.error('Error de conexión:', e);
+                mostrarAlerta('Error de conexión. Verificá tu internet.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
             }
         });
         
-        // Verificar si viene token de Google
-        const token = urlParams.get('token');
-        if (token) {
-            localStorage.setItem('token', token);
-            // Intentar obtener datos del usuario
-            fetch('/auth/me', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }).then(r => r.json()).then(u => {
-                if (u.id) {
-                    localStorage.setItem('usuario', JSON.stringify(u));
-                }
-            }).catch(() => {}).finally(() => {
-                window.location.href = returnUrl;
-            });
+        // Login con Google
+        function loginConGoogle() {
+            const btn = document.getElementById('google-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner" style="border-color: rgba(0,0,0,0.2); border-top-color: #DB4437;"></span> Conectando...';
+            
+            // Guardar URL de retorno antes de redirigir
+            const urlToSave = urlParams.get('return') || localStorage.getItem('returnUrl') || '/tienda';
+            localStorage.setItem('returnUrl', urlToSave);
+            console.log('Guardando returnUrl para Google:', urlToSave);
+            
+            // Redirigir a Google OAuth (usando función en lugar de enlace para asegurar que se guarde)
+            setTimeout(() => {
+                window.location.href = '/auth/google';
+            }, 300);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Primero verificar si hay callback de Google
+            verificarCallbackGoogle();
+            
+            // Si no hay callback, verificar sesión existente
+            if (!urlParams.get('token')) {
+                verificarSesionExistente();
+            }
+            
+            // Enfocar el campo de email
+            setTimeout(() => {
+                document.getElementById('email').focus();
+            }, 500);
+        });
+        
+        // También verificar al cargar la página (por si acaso)
+        if (document.readyState === 'complete') {
+            verificarCallbackGoogle();
         }
     </script>
 </body>
