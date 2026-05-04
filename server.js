@@ -273,7 +273,7 @@ async function enviarEmail(dest, asunto, html) {
 cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_NAME, api_key: process.env.CLOUDINARY_API_KEY, api_secret: process.env.CLOUDINARY_API_SECRET });
 const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
 const JWT_SECRET = process.env.JWT_SECRET;
-const SESSION_SECRET = process.env.SESSION_SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET || 'casa-elegida-session-secret';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
@@ -283,9 +283,20 @@ const storage = multer.diskStorage({ destination: (req, f, cb) => cb(null, './up
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: (req, f, cb) => { const a = /jpeg|jpg|png|gif|webp/; cb(null, a.test(path.extname(f.originalname).toLowerCase()) && a.test(f.mimetype)); } });
 
 app.use(express.json({ limit: '50mb' })); app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: false, cookie: { maxAge: 24 * 60 * 60 * 1000 } }));
-app.use(passport.initialize()); app.use(passport.session());
-app.use('/uploads', express.static('uploads')); app.use(express.static('public'));
+app.use(session({ 
+    secret: SESSION_SECRET, 
+    resave: true, 
+    saveUninitialized: true, 
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000,
+        secure: false,
+        sameSite: 'lax'
+    } 
+}));
+app.use(passport.initialize()); 
+app.use(passport.session());
+app.use('/uploads', express.static('uploads')); 
+app.use(express.static('public'));
 
 // ============================================
 // ESTRATEGIA DE GOOGLE CORREGIDA
@@ -293,57 +304,149 @@ app.use('/uploads', express.static('uploads')); app.use(express.static('public')
 passport.use(new GoogleStrategy({ 
     clientID: GOOGLE_CLIENT_ID, 
     clientSecret: GOOGLE_CLIENT_SECRET, 
-    callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback' 
+    callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback',
+    passReqToCallback: true
 },
-    async (accessToken, refreshToken, profile, done) => {
+    async (req, accessToken, refreshToken, profile, done) => {
         let client;
         try {
+            console.log('🔵 Google Strategy - Email:', profile.emails[0].value);
             client = await pool.connect();
-            let u = (await client.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
+            
+            // Buscar usuario por email o googleId
+            let u = (await client.query(
+                'SELECT * FROM usuarios WHERE email = $1 OR "googleId" = $2', 
+                [profile.emails[0].value, profile.id]
+            )).rows[0];
+            
             if (!u) {
+                // Crear nuevo usuario
                 const id = 'USR-' + Date.now();
-                await client.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,0)',
-                    [id, profile.name?.givenName || '', profile.name?.familyName || '', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
+                console.log('🆕 Creando nuevo usuario:', profile.emails[0].value);
+                await client.query(
+                    'INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+                    [id, profile.name?.givenName || '', profile.name?.familyName || '', 
+                     profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '', 
+                     'cliente', 0]
+                );
                 u = (await client.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
-            } else if (!u.googleId) {
-                await client.query('UPDATE usuarios SET "googleId" = $1, foto = COALESCE($2, foto) WHERE id = $3',
-                    [profile.id, profile.photos?.[0]?.value || null, u.id]);
-                u.googleId = profile.id;
+                console.log('✅ Usuario creado:', u.id);
+            } else {
+                console.log('👤 Usuario existente:', u.email, '| googleId:', u.googleId || 'NO');
+                // Si ya existe pero no tenía googleId vinculado
+                if (!u.googleId) {
+                    console.log('🔗 Vinculando Google ID...');
+                    await client.query(
+                        'UPDATE usuarios SET "googleId" = $1, foto = COALESCE($2, foto), nombre = COALESCE(NULLIF($3,\'\'), nombre), apellido = COALESCE(NULLIF($4,\'\'), apellido) WHERE id = $5',
+                        [profile.id, profile.photos?.[0]?.value || null, 
+                         profile.name?.givenName || '', profile.name?.familyName || '', u.id]
+                    );
+                    u.googleId = profile.id;
+                    console.log('✅ Google ID vinculado');
+                }
             }
+            
+            console.log('✅ Usuario listo para sesión:', u.email);
             return done(null, u);
         } catch(e) { 
+            console.error('❌ Error en Google Strategy:', e);
             return done(e, null); 
         } finally {
             if (client) client.release();
         }
     }
 ));
-passport.serializeUser((u, d) => d(null, u.id));
-passport.deserializeUser(async (id, d) => { 
+
+passport.serializeUser((user, done) => {
+    console.log('💾 serializeUser:', user.id);
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => { 
     let client;
     try {
         client = await pool.connect();
-        const u = (await client.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0]; 
-        d(null, u || null); 
+        const result = await client.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+        const user = result.rows[0];
+        console.log('📂 deserializeUser:', id, user ? 'encontrado' : 'NO encontrado');
+        done(null, user || null); 
     } catch(e) {
-        d(e, null);
+        console.error('❌ Error deserializeUser:', e);
+        done(e, null);
     } finally {
         if (client) client.release();
     }
 });
 
-const authMiddleware = (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { req.usuario = jwt.verify(t, JWT_SECRET); next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
-const adminMiddleware = (permiso = null) => (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { const d = jwt.verify(t, JWT_SECRET); if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); if (d.rol === 'admin') { req.admin = d; return next(); } if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); req.admin = d; next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
+const authMiddleware = (req, res, next) => { 
+    const t = req.headers.authorization?.replace('Bearer ', ''); 
+    if (!t) return res.status(401).json({ error: 'No autorizado' }); 
+    try { req.usuario = jwt.verify(t, JWT_SECRET); next(); } 
+    catch(e) { res.status(401).json({ error: 'Token inválido' }); } 
+};
+
+const adminMiddleware = (permiso = null) => (req, res, next) => { 
+    const t = req.headers.authorization?.replace('Bearer ', ''); 
+    if (!t) return res.status(401).json({ error: 'No autorizado' }); 
+    try { 
+        const d = jwt.verify(t, JWT_SECRET); 
+        if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); 
+        if (d.rol === 'admin') { req.admin = d; return next(); } 
+        if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); 
+        req.admin = d; next(); 
+    } catch(e) { res.status(401).json({ error: 'Token inválido' }); } 
+};
+
 const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos','completar-datos'].forEach(p => app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html'))));
+['admin','tienda','checkout','login','registro','perfil','recuperar','mis-pedidos','completar-datos'].forEach(p => 
+    app.get('/' + p, (req, res) => res.sendFile(path.join(__dirname, 'public', p + '.html')))
+);
+
 app.get('/', (req, res) => res.redirect('/tienda'));
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), async (req, res) => {
-    const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
-    const u = (await pool.query('SELECT "datosCompletos" FROM usuarios WHERE id=$1', [req.user.id])).rows[0];
-    if (u && u.datosCompletos == 0) return res.redirect(`/completar-datos?token=${token}`);
-    res.redirect(`/tienda?token=${token}`);
+
+app.get('/auth/google', (req, res, next) => {
+    console.log('🔵 Iniciando autenticación con Google...');
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        prompt: 'select_account'
+    })(req, res, next);
+});
+
+app.get('/auth/google/callback', (req, res, next) => {
+    console.log('🔵 Callback de Google recibido');
+    passport.authenticate('google', { 
+        failureRedirect: '/login?error=google',
+        session: true
+    })(req, res, next);
+}, async (req, res) => {
+    try {
+        console.log('✅ Usuario autenticado:', req.user?.email);
+        
+        if (!req.user) {
+            console.log('❌ No se encontró usuario');
+            return res.redirect('/login?error=nouser');
+        }
+        
+        const token = jwt.sign(
+            { id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, 
+            JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
+        
+        const u = (await pool.query('SELECT "datosCompletos" FROM usuarios WHERE id=$1', [req.user.id])).rows[0];
+        
+        if (u && u.datosCompletos == 0) {
+            console.log('📝 Usuario necesita completar datos');
+            return res.redirect(`/completar-datos?token=${token}`);
+        }
+        
+        console.log('🏠 Redirigiendo a tienda');
+        res.redirect(`/tienda?token=${token}`);
+    } catch(e) {
+        console.error('❌ Error en callback de Google:', e);
+        res.redirect('/login?error=server');
+    }
 });
 
 app.post('/admin/login', async (req, res) => {
@@ -724,7 +827,6 @@ app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
     res.send(csv);
 });
 
-// ==================== CAJA PROFESIONAL ====================
 app.post('/admin/apertura-caja-profesional', adminMiddleware('ventas'), async (req, res) => {
     try {
         const { montoEfectivo, montoTransferencia } = req.body;
@@ -829,9 +931,8 @@ app.get('/api/mis-pedidos', authMiddleware, async (req, res) => {
 });
 
 // ============================================
-// SISTEMA DE BACKUP TOTAL (PostgreSQL)
+// SISTEMA DE BACKUP TOTAL
 // ============================================
-
 async function exportarTabla(nombreTabla) {
     const result = await pool.query(`SELECT * FROM ${nombreTabla}`);
     return result.rows;
@@ -842,41 +943,28 @@ app.post('/admin/backup/crear-total', adminMiddleware(), async (req, res) => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backupId = `backup_total_${timestamp}`;
         const backupPath = path.join(BACKUP_DIR, backupId);
-        
         fs.mkdirSync(backupPath, { recursive: true });
-        
         console.log('📦 Iniciando backup total:', backupId);
-        
         const datos = {
             metadata: { id: backupId, fecha: new Date().toISOString(), version: '2.0', tipo: 'total', sistema: 'Casa Elegida POS Master' },
-            productos: await exportarTabla('productos'),
-            variantes: await exportarTabla('variantes'),
-            categorias: await exportarTabla('categorias'),
-            ventas: await exportarTabla('ventas'),
-            pedidos: await exportarTabla('pedidos'),
-            usuarios: await exportarTabla('usuarios'),
-            notificaciones: await exportarTabla('notificaciones'),
-            configuracion: await exportarTabla('configuracion'),
-            metodos_envio: await exportarTabla('metodos_envio'),
-            logs_admin: await exportarTabla('logs_admin'),
-            perfiles: await exportarTabla('perfiles'),
-            caja_profesional: await exportarTabla('caja_profesional'),
+            productos: await exportarTabla('productos'), variantes: await exportarTabla('variantes'),
+            categorias: await exportarTabla('categorias'), ventas: await exportarTabla('ventas'),
+            pedidos: await exportarTabla('pedidos'), usuarios: await exportarTabla('usuarios'),
+            notificaciones: await exportarTabla('notificaciones'), configuracion: await exportarTabla('configuracion'),
+            metodos_envio: await exportarTabla('metodos_envio'), logs_admin: await exportarTabla('logs_admin'),
+            perfiles: await exportarTabla('perfiles'), caja_profesional: await exportarTabla('caja_profesional'),
         };
-        
         const stats = { productos: datos.productos.length, ventas: datos.ventas.length, usuarios: datos.usuarios.length, pedidos: datos.pedidos.length, imagenes: 0, totalRegistros: 0 };
         Object.values(datos).forEach(val => { if (Array.isArray(val)) stats.totalRegistros += val.length; });
         datos.metadata.stats = stats;
         fs.writeFileSync(path.join(backupPath, 'data.json'), JSON.stringify(datos, null, 2));
-        
-        const imagenesDir = path.join(backupPath, 'imagenes');
-        fs.mkdirSync(imagenesDir, { recursive: true });
+        const imagenesDir = path.join(backupPath, 'imagenes'); fs.mkdirSync(imagenesDir, { recursive: true });
         const uploadsDir = path.join(__dirname, 'uploads');
         if (fs.existsSync(uploadsDir)) {
             const copiarRecursivo = (src, dest) => {
                 const entries = fs.readdirSync(src, { withFileTypes: true });
                 for (let entry of entries) {
-                    const srcPath = path.join(src, entry.name);
-                    const destPath = path.join(dest, entry.name);
+                    const srcPath = path.join(src, entry.name), destPath = path.join(dest, entry.name);
                     if (entry.isDirectory()) { fs.mkdirSync(destPath, { recursive: true }); copiarRecursivo(srcPath, destPath); }
                     else { fs.copyFileSync(srcPath, destPath); stats.imagenes++; }
                 }
@@ -885,17 +973,11 @@ app.post('/admin/backup/crear-total', adminMiddleware(), async (req, res) => {
         }
         datos.metadata.stats = stats;
         fs.writeFileSync(path.join(backupPath, 'data.json'), JSON.stringify(datos, null, 2));
-        
-        const zipFilename = `${backupId}.backup`;
-        const zipPath = path.join(BACKUP_DIR, zipFilename);
+        const zipFilename = `${backupId}.backup`, zipPath = path.join(BACKUP_DIR, zipFilename);
         await new Promise((resolve, reject) => {
-            const output = fs.createWriteStream(zipPath);
-            const archive = archiver('zip', { zlib: { level: 9 } });
-            output.on('close', resolve);
-            archive.on('error', reject);
-            archive.pipe(output);
-            archive.directory(backupPath, backupId);
-            archive.finalize();
+            const output = fs.createWriteStream(zipPath), archive = archiver('zip', { zlib: { level: 9 } });
+            output.on('close', resolve); archive.on('error', reject);
+            archive.pipe(output); archive.directory(backupPath, backupId); archive.finalize();
         });
         fs.rmSync(backupPath, { recursive: true, force: true });
         const finalStats = fs.statSync(zipPath);
@@ -908,8 +990,7 @@ app.post('/admin/backup/historial-total', adminMiddleware(), async (req, res) =>
     try {
         if (!fs.existsSync(BACKUP_DIR)) return res.json({ backups: [] });
         const files = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.backup') || f.endsWith('.zip')).map(f => {
-            const filePath = path.join(BACKUP_DIR, f);
-            const stats = fs.statSync(filePath);
+            const filePath = path.join(BACKUP_DIR, f), stats = fs.statSync(filePath);
             return { id: f.replace('.backup', '').replace('.zip', ''), nombre: f, fecha: stats.mtime.toISOString(), tamano: (stats.size / 1024 / 1024).toFixed(2), automatico: f.includes('auto_'), stats: { productos: '?', ventas: '?' } };
         }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         res.json({ backups: files });
@@ -924,20 +1005,14 @@ app.get('/admin/backup/descargar-archivo/:filename', adminMiddleware(), (req, re
 
 app.post('/admin/backup/descargar-total', adminMiddleware(), (req, res) => {
     const { id } = req.body;
-    for (let ext of ['.backup', '.zip']) {
-        const filePath = path.join(BACKUP_DIR, id + ext);
-        if (fs.existsSync(filePath)) return res.json({ url: `/admin/backup/descargar-archivo/${id}${ext}` });
-    }
+    for (let ext of ['.backup', '.zip']) { const filePath = path.join(BACKUP_DIR, id + ext); if (fs.existsSync(filePath)) return res.json({ url: `/admin/backup/descargar-archivo/${id}${ext}` }); }
     res.status(404).json({ error: 'Backup no encontrado' });
 });
 
 app.post('/admin/backup/eliminar-total', adminMiddleware(), async (req, res) => {
     try {
         const { id } = req.body;
-        for (let ext of ['.backup', '.zip']) {
-            const filePath = path.join(BACKUP_DIR, id + ext);
-            if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); await logActividad(req.admin.nombre, 'BACKUP_ELIMINADO', id, req); return res.json({ success: true }); }
-        }
+        for (let ext of ['.backup', '.zip']) { const filePath = path.join(BACKUP_DIR, id + ext); if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); await logActividad(req.admin.nombre, 'BACKUP_ELIMINADO', id, req); return res.json({ success: true }); } }
         res.status(404).json({ error: 'Backup no encontrado' });
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -946,27 +1021,25 @@ app.post('/admin/backup/restaurar-desde-archivo', adminMiddleware(), uploadBacku
     const { password } = req.body;
     try {
         const adminPerfil = (await pool.query("SELECT * FROM perfiles WHERE usuario = $1", [req.admin.usuario])).rows[0];
-        const passwordValida = await bcrypt.compare(password, adminPerfil.password);
-        if (!passwordValida) return res.status(403).json({ error: 'Contraseña incorrecta' });
+        if (!(await bcrypt.compare(password, adminPerfil.password))) return res.status(403).json({ error: 'Contraseña incorrecta' });
         if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
-        const tempDir = path.join(BACKUP_DIR, 'temp_restore_' + Date.now());
-        fs.mkdirSync(tempDir, { recursive: true });
+        const tempDir = path.join(BACKUP_DIR, 'temp_restore_' + Date.now()); fs.mkdirSync(tempDir, { recursive: true });
         await fs.createReadStream(req.file.path).pipe(unzipper.Extract({ path: tempDir })).promise();
         let dataDir = tempDir;
-        const files = fs.readdirSync(tempDir);
-        for (let file of files) { const fullPath = path.join(tempDir, file); if (fs.statSync(fullPath).isDirectory()) { dataDir = fullPath; break; } }
+        for (let file of fs.readdirSync(tempDir)) { const fullPath = path.join(tempDir, file); if (fs.statSync(fullPath).isDirectory()) { dataDir = fullPath; break; } }
         const dataPath = path.join(dataDir, 'data.json');
         if (!fs.existsSync(dataPath)) throw new Error('Archivo de datos no encontrado');
         const backup = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-        await pool.query('DELETE FROM productos'); await pool.query('DELETE FROM variantes'); await pool.query('DELETE FROM categorias');
-        await pool.query('DELETE FROM ventas'); await pool.query('DELETE FROM pedidos'); await pool.query('DELETE FROM notificaciones');
+        await pool.query('DELETE FROM productos'); await pool.query('DELETE FROM variantes');
+        await pool.query('DELETE FROM categorias'); await pool.query('DELETE FROM ventas');
+        await pool.query('DELETE FROM pedidos'); await pool.query('DELETE FROM notificaciones');
         await pool.query('DELETE FROM configuracion');
-        if (backup.productos) { for (let p of backup.productos) { await pool.query(`INSERT INTO productos (id, nombre, precio, "precioMayor", descripcion, "categoriaId", subcategoria, destacado) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId, p.subcategoria||'', p.destacado||0]); } }
-        if (backup.variantes) { for (let v of backup.variantes) { await pool.query('INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1,$2,$3,$4)', [v.productoId, v.nombre, v.stock||0, v.foto||'']); } }
-        if (backup.categorias) { for (let c of backup.categorias) { await pool.query('INSERT INTO categorias (id, nombre, subcategorias) VALUES ($1,$2,$3)', [c.id, c.nombre, c.subcategorias||'[]']); } }
-        if (backup.configuracion) { for (let c of backup.configuracion) { await pool.query('INSERT INTO configuracion (clave, valor) VALUES ($1,$2) ON CONFLICT (clave) DO UPDATE SET valor = $2', [c.clave, c.valor]); } }
+        if (backup.productos) for (let p of backup.productos) await pool.query(`INSERT INTO productos (id, nombre, precio, "precioMayor", descripcion, "categoriaId", subcategoria, destacado) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId, p.subcategoria||'', p.destacado||0]);
+        if (backup.variantes) for (let v of backup.variantes) await pool.query('INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1,$2,$3,$4)', [v.productoId, v.nombre, v.stock||0, v.foto||'']);
+        if (backup.categorias) for (let c of backup.categorias) await pool.query('INSERT INTO categorias (id, nombre, subcategorias) VALUES ($1,$2,$3)', [c.id, c.nombre, c.subcategorias||'[]']);
+        if (backup.configuracion) for (let c of backup.configuracion) await pool.query('INSERT INTO configuracion (clave, valor) VALUES ($1,$2) ON CONFLICT (clave) DO UPDATE SET valor = $2', [c.clave, c.valor]);
         const imagenesBackup = path.join(dataDir, 'imagenes');
-        if (fs.existsSync(imagenesBackup)) { const uploadsDir = path.join(__dirname, 'uploads'); if (fs.existsSync(uploadsDir)) fs.rmSync(uploadsDir, { recursive: true, force: true }); fs.mkdirSync(uploadsDir, { recursive: true }); const copiarRecursivo = (src, dest) => { const entries = fs.readdirSync(src, { withFileTypes: true }); for (let entry of entries) { const sp = path.join(src, entry.name); const dp = path.join(dest, entry.name); if (entry.isDirectory()) { fs.mkdirSync(dp, { recursive: true }); copiarRecursivo(sp, dp); } else fs.copyFileSync(sp, dp); } }; copiarRecursivo(imagenesBackup, uploadsDir); }
+        if (fs.existsSync(imagenesBackup)) { const upDir = path.join(__dirname, 'uploads'); if (fs.existsSync(upDir)) fs.rmSync(upDir, { recursive: true, force: true }); fs.mkdirSync(upDir, { recursive: true }); const copiarRec = (src, dest) => { for (let e of fs.readdirSync(src, { withFileTypes: true })) { const sp = path.join(src, e.name), dp = path.join(dest, e.name); if (e.isDirectory()) { fs.mkdirSync(dp, { recursive: true }); copiarRec(sp, dp); } else fs.copyFileSync(sp, dp); } }; copiarRec(imagenesBackup, upDir); }
         fs.rmSync(tempDir, { recursive: true, force: true }); fs.unlinkSync(req.file.path);
         await logActividad(req.admin.nombre, 'RESTAURACION_SISTEMA', 'Sistema restaurado desde backup', req);
         res.json({ success: true, stats: { productos: backup.productos?.length||0, ventas: backup.ventas?.length||0, imagenes: backup.metadata?.stats?.imagenes||0 } });
