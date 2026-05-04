@@ -1,7 +1,8 @@
 // ============================================
-// SERVER.JS - CASA ELEGIDA (Adaptado a JSON)
+// SERVER.JS - CASA ELEGIDA POS MASTER (PostgreSQL)
 // ============================================
 
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -9,24 +10,36 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const { Pool } = require('pg');
 const archiver = require('archiver');
 const unzipper = require('unzipper');
 const crypto = require('crypto');
-const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'casa-elegida-secret-key-2024';
 const BACKUP_DIR = path.join(__dirname, 'backups');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
-const CONFIG_DIR = path.join(__dirname, 'config');
-const DATA_DIR = __dirname; // Los JSON están en la raíz
+
+// ============================================
+// CONEXIÓN A POSTGRESQL
+// ============================================
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // o configuración individual:
+    // user: process.env.DB_USER,
+    // host: process.env.DB_HOST,
+    // database: process.env.DB_NAME,
+    // password: process.env.DB_PASSWORD,
+    // port: process.env.DB_PORT || 5432,
+});
 
 // ============================================
 // CREAR DIRECTORIOS
 // ============================================
 
-[BACKUP_DIR, UPLOADS_DIR, CONFIG_DIR, path.join(BACKUP_DIR, 'temp')].forEach(dir => {
+[BACKUP_DIR, UPLOADS_DIR, path.join(BACKUP_DIR, 'temp')].forEach(dir => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
@@ -62,36 +75,6 @@ const backupStorage = multer.diskStorage({
 const uploadBackup = multer({ storage: backupStorage, limits: { fileSize: 500 * 1024 * 1024 } });
 
 // ============================================
-// FUNCIONES DE LECTURA/ESCRITURA DE JSON
-// ============================================
-
-function leerJSON(archivo) {
-    try {
-        const filePath = path.join(DATA_DIR, archivo);
-        if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, JSON.stringify([], null, 2));
-            return [];
-        }
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error(`Error leyendo ${archivo}:`, error);
-        return [];
-    }
-}
-
-function guardarJSON(archivo, data) {
-    try {
-        const filePath = path.join(DATA_DIR, archivo);
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        return true;
-    } catch (error) {
-        console.error(`Error guardando ${archivo}:`, error);
-        return false;
-    }
-}
-
-// ============================================
 // MIDDLEWARE DE AUTENTICACIÓN
 // ============================================
 
@@ -117,16 +100,10 @@ function adminOnly(req, res, next) {
 
 async function logAccion(admin, accion, detalles = '') {
     try {
-        const logs = leerJSON('logs.json') || [];
-        const fecha = new Date();
-        logs.unshift({
-            fecha,
-            fechaLocal: fecha.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }),
-            admin,
-            accion,
-            detalles
-        });
-        guardarJSON('logs.json', logs.slice(0, 5000));
+        await pool.query(
+            'INSERT INTO logs (fecha, admin, accion, detalles) VALUES (NOW(), $1, $2, $3)',
+            [admin, accion, detalles]
+        );
     } catch (e) {
         console.error('Error guardando log:', e);
     }
@@ -143,8 +120,13 @@ function fmt(monto) {
 app.post('/admin/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
-        const usuarios = leerJSON('usuarios.json');
-        const perfil = usuarios.find(u => u.usuario === usuario && u.activo !== false);
+        
+        const result = await pool.query(
+            'SELECT * FROM usuarios WHERE usuario = $1 AND activo = true',
+            [usuario]
+        );
+        
+        const perfil = result.rows[0];
         
         if (!perfil) {
             return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
@@ -156,7 +138,13 @@ app.post('/admin/login', async (req, res) => {
         }
         
         const token = jwt.sign(
-            { id: perfil.id, usuario: perfil.usuario, nombre: perfil.nombre, rol: perfil.rol, permisos: perfil.permisos || [] },
+            { 
+                id: perfil.id, 
+                usuario: perfil.usuario, 
+                nombre: perfil.nombre, 
+                rol: perfil.rol, 
+                permisos: perfil.permisos || [] 
+            },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -165,6 +153,7 @@ app.post('/admin/login', async (req, res) => {
         
         res.json({ success: true, token, perfil });
     } catch (error) {
+        console.error('Error en login:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -175,40 +164,53 @@ app.post('/admin/login', async (req, res) => {
 
 app.post('/listar', async (req, res) => {
     try {
-        const productos = leerJSON('productos.json');
-        res.json({ lista: productos });
+        const result = await pool.query(
+            'SELECT * FROM productos ORDER BY orden ASC, fecha_creacion DESC'
+        );
+        res.json({ lista: result.rows });
     } catch (error) {
+        console.error('Error listando productos:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/guardar-producto', authMiddleware, async (req, res) => {
     try {
-        const productoData = req.body;
-        let productos = leerJSON('productos.json');
+        const p = req.body;
         
-        const index = productos.findIndex(p => p.id === productoData.id);
-        if (index >= 0) {
-            productos[index] = { ...productos[index], ...productoData };
+        // Verificar si existe
+        const existe = await pool.query('SELECT id FROM productos WHERE id = $1', [p.id]);
+        
+        if (existe.rows.length > 0) {
+            await pool.query(
+                `UPDATE productos SET 
+                    nombre = $1, precio = $2, precio_mayor = $3, descripcion = $4,
+                    categoria_id = $5, subcategoria = $6, variantes = $7, destacado = $8
+                WHERE id = $9`,
+                [p.nombre, p.precio, p.precioMayor, p.descripcion, p.categoriaId, 
+                 p.subcategoria, JSON.stringify(p.variantes), p.destacado, p.id]
+            );
         } else {
-            productos.push(productoData);
+            await pool.query(
+                `INSERT INTO productos (id, nombre, precio, precio_mayor, descripcion, categoria_id, subcategoria, variantes, destacado)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [p.id, p.nombre, p.precio, p.precioMayor, p.descripcion, p.categoriaId, 
+                 p.subcategoria, JSON.stringify(p.variantes), p.destacado]
+            );
         }
         
-        guardarJSON('productos.json', productos);
-        await logAccion(req.admin.nombre, 'Guardar producto', productoData.nombre);
+        await logAccion(req.admin.nombre, 'Guardar producto', p.nombre);
         res.json({ success: true });
     } catch (error) {
+        console.error('Error guardando producto:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/eliminar-producto', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.body;
-        let productos = leerJSON('productos.json');
-        productos = productos.filter(p => p.id !== id);
-        guardarJSON('productos.json', productos);
-        await logAccion(req.admin.nombre, 'Eliminar producto', `ID: ${id}`);
+        await pool.query('DELETE FROM productos WHERE id = $1', [req.body.id]);
+        await logAccion(req.admin.nombre, 'Eliminar producto', req.body.id);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -217,12 +219,11 @@ app.post('/eliminar-producto', authMiddleware, async (req, res) => {
 
 app.post('/verificar-stock', async (req, res) => {
     try {
-        const { productoId, varianteNombre } = req.body;
-        const productos = leerJSON('productos.json');
-        const producto = productos.find(p => p.id == productoId);
-        if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+        const result = await pool.query('SELECT variantes FROM productos WHERE id = $1', [req.body.productoId]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Producto no encontrado' });
         
-        const variante = producto.variantes?.find(v => v.nombre === varianteNombre);
+        const variantes = result.rows[0].variantes || [];
+        const variante = variantes.find(v => v.nombre === req.body.varianteNombre);
         res.json({ stock: variante?.stock || 0 });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -231,13 +232,12 @@ app.post('/verificar-stock', async (req, res) => {
 
 app.post('/stock-bajo', authMiddleware, async (req, res) => {
     try {
-        const { minimo = 5 } = req.body;
-        const productos = leerJSON('productos.json');
+        const result = await pool.query('SELECT * FROM productos');
         const stockBajo = [];
         
-        productos.forEach(p => {
+        result.rows.forEach(p => {
             (p.variantes || []).forEach(v => {
-                if (v.stock <= minimo) {
+                if (v.stock <= (req.body.minimo || 5)) {
                     stockBajo.push({ producto: p.nombre, variante: v.nombre, stock: v.stock });
                 }
             });
@@ -252,8 +252,7 @@ app.post('/stock-bajo', authMiddleware, async (req, res) => {
 app.post('/subir-imagen', authMiddleware, upload.single('foto'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No se subió archivo' });
-        const url = '/uploads/' + req.file.filename;
-        res.json({ url });
+        res.json({ url: '/uploads/' + req.file.filename });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -262,17 +261,21 @@ app.post('/subir-imagen', authMiddleware, upload.single('foto'), async (req, res
 app.post('/admin/importar-productos', authMiddleware, async (req, res) => {
     try {
         const { productos } = req.body;
-        let productosActuales = leerJSON('productos.json');
         let importados = 0;
         
         for (let prod of productos) {
             prod.id = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
             if (!prod.variantes?.length) prod.variantes = [{ nombre: 'Única', stock: 0, foto: '' }];
-            productosActuales.push(prod);
+            
+            await pool.query(
+                `INSERT INTO productos (id, nombre, precio, precio_mayor, descripcion, categoria_id, subcategoria, variantes)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                [prod.id, prod.nombre, prod.precio, prod.precioMayor, prod.descripcion, 
+                 prod.categoriaId, prod.subcategoria, JSON.stringify(prod.variantes)]
+            );
             importados++;
         }
         
-        guardarJSON('productos.json', productosActuales);
         await logAccion(req.admin.nombre, 'Importar productos', `${importados} productos`);
         res.json({ success: true, importados });
     } catch (error) {
@@ -286,8 +289,8 @@ app.post('/admin/importar-productos', authMiddleware, async (req, res) => {
 
 app.post('/listar-categorias', async (req, res) => {
     try {
-        const categorias = leerJSON('categorias.json');
-        res.json({ lista: categorias });
+        const result = await pool.query('SELECT * FROM categorias ORDER BY orden ASC');
+        res.json({ lista: result.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -295,16 +298,17 @@ app.post('/listar-categorias', async (req, res) => {
 
 app.post('/guardar-categoria', authMiddleware, async (req, res) => {
     try {
-        const catData = req.body;
-        let categorias = leerJSON('categorias.json');
-        const index = categorias.findIndex(c => c.id === catData.id);
-        if (index >= 0) {
-            categorias[index] = catData;
+        const c = req.body;
+        const existe = await pool.query('SELECT id FROM categorias WHERE id = $1', [c.id]);
+        
+        if (existe.rows.length > 0) {
+            await pool.query('UPDATE categorias SET nombre = $1, subcategorias = $2 WHERE id = $3',
+                [c.nombre, JSON.stringify(c.subcategorias || []), c.id]);
         } else {
-            categorias.push(catData);
+            await pool.query('INSERT INTO categorias (id, nombre, subcategorias) VALUES ($1, $2, $3)',
+                [c.id, c.nombre, JSON.stringify(c.subcategorias || [])]);
         }
-        guardarJSON('categorias.json', categorias);
-        await logAccion(req.admin.nombre, 'Guardar categoría', catData.nombre);
+        
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -313,9 +317,7 @@ app.post('/guardar-categoria', authMiddleware, async (req, res) => {
 
 app.post('/eliminar-categoria', authMiddleware, async (req, res) => {
     try {
-        let categorias = leerJSON('categorias.json');
-        categorias = categorias.filter(c => c.id !== req.body.id);
-        guardarJSON('categorias.json', categorias);
+        await pool.query('DELETE FROM categorias WHERE id = $1', [req.body.id]);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -330,51 +332,39 @@ app.post('/confirmar-venta', authMiddleware, async (req, res) => {
     try {
         const { carrito, pagos, total, logistica, cliente, mayoristaConfig } = req.body;
         const ventaId = 'V-' + Date.now().toString(36).toUpperCase();
-        const fecha = new Date();
         
-        const venta = {
-            id: ventaId,
-            fecha: fecha.toISOString(),
-            fechaLocal: fecha.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }),
-            items: carrito.map(i => ({
-                pId: i.pId,
-                pNom: i.pNom,
-                vNom: i.vNom,
-                vFoto: i.vFoto || '',
-                precio: i.precio,
-                cant: i.cant
-            })),
-            pago: {
-                total,
-                metodo: pagos?.[0]?.metodo || 'efectivo',
-                pagos: pagos || [{ metodo: 'efectivo', monto: total }]
-            },
-            cliente: cliente || { nombre: 'Mostrador' },
-            logistica: logistica || 'local',
-            vendedor: req.admin.nombre,
-            mayoristaAplicado: mayoristaConfig?.habilitado || false
-        };
-        
-        // Guardar venta
-        let ventas = leerJSON('ventas.json');
-        ventas.unshift(venta);
-        guardarJSON('ventas.json', ventas);
+        await pool.query(
+            `INSERT INTO ventas (id, fecha, items, pago, cliente, logistica, vendedor, mayorista_aplicado)
+            VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7)`,
+            [
+                ventaId,
+                JSON.stringify(carrito.map(i => ({
+                    pId: i.pId, pNom: i.pNom, vNom: i.vNom,
+                    vFoto: i.vFoto || '', precio: i.precio, cant: i.cant
+                }))),
+                JSON.stringify({ total, metodo: pagos?.[0]?.metodo || 'efectivo', pagos: pagos || [] }),
+                JSON.stringify(cliente || { nombre: 'Mostrador' }),
+                logistica || 'local',
+                req.admin.nombre,
+                mayoristaConfig?.habilitado || false
+            ]
+        );
         
         // Actualizar stock
-        let productos = leerJSON('productos.json');
         for (let item of carrito) {
-            const producto = productos.find(p => p.id == item.pId);
-            if (producto) {
-                const variante = producto.variantes?.find(v => v.nombre === item.vNom);
+            const result = await pool.query('SELECT variantes FROM productos WHERE id = $1', [item.pId]);
+            if (result.rows.length > 0) {
+                let variantes = result.rows[0].variantes || [];
+                const variante = variantes.find(v => v.nombre === item.vNom);
                 if (variante) {
                     variante.stock = Math.max(0, variante.stock - item.cant);
+                    await pool.query('UPDATE productos SET variantes = $1 WHERE id = $2',
+                        [JSON.stringify(variantes), item.pId]);
                 }
             }
         }
-        guardarJSON('productos.json', productos);
         
-        await logAccion(req.admin.nombre, 'Venta realizada', `${ventaId}`);
-        
+        await logAccion(req.admin.nombre, 'Venta realizada', ventaId);
         res.json({ success: true, ventaId });
     } catch (error) {
         console.error('Error en venta:', error);
@@ -384,8 +374,8 @@ app.post('/confirmar-venta', authMiddleware, async (req, res) => {
 
 app.post('/listar-ventas', authMiddleware, async (req, res) => {
     try {
-        const ventas = leerJSON('ventas.json');
-        res.json({ lista: ventas.slice(0, 500) });
+        const result = await pool.query('SELECT * FROM ventas ORDER BY fecha DESC LIMIT 500');
+        res.json({ lista: result.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -397,8 +387,8 @@ app.post('/listar-ventas', authMiddleware, async (req, res) => {
 
 app.post('/tienda/listar-pedidos', authMiddleware, async (req, res) => {
     try {
-        const pedidos = leerJSON('pedidos.json');
-        res.json({ lista: pedidos });
+        const result = await pool.query('SELECT * FROM pedidos ORDER BY fecha DESC');
+        res.json({ lista: result.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -406,12 +396,7 @@ app.post('/tienda/listar-pedidos', authMiddleware, async (req, res) => {
 
 app.post('/tienda/confirmar-pedido', authMiddleware, async (req, res) => {
     try {
-        let pedidos = leerJSON('pedidos.json');
-        const pedido = pedidos.find(p => p.id === req.body.pedidoId);
-        if (pedido) {
-            pedido.estado = 'confirmado';
-            guardarJSON('pedidos.json', pedidos);
-        }
+        await pool.query("UPDATE pedidos SET estado = 'confirmado' WHERE id = $1", [req.body.pedidoId]);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -424,9 +409,8 @@ app.post('/tienda/confirmar-pedido', authMiddleware, async (req, res) => {
 
 app.post('/admin/perfiles', authMiddleware, adminOnly, async (req, res) => {
     try {
-        const usuarios = leerJSON('usuarios.json');
-        const perfiles = usuarios.map(u => ({ ...u, password: undefined }));
-        res.json({ lista: perfiles });
+        const result = await pool.query('SELECT id, nombre, usuario, rol, permisos, activo FROM usuarios');
+        res.json({ lista: result.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -436,25 +420,16 @@ app.post('/admin/crear-perfil', authMiddleware, adminOnly, async (req, res) => {
     try {
         const { adminPassword, usuario, password, nombre, permisos } = req.body;
         
-        // Verificar contraseña del admin
-        const usuarios = leerJSON('usuarios.json');
-        const admin = usuarios.find(u => u.usuario === req.admin.usuario);
-        const passwordValida = await bcrypt.compare(adminPassword, admin.password);
+        const adminResult = await pool.query('SELECT password FROM usuarios WHERE usuario = $1', [req.admin.usuario]);
+        const passwordValida = await bcrypt.compare(adminPassword, adminResult.rows[0].password);
         if (!passwordValida) return res.status(403).json({ success: false, error: 'Contraseña de admin incorrecta' });
         
         const hashedPassword = await bcrypt.hash(password, 10);
-        usuarios.push({
-            id: 'P-' + Date.now(),
-            nombre,
-            usuario,
-            password: hashedPassword,
-            permisos: permisos || [],
-            rol: 'vendedor',
-            activo: true
-        });
+        await pool.query(
+            'INSERT INTO usuarios (id, nombre, usuario, password, rol, permisos, activo) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            ['P-' + Date.now(), nombre, usuario, hashedPassword, 'vendedor', JSON.stringify(permisos || []), true]
+        );
         
-        guardarJSON('usuarios.json', usuarios);
-        await logAccion(req.admin.nombre, 'Crear perfil', nombre);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -463,13 +438,8 @@ app.post('/admin/crear-perfil', authMiddleware, adminOnly, async (req, res) => {
 
 app.post('/admin/editar-perfil', authMiddleware, adminOnly, async (req, res) => {
     try {
-        const { id, activo } = req.body;
-        let usuarios = leerJSON('usuarios.json');
-        const usuario = usuarios.find(u => u.id === id);
-        if (usuario && usuario.rol !== 'admin') {
-            usuario.activo = activo;
-            guardarJSON('usuarios.json', usuarios);
-        }
+        await pool.query('UPDATE usuarios SET activo = $1 WHERE id = $2 AND rol != $3',
+            [req.body.activo, req.body.id, 'admin']);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -478,15 +448,13 @@ app.post('/admin/editar-perfil', authMiddleware, adminOnly, async (req, res) => 
 
 app.post('/admin/cambiar-password', authMiddleware, async (req, res) => {
     try {
-        const { passwordActual, passwordNueva } = req.body;
-        let usuarios = leerJSON('usuarios.json');
-        const usuario = usuarios.find(u => u.usuario === req.admin.usuario);
-        
-        const passwordValida = await bcrypt.compare(passwordActual, usuario.password);
+        const result = await pool.query('SELECT password FROM usuarios WHERE usuario = $1', [req.admin.usuario]);
+        const passwordValida = await bcrypt.compare(req.body.passwordActual, result.rows[0].password);
         if (!passwordValida) return res.status(403).json({ success: false, error: 'Contraseña actual incorrecta' });
         
-        usuario.password = await bcrypt.hash(passwordNueva, 10);
-        guardarJSON('usuarios.json', usuarios);
+        const hashedPassword = await bcrypt.hash(req.body.passwordNueva, 10);
+        await pool.query('UPDATE usuarios SET password = $1 WHERE usuario = $2',
+            [hashedPassword, req.admin.usuario]);
         
         res.json({ success: true });
     } catch (error) {
@@ -500,8 +468,8 @@ app.post('/admin/cambiar-password', authMiddleware, async (req, res) => {
 
 app.post('/notificaciones', authMiddleware, async (req, res) => {
     try {
-        const notificaciones = leerJSON('notificaciones.json');
-        res.json({ lista: notificaciones.slice(0, 50) });
+        const result = await pool.query('SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT 50');
+        res.json({ lista: result.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -509,12 +477,7 @@ app.post('/notificaciones', authMiddleware, async (req, res) => {
 
 app.post('/notificaciones/leer', authMiddleware, async (req, res) => {
     try {
-        let notificaciones = leerJSON('notificaciones.json');
-        const notif = notificaciones.find(n => n.id === req.body.id);
-        if (notif) {
-            notif.leida = true;
-            guardarJSON('notificaciones.json', notificaciones);
-        }
+        await pool.query('UPDATE notificaciones SET leida = true WHERE id = $1', [req.body.id]);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -523,31 +486,7 @@ app.post('/notificaciones/leer', authMiddleware, async (req, res) => {
 
 app.post('/notificaciones/leer-todas', authMiddleware, async (req, res) => {
     try {
-        let notificaciones = leerJSON('notificaciones.json');
-        notificaciones.forEach(n => n.leida = true);
-        guardarJSON('notificaciones.json', notificaciones);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ============================================
-// RUTAS DE MÉTODOS DE ENVÍO
-// ============================================
-
-app.post('/listar-metodos-envio', async (req, res) => {
-    try {
-        const metodos = leerJSON('metodos-envio.json');
-        res.json({ lista: metodos });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/guardar-metodos-envio', authMiddleware, async (req, res) => {
-    try {
-        guardarJSON('metodos-envio.json', req.body.lista);
+        await pool.query("UPDATE notificaciones SET leida = true WHERE leida = false");
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -560,25 +499,32 @@ app.post('/guardar-metodos-envio', authMiddleware, async (req, res) => {
 
 app.post('/logs/admin', authMiddleware, async (req, res) => {
     try {
-        const { filtro, desde, hasta } = req.body;
-        let logs = leerJSON('logs.json') || [];
+        const { filtro } = req.body;
+        let query = 'SELECT * FROM logs';
+        let params = [];
         
         if (filtro) {
-            logs = logs.filter(l => 
-                (l.admin && l.admin.toLowerCase().includes(filtro.toLowerCase())) ||
-                (l.accion && l.accion.toLowerCase().includes(filtro.toLowerCase()))
-            );
+            query += ' WHERE admin ILIKE $1 OR accion ILIKE $1';
+            params.push(`%${filtro}%`);
         }
         
-        res.json({ lista: logs.slice(0, 500) });
+        query += ' ORDER BY fecha DESC LIMIT 500';
+        
+        const result = await pool.query(query, params);
+        res.json({ lista: result.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 // ============================================
-// SISTEMA DE BACKUP TOTAL (Adaptado a JSON)
+// SISTEMA DE BACKUP TOTAL (PostgreSQL)
 // ============================================
+
+async function exportarTabla(nombreTabla) {
+    const result = await pool.query(`SELECT * FROM ${nombreTabla}`);
+    return result.rows;
+}
 
 app.post('/admin/backup/crear-total', authMiddleware, async (req, res) => {
     try {
@@ -590,27 +536,24 @@ app.post('/admin/backup/crear-total', authMiddleware, async (req, res) => {
         
         console.log('📦 Iniciando backup total:', backupId);
         
-        // Recopilar TODOS los datos de archivos JSON
+        // Exportar TODAS las tablas
         const datos = {
             metadata: {
                 id: backupId,
                 fecha: new Date().toISOString(),
                 version: '2.0',
                 tipo: 'total',
-                sistema: 'Casa Elegida'
+                sistema: 'Casa Elegida POS Master'
             },
-            productos: leerJSON('productos.json'),
-            categorias: leerJSON('categorias.json'),
-            ventas: leerJSON('ventas.json'),
-            pedidos: leerJSON('pedidos.json'),
-            usuarios: leerJSON('usuarios.json'),
-            notificaciones: leerJSON('notificaciones.json'),
-            metodosEnvio: leerJSON('metodos-envio.json'),
-            sucursales: leerJSON('sucursales.json'),
-            logs: (leerJSON('logs.json') || []).slice(0, 5000)
+            productos: await exportarTabla('productos'),
+            categorias: await exportarTabla('categorias'),
+            ventas: await exportarTabla('ventas'),
+            pedidos: await exportarTabla('pedidos'),
+            usuarios: await exportarTabla('usuarios'),
+            notificaciones: await exportarTabla('notificaciones'),
+            logs: (await pool.query('SELECT * FROM logs ORDER BY fecha DESC LIMIT 5000')).rows,
         };
         
-        // Estadísticas
         const stats = {
             productos: datos.productos.length,
             ventas: datos.ventas.length,
@@ -620,11 +563,12 @@ app.post('/admin/backup/crear-total', authMiddleware, async (req, res) => {
             totalRegistros: 0
         };
         
+        // Contar registros
         Object.values(datos).forEach(val => {
             if (Array.isArray(val)) stats.totalRegistros += val.length;
         });
         
-        // Guardar datos
+        datos.metadata.stats = stats;
         fs.writeFileSync(path.join(backupPath, 'data.json'), JSON.stringify(datos, null, 2));
         
         // Copiar imágenes
@@ -649,7 +593,7 @@ app.post('/admin/backup/crear-total', authMiddleware, async (req, res) => {
             copiarRecursivo(UPLOADS_DIR, imagenesDir);
         }
         
-        // Guardar metadata con stats
+        // Actualizar stats finales
         datos.metadata.stats = stats;
         fs.writeFileSync(path.join(backupPath, 'data.json'), JSON.stringify(datos, null, 2));
         
@@ -667,7 +611,6 @@ app.post('/admin/backup/crear-total', authMiddleware, async (req, res) => {
             archive.finalize();
         });
         
-        // Limpiar temp
         fs.rmSync(backupPath, { recursive: true, force: true });
         
         const finalStats = fs.statSync(zipPath);
@@ -704,7 +647,6 @@ app.post('/admin/backup/historial-total', authMiddleware, async (req, res) => {
                     fecha: stats.mtime.toISOString(),
                     tamano: (stats.size / 1024 / 1024).toFixed(2),
                     automatico: f.includes('auto_'),
-                    encriptado: f.includes('enc_'),
                     stats: { productos: '?', ventas: '?' }
                 };
             })
@@ -755,14 +697,14 @@ app.post('/admin/backup/eliminar-total', authMiddleware, async (req, res) => {
 app.post('/admin/backup/restaurar-desde-archivo', authMiddleware, uploadBackup.single('backup'), async (req, res) => {
     const { password } = req.body;
     
-    const usuarios = leerJSON('usuarios.json');
-    const admin = usuarios.find(u => u.usuario === req.admin.usuario);
-    const passwordValida = await bcrypt.compare(password, admin.password);
-    if (!passwordValida) return res.status(403).json({ error: 'Contraseña incorrecta' });
-    
-    if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
-    
     try {
+        // Verificar contraseña
+        const adminResult = await pool.query('SELECT password FROM usuarios WHERE usuario = $1', [req.admin.usuario]);
+        const passwordValida = await bcrypt.compare(password, adminResult.rows[0].password);
+        if (!passwordValida) return res.status(403).json({ error: 'Contraseña incorrecta' });
+        
+        if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
+        
         const tempDir = path.join(BACKUP_DIR, 'temp_restore_' + Date.now());
         fs.mkdirSync(tempDir, { recursive: true });
         
@@ -785,19 +727,25 @@ app.post('/admin/backup/restaurar-desde-archivo', authMiddleware, uploadBackup.s
         
         const backup = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
         
-        // Restaurar archivos JSON
-        if (backup.productos) guardarJSON('productos.json', backup.productos);
-        if (backup.categorias) guardarJSON('categorias.json', backup.categorias);
-        if (backup.ventas) guardarJSON('ventas.json', backup.ventas);
-        if (backup.pedidos) guardarJSON('pedidos.json', backup.pedidos);
-        if (backup.notificaciones) guardarJSON('notificaciones.json', backup.notificaciones);
-        if (backup.metodosEnvio) guardarJSON('metodos-envio.json', backup.metodosEnvio);
+        // Limpiar tablas actuales
+        await pool.query('DELETE FROM productos');
+        await pool.query('DELETE FROM categorias');
+        await pool.query('DELETE FROM ventas');
+        await pool.query('DELETE FROM pedidos');
+        await pool.query('DELETE FROM notificaciones');
         
-        // Mantener admin principal
-        if (backup.usuarios) {
-            const adminPrincipal = usuarios.find(u => u.rol === 'admin');
-            const otrosUsuarios = backup.usuarios.filter(u => u.rol !== 'admin' || u.usuario === adminPrincipal?.usuario);
-            guardarJSON('usuarios.json', otrosUsuarios);
+        // Restaurar datos
+        if (backup.productos) {
+            for (let p of backup.productos) {
+                await pool.query(
+                    `INSERT INTO productos (id, nombre, precio, precio_mayor, descripcion, categoria_id, subcategoria, variantes, destacado)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                    [p.id, p.nombre, p.precio, p.precio_mayor || p.precioMayor, p.descripcion,
+                     p.categoria_id || p.categoriaId, p.subcategoria,
+                     typeof p.variantes === 'string' ? p.variantes : JSON.stringify(p.variantes),
+                     p.destacado]
+                );
+            }
         }
         
         // Restaurar imágenes
@@ -824,21 +772,22 @@ app.post('/admin/backup/restaurar-desde-archivo', authMiddleware, uploadBackup.s
             copiarRecursivo(imagenesBackup, UPLOADS_DIR);
         }
         
-        // Limpiar
         fs.rmSync(tempDir, { recursive: true, force: true });
         fs.unlinkSync(req.file.path);
         
-        const stats = {
-            productos: backup.productos?.length || 0,
-            ventas: backup.ventas?.length || 0,
-            imagenes: backup.metadata?.stats?.imagenes || 0
-        };
-        
         await logAccion(req.admin.nombre, 'Restauración del sistema');
         
-        res.json({ success: true, stats });
+        res.json({
+            success: true,
+            stats: {
+                productos: backup.productos?.length || 0,
+                ventas: backup.ventas?.length || 0,
+                imagenes: backup.metadata?.stats?.imagenes || 0
+            }
+        });
         
     } catch (error) {
+        console.error('Error restaurando:', error);
         res.status(500).json({ error: 'Error al restaurar: ' + error.message });
     }
 });
@@ -849,50 +798,13 @@ app.post('/admin/backup/restaurar-desde-archivo', authMiddleware, uploadBackup.s
 
 app.post('/tienda/listar-productos', async (req, res) => {
     try {
-        const productos = leerJSON('productos.json');
-        const categorias = leerJSON('categorias.json');
-        res.json({ productos, categorias });
+        const productos = await pool.query('SELECT * FROM productos ORDER BY orden ASC');
+        const categorias = await pool.query('SELECT * FROM categorias ORDER BY orden ASC');
+        res.json({ productos: productos.rows, categorias: categorias.rows });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
-// ============================================
-// INICIALIZACIÓN DEL SISTEMA
-// ============================================
-
-async function inicializarSistema() {
-    try {
-        // Crear admin por defecto
-        let usuarios = leerJSON('usuarios.json');
-        if (!usuarios.find(u => u.usuario === 'admin')) {
-            const hashedPassword = await bcrypt.hash('admin123', 10);
-            usuarios.push({
-                id: 'P-admin',
-                nombre: 'Administrador',
-                usuario: 'admin',
-                password: hashedPassword,
-                rol: 'admin',
-                permisos: ['ventas', 'stock', 'pedidos', 'config', 'dashboard', 'logs', 'web', 'admin'],
-                activo: true
-            });
-            guardarJSON('usuarios.json', usuarios);
-            console.log('✅ Admin creado: admin / admin123');
-        }
-        
-        // Inicializar archivos si no existen
-        const archivosIniciales = ['productos.json', 'categorias.json', 'ventas.json', 'pedidos.json', 'notificaciones.json', 'logs.json'];
-        archivosIniciales.forEach(archivo => {
-            if (!fs.existsSync(path.join(DATA_DIR, archivo))) {
-                guardarJSON(archivo, []);
-            }
-        });
-        
-        console.log('🚀 Sistema inicializado correctamente');
-    } catch (error) {
-        console.error('❌ Error inicializando:', error);
-    }
-}
 
 // ============================================
 // INICIAR SERVIDOR
@@ -906,12 +818,7 @@ app.get('/tienda', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'tienda.html'));
 });
 
-app.listen(PORT, async () => {
-    await inicializarSistema();
-    console.log(`🏪 Casa Elegida - Servidor corriendo en puerto ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`🏪 Casa Elegida POS Master - Puerto ${PORT}`);
     console.log(`📊 Panel Admin: http://localhost:${PORT}/admin`);
-    console.log(`🛍️ Tienda: http://localhost:${PORT}/tienda`);
-    console.log(`👤 Login: admin / admin123`);
 });
-
-module.exports = app;
