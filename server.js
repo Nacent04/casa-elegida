@@ -22,11 +22,9 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// Directorio de backups
 const BACKUP_DIR = path.join(__dirname, 'backups');
 ['./backups', './backups/temp'].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
 
-// Configuración de multer para backup
 const backupStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, './backups/temp/'),
     filename: (req, file, cb) => cb(null, 'restore_' + Date.now() + path.extname(file.originalname))
@@ -289,21 +287,50 @@ app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: fals
 app.use(passport.initialize()); app.use(passport.session());
 app.use('/uploads', express.static('uploads')); app.use(express.static('public'));
 
-passport.use(new GoogleStrategy({ clientID: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback' },
+// ============================================
+// ESTRATEGIA DE GOOGLE CORREGIDA
+// ============================================
+passport.use(new GoogleStrategy({ 
+    clientID: GOOGLE_CLIENT_ID, 
+    clientSecret: GOOGLE_CLIENT_SECRET, 
+    callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback' 
+},
     async (accessToken, refreshToken, profile, done) => {
+        let client;
         try {
-            let u = (await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
+            client = await pool.connect();
+            let u = (await client.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value])).rows[0];
             if (!u) {
                 const id = 'USR-' + Date.now();
-                await pool.query('INSERT INTO usuarios (id, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,0)',
-                    [id, profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
-                u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
+                await client.query('INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,0)',
+                    [id, profile.name?.givenName || '', profile.name?.familyName || '', profile.emails[0].value, profile.id, profile.photos?.[0]?.value||'', 'cliente']);
+                u = (await client.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
+            } else if (!u.googleId) {
+                await client.query('UPDATE usuarios SET "googleId" = $1, foto = COALESCE($2, foto) WHERE id = $3',
+                    [profile.id, profile.photos?.[0]?.value || null, u.id]);
+                u.googleId = profile.id;
             }
             return done(null, u);
-        } catch(e) { return done(e, null); }
-    }));
+        } catch(e) { 
+            return done(e, null); 
+        } finally {
+            if (client) client.release();
+        }
+    }
+));
 passport.serializeUser((u, d) => d(null, u.id));
-passport.deserializeUser(async (id, d) => { const u = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0]; d(null, u || null); });
+passport.deserializeUser(async (id, d) => { 
+    let client;
+    try {
+        client = await pool.connect();
+        const u = (await client.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0]; 
+        d(null, u || null); 
+    } catch(e) {
+        d(e, null);
+    } finally {
+        if (client) client.release();
+    }
+});
 
 const authMiddleware = (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { req.usuario = jwt.verify(t, JWT_SECRET); next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
 const adminMiddleware = (permiso = null) => (req, res, next) => { const t = req.headers.authorization?.replace('Bearer ', ''); if (!t) return res.status(401).json({ error: 'No autorizado' }); try { const d = jwt.verify(t, JWT_SECRET); if (d.tipo !== 'admin') return res.status(401).json({ error: 'No autorizado' }); if (d.rol === 'admin') { req.admin = d; return next(); } if (permiso && !d.permisos.includes(permiso)) return res.status(403).json({ error: 'Sin permiso' }); req.admin = d; next(); } catch(e) { res.status(401).json({ error: 'Token inválido' }); } };
@@ -669,7 +696,6 @@ app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), async (r
     const ventasMes = (await pool.query("SELECT * FROM ventas WHERE fecha LIKE $1", [`%${mes}%`])).rows;
     let efAdmin = 0, trAdmin = 0, efWeb = 0, trWeb = 0;
     ventasMes.forEach(v => {
-        const items = JSON.parse(v.items||'[]');
         if (v.origen === 'admin') {
             if (v["metodoPago"] === 'efectivo') efAdmin += v.total;
             if (v["metodoPago"] === 'transferencia') trAdmin += v.total;
@@ -822,13 +848,7 @@ app.post('/admin/backup/crear-total', adminMiddleware(), async (req, res) => {
         console.log('📦 Iniciando backup total:', backupId);
         
         const datos = {
-            metadata: {
-                id: backupId,
-                fecha: new Date().toISOString(),
-                version: '2.0',
-                tipo: 'total',
-                sistema: 'Casa Elegida POS Master'
-            },
+            metadata: { id: backupId, fecha: new Date().toISOString(), version: '2.0', tipo: 'total', sistema: 'Casa Elegida POS Master' },
             productos: await exportarTabla('productos'),
             variantes: await exportarTabla('variantes'),
             categorias: await exportarTabla('categorias'),
@@ -843,26 +863,13 @@ app.post('/admin/backup/crear-total', adminMiddleware(), async (req, res) => {
             caja_profesional: await exportarTabla('caja_profesional'),
         };
         
-        const stats = {
-            productos: datos.productos.length,
-            ventas: datos.ventas.length,
-            usuarios: datos.usuarios.length,
-            pedidos: datos.pedidos.length,
-            imagenes: 0,
-            totalRegistros: 0
-        };
-        
-        Object.values(datos).forEach(val => {
-            if (Array.isArray(val)) stats.totalRegistros += val.length;
-        });
-        
+        const stats = { productos: datos.productos.length, ventas: datos.ventas.length, usuarios: datos.usuarios.length, pedidos: datos.pedidos.length, imagenes: 0, totalRegistros: 0 };
+        Object.values(datos).forEach(val => { if (Array.isArray(val)) stats.totalRegistros += val.length; });
         datos.metadata.stats = stats;
         fs.writeFileSync(path.join(backupPath, 'data.json'), JSON.stringify(datos, null, 2));
         
-        // Copiar imágenes
         const imagenesDir = path.join(backupPath, 'imagenes');
         fs.mkdirSync(imagenesDir, { recursive: true });
-        
         const uploadsDir = path.join(__dirname, 'uploads');
         if (fs.existsSync(uploadsDir)) {
             const copiarRecursivo = (src, dest) => {
@@ -870,24 +877,17 @@ app.post('/admin/backup/crear-total', adminMiddleware(), async (req, res) => {
                 for (let entry of entries) {
                     const srcPath = path.join(src, entry.name);
                     const destPath = path.join(dest, entry.name);
-                    if (entry.isDirectory()) {
-                        fs.mkdirSync(destPath, { recursive: true });
-                        copiarRecursivo(srcPath, destPath);
-                    } else {
-                        fs.copyFileSync(srcPath, destPath);
-                        stats.imagenes++;
-                    }
+                    if (entry.isDirectory()) { fs.mkdirSync(destPath, { recursive: true }); copiarRecursivo(srcPath, destPath); }
+                    else { fs.copyFileSync(srcPath, destPath); stats.imagenes++; }
                 }
             };
             copiarRecursivo(uploadsDir, imagenesDir);
         }
-        
         datos.metadata.stats = stats;
         fs.writeFileSync(path.join(backupPath, 'data.json'), JSON.stringify(datos, null, 2));
         
         const zipFilename = `${backupId}.backup`;
         const zipPath = path.join(BACKUP_DIR, zipFilename);
-        
         await new Promise((resolve, reject) => {
             const output = fs.createWriteStream(zipPath);
             const archive = archiver('zip', { zlib: { level: 9 } });
@@ -897,70 +897,36 @@ app.post('/admin/backup/crear-total', adminMiddleware(), async (req, res) => {
             archive.directory(backupPath, backupId);
             archive.finalize();
         });
-        
         fs.rmSync(backupPath, { recursive: true, force: true });
-        
         const finalStats = fs.statSync(zipPath);
-        
         await logActividad(req.admin.nombre, 'BACKUP_CREADO', `${stats.productos} prod, ${stats.ventas} ventas`, req);
-        
-        res.json({
-            success: true,
-            id: backupId,
-            filename: zipFilename,
-            downloadUrl: `/admin/backup/descargar-archivo/${zipFilename}`,
-            stats,
-            tamano: (finalStats.size / 1024 / 1024).toFixed(2)
-        });
-        
-    } catch (error) {
-        console.error('❌ Error creando backup:', error);
-        res.status(500).json({ error: 'Error al crear backup: ' + error.message });
-    }
+        res.json({ success: true, id: backupId, filename: zipFilename, downloadUrl: `/admin/backup/descargar-archivo/${zipFilename}`, stats, tamano: (finalStats.size / 1024 / 1024).toFixed(2) });
+    } catch (error) { console.error('❌ Error creando backup:', error); res.status(500).json({ error: 'Error al crear backup: ' + error.message }); }
 });
 
 app.post('/admin/backup/historial-total', adminMiddleware(), async (req, res) => {
     try {
         if (!fs.existsSync(BACKUP_DIR)) return res.json({ backups: [] });
-        
-        const files = fs.readdirSync(BACKUP_DIR)
-            .filter(f => f.endsWith('.backup') || f.endsWith('.zip'))
-            .map(f => {
-                const filePath = path.join(BACKUP_DIR, f);
-                const stats = fs.statSync(filePath);
-                return {
-                    id: f.replace('.backup', '').replace('.zip', ''),
-                    nombre: f,
-                    fecha: stats.mtime.toISOString(),
-                    tamano: (stats.size / 1024 / 1024).toFixed(2),
-                    automatico: f.includes('auto_'),
-                    stats: { productos: '?', ventas: '?' }
-                };
-            })
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        
+        const files = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.backup') || f.endsWith('.zip')).map(f => {
+            const filePath = path.join(BACKUP_DIR, f);
+            const stats = fs.statSync(filePath);
+            return { id: f.replace('.backup', '').replace('.zip', ''), nombre: f, fecha: stats.mtime.toISOString(), tamano: (stats.size / 1024 / 1024).toFixed(2), automatico: f.includes('auto_'), stats: { productos: '?', ventas: '?' } };
+        }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         res.json({ backups: files });
-    } catch (error) {
-        res.json({ backups: [] });
-    }
+    } catch (error) { res.json({ backups: [] }); }
 });
 
 app.get('/admin/backup/descargar-archivo/:filename', adminMiddleware(), (req, res) => {
     const filePath = path.join(BACKUP_DIR, req.params.filename);
-    if (fs.existsSync(filePath)) {
-        res.download(filePath);
-    } else {
-        res.status(404).json({ error: 'Archivo no encontrado' });
-    }
+    if (fs.existsSync(filePath)) res.download(filePath);
+    else res.status(404).json({ error: 'Archivo no encontrado' });
 });
 
 app.post('/admin/backup/descargar-total', adminMiddleware(), (req, res) => {
     const { id } = req.body;
     for (let ext of ['.backup', '.zip']) {
         const filePath = path.join(BACKUP_DIR, id + ext);
-        if (fs.existsSync(filePath)) {
-            return res.json({ url: `/admin/backup/descargar-archivo/${id}${ext}` });
-        }
+        if (fs.existsSync(filePath)) return res.json({ url: `/admin/backup/descargar-archivo/${id}${ext}` });
     }
     res.status(404).json({ error: 'Backup no encontrado' });
 });
@@ -970,155 +936,48 @@ app.post('/admin/backup/eliminar-total', adminMiddleware(), async (req, res) => 
         const { id } = req.body;
         for (let ext of ['.backup', '.zip']) {
             const filePath = path.join(BACKUP_DIR, id + ext);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-                await logActividad(req.admin.nombre, 'BACKUP_ELIMINADO', id, req);
-                return res.json({ success: true });
-            }
+            if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); await logActividad(req.admin.nombre, 'BACKUP_ELIMINADO', id, req); return res.json({ success: true }); }
         }
         res.status(404).json({ error: 'Backup no encontrado' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 app.post('/admin/backup/restaurar-desde-archivo', adminMiddleware(), uploadBackup.single('backup'), async (req, res) => {
     const { password } = req.body;
-    
     try {
-        // Verificar contraseña del admin
         const adminPerfil = (await pool.query("SELECT * FROM perfiles WHERE usuario = $1", [req.admin.usuario])).rows[0];
         const passwordValida = await bcrypt.compare(password, adminPerfil.password);
         if (!passwordValida) return res.status(403).json({ error: 'Contraseña incorrecta' });
-        
         if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
-        
         const tempDir = path.join(BACKUP_DIR, 'temp_restore_' + Date.now());
         fs.mkdirSync(tempDir, { recursive: true });
-        
-        await fs.createReadStream(req.file.path)
-            .pipe(unzipper.Extract({ path: tempDir }))
-            .promise();
-        
+        await fs.createReadStream(req.file.path).pipe(unzipper.Extract({ path: tempDir })).promise();
         let dataDir = tempDir;
         const files = fs.readdirSync(tempDir);
-        for (let file of files) {
-            const fullPath = path.join(tempDir, file);
-            if (fs.statSync(fullPath).isDirectory()) {
-                dataDir = fullPath;
-                break;
-            }
-        }
-        
+        for (let file of files) { const fullPath = path.join(tempDir, file); if (fs.statSync(fullPath).isDirectory()) { dataDir = fullPath; break; } }
         const dataPath = path.join(dataDir, 'data.json');
         if (!fs.existsSync(dataPath)) throw new Error('Archivo de datos no encontrado');
-        
         const backup = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-        
-        // Limpiar tablas actuales (excepto perfiles admin)
-        await pool.query('DELETE FROM productos');
-        await pool.query('DELETE FROM variantes');
-        await pool.query('DELETE FROM categorias');
-        await pool.query('DELETE FROM ventas');
-        await pool.query('DELETE FROM pedidos');
-        await pool.query('DELETE FROM notificaciones');
+        await pool.query('DELETE FROM productos'); await pool.query('DELETE FROM variantes'); await pool.query('DELETE FROM categorias');
+        await pool.query('DELETE FROM ventas'); await pool.query('DELETE FROM pedidos'); await pool.query('DELETE FROM notificaciones');
         await pool.query('DELETE FROM configuracion');
-        
-        // Restaurar datos
-        if (backup.productos) {
-            for (let p of backup.productos) {
-                await pool.query(
-                    `INSERT INTO productos (id, nombre, precio, "precioMayor", descripcion, "categoriaId", subcategoria, destacado)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                    [p.id, p.nombre, p.precio, p.precioMayor || 0, p.descripcion || '', p.categoriaId, p.subcategoria || '', p.destacado || 0]
-                );
-            }
-        }
-        
-        if (backup.variantes) {
-            for (let v of backup.variantes) {
-                await pool.query(
-                    'INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1, $2, $3, $4)',
-                    [v.productoId, v.nombre, v.stock || 0, v.foto || '']
-                );
-            }
-        }
-        
-        if (backup.categorias) {
-            for (let c of backup.categorias) {
-                await pool.query(
-                    'INSERT INTO categorias (id, nombre, subcategorias) VALUES ($1, $2, $3)',
-                    [c.id, c.nombre, c.subcategorias || '[]']
-                );
-            }
-        }
-        
-        if (backup.configuracion) {
-            for (let c of backup.configuracion) {
-                await pool.query(
-                    'INSERT INTO configuracion (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO UPDATE SET valor = $2',
-                    [c.clave, c.valor]
-                );
-            }
-        }
-        
-        // Restaurar imágenes
+        if (backup.productos) { for (let p of backup.productos) { await pool.query(`INSERT INTO productos (id, nombre, precio, "precioMayor", descripcion, "categoriaId", subcategoria, destacado) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [p.id, p.nombre, p.precio, p.precioMayor||0, p.descripcion||'', p.categoriaId, p.subcategoria||'', p.destacado||0]); } }
+        if (backup.variantes) { for (let v of backup.variantes) { await pool.query('INSERT INTO variantes ("productoId", nombre, stock, foto) VALUES ($1,$2,$3,$4)', [v.productoId, v.nombre, v.stock||0, v.foto||'']); } }
+        if (backup.categorias) { for (let c of backup.categorias) { await pool.query('INSERT INTO categorias (id, nombre, subcategorias) VALUES ($1,$2,$3)', [c.id, c.nombre, c.subcategorias||'[]']); } }
+        if (backup.configuracion) { for (let c of backup.configuracion) { await pool.query('INSERT INTO configuracion (clave, valor) VALUES ($1,$2) ON CONFLICT (clave) DO UPDATE SET valor = $2', [c.clave, c.valor]); } }
         const imagenesBackup = path.join(dataDir, 'imagenes');
-        if (fs.existsSync(imagenesBackup)) {
-            const uploadsDir = path.join(__dirname, 'uploads');
-            if (fs.existsSync(uploadsDir)) {
-                fs.rmSync(uploadsDir, { recursive: true, force: true });
-            }
-            fs.mkdirSync(uploadsDir, { recursive: true });
-            
-            const copiarRecursivo = (src, dest) => {
-                const entries = fs.readdirSync(src, { withFileTypes: true });
-                for (let entry of entries) {
-                    const srcPath = path.join(src, entry.name);
-                    const destPath = path.join(dest, entry.name);
-                    if (entry.isDirectory()) {
-                        fs.mkdirSync(destPath, { recursive: true });
-                        copiarRecursivo(srcPath, destPath);
-                    } else {
-                        fs.copyFileSync(srcPath, destPath);
-                    }
-                }
-            };
-            copiarRecursivo(imagenesBackup, uploadsDir);
-        }
-        
-        fs.rmSync(tempDir, { recursive: true, force: true });
-        fs.unlinkSync(req.file.path);
-        
+        if (fs.existsSync(imagenesBackup)) { const uploadsDir = path.join(__dirname, 'uploads'); if (fs.existsSync(uploadsDir)) fs.rmSync(uploadsDir, { recursive: true, force: true }); fs.mkdirSync(uploadsDir, { recursive: true }); const copiarRecursivo = (src, dest) => { const entries = fs.readdirSync(src, { withFileTypes: true }); for (let entry of entries) { const sp = path.join(src, entry.name); const dp = path.join(dest, entry.name); if (entry.isDirectory()) { fs.mkdirSync(dp, { recursive: true }); copiarRecursivo(sp, dp); } else fs.copyFileSync(sp, dp); } }; copiarRecursivo(imagenesBackup, uploadsDir); }
+        fs.rmSync(tempDir, { recursive: true, force: true }); fs.unlinkSync(req.file.path);
         await logActividad(req.admin.nombre, 'RESTAURACION_SISTEMA', 'Sistema restaurado desde backup', req);
-        
-        res.json({
-            success: true,
-            stats: {
-                productos: backup.productos?.length || 0,
-                ventas: backup.ventas?.length || 0,
-                imagenes: backup.metadata?.stats?.imagenes || 0
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error restaurando:', error);
-        res.status(500).json({ error: 'Error al restaurar: ' + error.message });
-    }
+        res.json({ success: true, stats: { productos: backup.productos?.length||0, ventas: backup.ventas?.length||0, imagenes: backup.metadata?.stats?.imagenes||0 } });
+    } catch (error) { console.error('Error restaurando:', error); res.status(500).json({ error: 'Error al restaurar: ' + error.message }); }
 });
-
-// ============================================
-// FIN DEL SISTEMA DE BACKUP
-// ============================================
 
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Error interno' }); });
 
 async function start() {
-    await initDB();
-    await initConfig();
-    await initMetodosEnvio();
-    await initAdmin();
+    await initDB(); await initConfig(); await initMetodosEnvio(); await initAdmin();
     app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n📊 Panel Admin: http://localhost:${PORT}/admin\n🛍️ Tienda: http://localhost:${PORT}/tienda\n`));
 }
 start();
