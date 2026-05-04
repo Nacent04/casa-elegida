@@ -21,46 +21,54 @@
         .btn-warning{background:#f59e0b;color:white}.btn-success{background:#10b981;color:white}.btn-danger{background:#ef4444;color:white}.btn-info{background:#3b82f6;color:white}.btn-manual{background:#8b5cf6;color:white}
         
         /* NUEVO SISTEMA DE GRID PARA VARIANTES */
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
-        .card{background:white;border-radius:24px;padding:16px;text-align:center;transition:all 0.3s;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 1px 2px 0 rgba(0,0,0,0.05);border:1px solid #eef2ff}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+        .card{background:white;border-radius:24px;padding:16px;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 1px 2px 0 rgba(0,0,0,0.05);border:1px solid #eef2ff}
         .card:hover{transform:translateY(-4px);box-shadow:0 20px 25px -5px rgba(0,0,0,0.1)}
         
-        /* Imagen principal del producto */
-        .producto-imagen-principal{width:100%;height:200px;object-fit:cover;border-radius:16px;margin-bottom:12px;background:#f1f5f9;transition:all 0.3s}
+        /* Imagen principal del producto - MÁS GRANDE */
+        .producto-imagen-principal{width:100%;height:280px;object-fit:cover;border-radius:16px;margin-bottom:12px;background:#f1f5f9;transition:all 0.3s;cursor:default}
         
         .card h4{font-size:16px;font-weight:700;margin:8px 0}
         .precio-producto{font-size:22px;font-weight:800;margin:8px 0;color:#6366f1}
         .precio-mayor{font-size:12px;color:#10b981;margin-top:-4px;margin-bottom:8px}
         
-        /* CONTENEDOR DE VARIANTES EN FORMATO GRID */
-        .variantes-grid-container{background:#f8fafc;border-radius:16px;padding:12px;margin:12px 0;max-height:240px;overflow-y:auto}
+        /* Información de variante seleccionada */
+        .variante-seleccionada-info{background:#6366f1;color:white;padding:10px 14px;border-radius:14px;font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:default}
+        .variante-seleccionada-info i{opacity:0.8}
+        
+        /* BOTÓN DESPLEGAR VARIANTES */
+        .btn-desplegar-variantes{width:100%;padding:12px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:white;border:none;border-radius:14px;font-weight:700;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;margin:8px 0}
+        .btn-desplegar-variantes:hover{background:linear-gradient(135deg,#7c3aed,#6d28d9);transform:translateY(-2px);box-shadow:0 4px 12px rgba(139,92,246,0.3)}
+        .btn-desplegar-variantes.activo{background:linear-gradient(135deg,#ef4444,#dc2626)}
+        .btn-desplegar-variantes.activo:hover{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+        
+        /* CONTENEDOR DE VARIANTES - OCULTO POR DEFECTO */
+        .variantes-grid-container{background:#f8fafc;border-radius:16px;padding:12px;margin:12px 0;max-height:0;overflow:hidden;transition:max-height 0.4s ease, padding 0.3s ease, margin 0.3s ease;opacity:0}
+        .variantes-grid-container.desplegado{max-height:400px;overflow-y:auto;opacity:1;padding:16px;margin:16px 0}
         .variantes-grid-container::-webkit-scrollbar{width:6px}
         .variantes-grid-container::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
         
-        .variantes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px}
+        .variantes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
         
         /* Cada variante individual */
-        .variante-item-venta{cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid #e2e8f0;transition:all 0.2s;background:white;text-align:center;position:relative}
+        .variante-item-venta{cursor:pointer;border-radius:14px;overflow:hidden;border:2px solid #e2e8f0;transition:all 0.2s;background:white;text-align:center;position:relative}
         .variante-item-venta:hover{border-color:#a5b4fc;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-        .variante-item-venta.activa{border-color:#6366f1 !important;background:#eef2ff;box-shadow:0 4px 16px rgba(99,102,241,0.3)}
+        .variante-item-venta.activa{border-color:#6366f1 !important;background:#eef2ff;box-shadow:0 4px 16px rgba(99,102,241,0.3);transform:scale(1.05)}
         .variante-item-venta.sin-stock{opacity:0.5;pointer-events:none}
         
-        .variante-item-venta img{width:100%;height:70px;object-fit:cover;display:block}
-        .variante-item-venta .variante-nombre{font-size:10px;font-weight:600;padding:4px 6px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-        .variante-item-venta .variante-stock{font-size:9px;color:#64748b;padding:2px 6px;background:#f1f5f9;display:block}
+        .variante-item-venta img{width:100%;height:80px;object-fit:cover;display:block}
+        .variante-item-venta .variante-nombre{font-size:11px;font-weight:600;padding:6px 8px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+        .variante-item-venta .variante-stock{font-size:10px;color:#64748b;padding:3px 6px;background:#f1f5f9;display:block;font-weight:600}
         .variante-item-venta.activa .variante-stock{background:#6366f1;color:white}
-        
-        /* Badge de variante seleccionada */
-        .variante-seleccionada-info{background:#6366f1;color:white;padding:8px 12px;border-radius:12px;font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-        .variante-seleccionada-info i{opacity:0.8}
+        .variante-item-venta.activa .variante-nombre{color:#1e293b}
         
         .cantidad-selector{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0;background:#f1f5f9;border-radius:9999px;padding:4px;width:fit-content;margin-left:auto;margin-right:auto}
         .cantidad-btn{width:40px;height:40px;border-radius:9999px;border:none;background:white;cursor:pointer;font-weight:700;font-size:20px;color:#6366f1;transition:all 0.2s}
         .cantidad-btn:hover{background:#6366f1;color:white;transform:scale(1.1)}
         .cantidad-input{width:60px;text-align:center;font-size:18px;font-weight:600;border:2px solid #e2e8f0;background:white;border-radius:12px;padding:6px}
         
-        .btn-add{width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border:none;border-radius:40px;padding:14px;font-weight:700;cursor:pointer;transition:all 0.3s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px}
-        .btn-add:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(99,102,241,0.3)}
+        .btn-add{width:100%;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:40px;padding:14px;font-weight:700;cursor:pointer;transition:all 0.3s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px}
+        .btn-add:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(16,185,129,0.3)}
         .btn-add:disabled{background:#cbd5e1;cursor:not-allowed;transform:none}
         
         .cart-item{background:white;border-radius:20px;padding:12px;margin-bottom:12px;display:flex;gap:12px;align-items:center;border:1px solid #eef2ff}
@@ -135,7 +143,7 @@
         .btn-toggle-variantes{margin-top:12px;padding:10px 20px;background:#6366f1;color:white;border:none;border-radius:12px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:8px;transition:all 0.2s}
         .btn-toggle-variantes:hover{background:#4f46e5}
         @media(max-width:1024px){.layout-con-carrito{grid-template-columns:1fr}body{padding:16px}}
-        @media(max-width:768px){.form-row{grid-template-columns:1fr}.producto-header{flex-direction:column}}
+        @media(max-width:768px){.form-row{grid-template-columns:1fr}.producto-header{flex-direction:column}.grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}}
     </style>
 </head>
 <body>
@@ -188,13 +196,15 @@ let productos = [], carrito = [], metodoPago = 'efectivo', logistica = 'local', 
 let ventasHistorial = [], pedidosTienda = [], categorias = [], metodosEnvio = [];
 let varianteSeleccionada = {}, configuracion = {}, mayoristaHabilitado = false, mayoristaModo = 'cantidad';
 let notificaciones = [], notificacionesNoLeidas = 0;
+// Control de paneles de variantes desplegados
+let variantesDesplegadas = {};
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
 
 function mostrarToast(msg, error=false) { const t = document.createElement('div'); t.className = `toast-notification ${error?'error':''}`; t.innerHTML = `<i class="fas ${error?'fa-exclamation-circle':'fa-check-circle'}"></i> ${msg}`; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 function formatearNumero(n) { if(!n) return '0'; return Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
 function desformatearNumero(t) { if(!t) return 0; return parseInt(t.toString().replace(/\./g,''))||0; }
-function sanitizarUrl(url) { if(!url || url === '') return 'https://via.placeholder.com/180'; if(url.startsWith('/uploads/')||url.startsWith('http')) return url; return 'https://via.placeholder.com/180'; }
+function sanitizarUrl(url) { if(!url || url === '') return 'https://via.placeholder.com/400x300'; if(url.startsWith('/uploads/')||url.startsWith('http')) return url; return 'https://via.placeholder.com/400x300'; }
 async function safeFetch(url, options={}) { if (adminToken) options.headers = { ...options.headers, 'Authorization': `Bearer ${adminToken}` }; try { const res = await fetch(url, options); if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error || `HTTP ${res.status}`); return await res.json(); } catch(e) { mostrarToast(e.message, true); throw e; } }
 
 async function loginAdmin() { const usuario = document.getElementById('login-usuario').value.trim(); const password = document.getElementById('login-password').value; if (!usuario || !password) { document.getElementById('login-error').textContent = 'Completá todos los campos'; return; } try { const res = await fetch('/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({usuario,password}) }); const data = await res.json(); if (data.success) { localStorage.setItem('adminToken', data.token); adminToken = data.token; adminActual = data.perfil; document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-screen').style.display = 'block'; iniciarPanel(); } else { document.getElementById('login-error').textContent = data.error || 'Error'; } } catch(e) { document.getElementById('login-error').textContent = 'Error de conexión'; } }
@@ -247,10 +257,9 @@ function renderPaginaPedidosWeb() { return `<div class="panel"><h3><i class="fas
 function renderPaginaPerfiles() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-users-cog"></i> Gestión de Perfiles</span><button onclick="abrirModalCrearPerfil()" class="tab-btn btn-success"><i class="fas fa-user-plus"></i> Nuevo Perfil</button></h3><div id="lista-perfiles"></div></div>`; }
 function renderPaginaLogs() { return `<div class="panel"><h3><i class="fas fa-history"></i> Registro de Actividad</h3><div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"><input type="text" id="logs-filtro" placeholder="🔍 Buscar..." style="flex:1;min-width:200px" onkeyup="cargarLogs()"><input type="date" id="logs-desde" style="width:150px" onchange="cargarLogs()"><input type="date" id="logs-hasta" style="width:150px" onchange="cargarLogs()"><button onclick="document.getElementById('logs-filtro').value='';document.getElementById('logs-desde').value='';document.getElementById('logs-hasta').value='';cargarLogs();" class="tab-btn">Limpiar</button></div><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Fecha</th><th>Admin</th><th>Acción</th><th>Detalles</th></tr></thead><tbody id="logs-body"></tbody></table></div></div>`; }
 function renderPaginaEdicionWeb() { return `<div class="panel"><h3><i class="fas fa-paint-brush"></i> Edición Web</h3><div class="config-section"><h4><i class="fas fa-swatchbook"></i> Plantillas de Tienda</h4><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"><div class="plantilla-card" style="border:2px solid #6366f1;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('moderna')"><div style="background:linear-gradient(135deg,#1a1a1a,#333);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Moderna</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('clasica')"><div style="background:linear-gradient(135deg,#8B5E3C,#D4A574);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Clásica</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('minimalista')"><div style="background:linear-gradient(135deg,#fafafa,#e2e8f0);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Minimalista</strong></div></div></div><div class="config-section"><h4><i class="fas fa-icons"></i> Íconos de la Tienda</h4><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="tab-btn" onclick="cambiarIcono('store')"><i class="fas fa-store"></i> Tienda</button><button class="tab-btn" onclick="cambiarIcono('home')"><i class="fas fa-home"></i> Hogar</button><button class="tab-btn" onclick="cambiarIcono('star')"><i class="fas fa-star"></i> Premium</button><button class="tab-btn" onclick="cambiarIcono('gem')"><i class="fas fa-gem"></i> Lujo</button></div></div></div>`; }
-
 function renderPaginaConfiguracion() { return `<div class="panel"><h3><i class="fas fa-sliders-h"></i> Configuración</h3><div class="config-section" style="border-color:#10b981"><h3 style="color:#10b981"><i class="fas fa-tags"></i> Ventas Mayoristas <button id="btnMayoristaToggle" class="tab-btn" style="margin-left:auto;background:#10b981;color:white" onclick="toggleMayorista()"><i class="fas fa-toggle-on"></i> Activado</button></h3><div id="mayoristaPanel"><div style="margin-bottom:20px"><label>Modo:</label><div style="display:flex;gap:12px;margin-top:12px"><div class="modo-option active" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')"><i class="fas fa-boxes"></i><br><strong>Cantidad</strong></div><div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')"><i class="fas fa-money-bill-wave"></i><br><strong>Monto</strong></div><div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')"><i class="fas fa-chart-line"></i><br><strong>Ambas</strong></div></div></div><div style="display:flex;gap:20px"><div id="configCantidad"><label>Cantidad mínima</label><input type="number" id="mayoristaCantidad" value="3"></div><div id="configMonto" style="display:none"><label>Monto mínimo</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b">$</span><input type="text" id="mayoristaMonto" value="80000" style="padding-left:28px"></div></div></div><button onclick="guardarMayorista()" class="btn-confirm" style="margin-top:16px"><i class="fas fa-save"></i> Guardar Mayorista</button></div></div><div class="config-section"><h3><i class="fas fa-image"></i> Logo</h3><div class="logo-preview"><img id="logo-preview-img" style="display:none;max-width:200px;max-height:80px"><div id="logo-placeholder"><i class="fas fa-store" style="font-size:48px;color:#cbd5e1"></i></div><div class="logo-actions"><label class="tab-btn" style="background:#6366f1;color:white"><i class="fas fa-upload"></i> Subir <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)"></label><button onclick="eliminarLogo()" class="tab-btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button></div></div></div><div class="config-section"><h3><i class="fas fa-building"></i> Empresa</h3><input type="text" id="empresa-nombre" placeholder="Nombre"><div class="form-row"><input type="text" id="empresa-telefono" placeholder="Teléfono"><input type="email" id="empresa-email" placeholder="Email"></div><input type="text" id="empresa-direccion" placeholder="Dirección"><h4 style="margin-top:20px"><i class="fas fa-clock"></i> Horarios</h4><div class="form-row"><input type="text" id="horario-lv" placeholder="L a V"><input type="text" id="horario-sab" placeholder="Sábados"></div><input type="text" id="horario-dom" placeholder="Domingos"><h4 style="margin-top:20px"><i class="fas fa-hashtag"></i> Redes Sociales</h4><div class="form-row"><input type="text" id="red-instagram" placeholder="Instagram"><input type="text" id="red-facebook" placeholder="Facebook"></div><div class="form-row"><input type="text" id="red-tiktok" placeholder="TikTok"><input type="text" id="red-whatsapp" placeholder="WhatsApp"></div><h4 style="margin-top:20px"><i class="fas fa-credit-card"></i> Datos de Pago</h4><div class="form-row"><input type="text" id="pago-alias" placeholder="Alias"><input type="text" id="pago-cbu" placeholder="CBU"></div><div class="form-row"><input type="text" id="pago-banco" placeholder="Banco"><input type="text" id="pago-titular" placeholder="Titular"></div><button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Empresa</button></div><div class="config-section"><h3><i class="fas fa-palette"></i> Diseño Tienda</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px"><div><label>Color Principal</label><input type="color" id="tienda-color-primary" value="#1a1a1a"></div><div><label>Color Secundario</label><input type="color" id="tienda-color-secondary" value="#c9a96e"></div><div><label>Color Fondo</label><input type="color" id="tienda-color-bg" value="#fafafa"></div><div><label>Color Texto</label><input type="color" id="tienda-color-text" value="#1a1a1a"></div></div><button onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top:16px">Aplicar Colores</button></div><div class="config-section"><h3><i class="fas fa-store"></i> Tienda Online</h3><div style="margin-bottom:16px"><label>Habilitar</label><div class="pago-tabs"><button id="tienda-on" class="pago-btn active" onclick="setTiendaHabilitada(true)">Activada</button><button id="tienda-off" class="pago-btn" onclick="setTiendaHabilitada(false)">Desactivada</button></div></div><input type="text" id="tienda-titulo" placeholder="Título"><textarea id="tienda-mensaje" rows="2" placeholder="Mensaje"></textarea><button onclick="guardarConfiguracionTienda()" class="btn-confirm">Guardar Tienda</button></div><div class="config-section"><h3><i class="fas fa-truck"></i> Métodos de Envío</h3><p style="color:#64748b;margin-bottom:12px">Un método por línea</p><textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani"></textarea><button onclick="guardarMetodosEnvio()" class="btn-confirm">Guardar Métodos</button></div></div>`; }
 
-async function cargar() { try { const d=await safeFetch('/listar',{method:'POST'}); productos=d.lista||[]; renderProductosVenta(); actualizarEstadisticasRapidas(); } catch(e){} }
+async function cargar() { try { const d=await safeFetch('/listar',{method:'POST'}); productos=d.lista||[]; variantesDesplegadas={}; renderProductosVenta(); actualizarEstadisticasRapidas(); } catch(e){} }
 async function cargarYRenderAdmin() { try { const d=await safeFetch('/listar',{method:'POST'}); productos=d.lista||[]; renderAdmin(); } catch(e){} }
 async function cargarVentas() { try { const d=await safeFetch('/listar-ventas',{method:'POST'}); ventasHistorial=d.lista||[]; renderVentas(); } catch(e){} }
 async function cargarCategorias() { try { const d=await safeFetch('/listar-categorias',{method:'POST'}); categorias=d.lista||[]; } catch(e){} }
@@ -275,21 +284,37 @@ function renderProductosVenta() {
                 </span>
                 ${p.precioMayor > 0 ? `<span style="background:#d1fae5;color:#065f46;font-size:10px;padding:4px 8px;border-radius:40px;font-weight:600">MAY</span>` : ''}
             </div>
+            
+            <!-- Imagen principal más grande -->
             <img id="img-principal-${p.id}" 
                  src="${sanitizarUrl(v.foto)}" 
-                 onerror="this.src='https://via.placeholder.com/300x200?text=Sin+Imagen'" 
+                 onerror="this.src='https://via.placeholder.com/400x300?text=Sin+Imagen'" 
                  class="producto-imagen-principal"
-                 alt="${escapeHtml(p.nombre)}">
+                 alt="${escapeHtml(p.nombre)}"
+                 draggable="false"
+                 oncontextmenu="return false;">
+            
             <h4>${escapeHtml(p.nombre)}</h4>
             <div class="precio-producto">${fmt.format(p.precio)}</div>
             ${p.precioMayor > 0 ? `<div class="precio-mayor">💰 Mayorista: ${fmt.format(p.precioMayor)}</div>` : ''}
+            
+            <!-- Información de variante seleccionada -->
             <div class="variante-seleccionada-info" id="variante-info-${p.id}">
-                <span><i class="fas fa-check-circle"></i> ${escapeHtml(v.nombre)}</span>
-                <span style="font-size:10px;opacity:0.9">Stock: ${v.stock}</span>
+                <span><i class="fas fa-check-circle"></i> <strong>${escapeHtml(v.nombre)}</strong></span>
+                <span style="font-size:11px;opacity:0.9">Stock: ${v.stock}</span>
             </div>
+            
+            <!-- Botón para desplegar variantes -->
+            <button class="btn-desplegar-variantes" id="btn-desplegar-${p.id}" onclick="toggleVariantesVenta(${p.id})">
+                <i class="fas fa-layer-group"></i> 
+                <span id="btn-texto-${p.id}">Desplegar variantes (${p.variantes.length})</span>
+                <i class="fas fa-chevron-down" id="btn-icono-${p.id}"></i>
+            </button>
+            
+            <!-- Contenedor de variantes oculto -->
             <div class="variantes-grid-container" id="variantes-container-${p.id}">
                 <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;font-weight:600">
-                    <i class="fas fa-palette"></i> ${p.variantes.length} variante${p.variantes.length > 1 ? 's' : ''}
+                    <i class="fas fa-palette"></i> Seleccioná una variante
                 </div>
                 <div class="variantes-grid">
                     ${p.variantes.map((vr, i) => `
@@ -299,13 +324,15 @@ function renderProductosVenta() {
                              title="${escapeHtml(vr.nombre)} - Stock: ${vr.stock}">
                             <img src="${sanitizarUrl(vr.foto)}" 
                                  onerror="this.src='https://via.placeholder.com/80?text=N/A'"
-                                 alt="${escapeHtml(vr.nombre)}">
+                                 alt="${escapeHtml(vr.nombre)}"
+                                 draggable="false">
                             <span class="variante-nombre">${escapeHtml(vr.nombre)}</span>
                             <span class="variante-stock">${vr.stock} uds</span>
                         </div>
                     `).join('')}
                 </div>
             </div>
+            
             <div class="cantidad-selector">
                 <button class="cantidad-btn" onclick="cambiarCantidad(${p.id},-1)">−</button>
                 <input type="number" id="q-${p.id}" value="1" min="1" max="${v.stock}" class="cantidad-input" onchange="validarCantidad(${p.id})">
@@ -316,6 +343,38 @@ function renderProductosVenta() {
             </button>
         </div>`;
     });
+}
+
+// Nueva función para desplegar/ocultar variantes
+function toggleVariantesVenta(id) {
+    const container = document.getElementById(`variantes-container-${id}`);
+    const btn = document.getElementById(`btn-desplegar-${id}`);
+    const texto = document.getElementById(`btn-texto-${id}`);
+    const icono = document.getElementById(`btn-icono-${id}`);
+    
+    if (!container || !btn) return;
+    
+    if (container.classList.contains('desplegado')) {
+        // Ocultar
+        container.classList.remove('desplegado');
+        btn.classList.remove('activo');
+        texto.textContent = `Desplegar variantes (${productos.find(p=>p.id==id)?.variantes.length||0})`;
+        icono.className = 'fas fa-chevron-down';
+    } else {
+        // Mostrar
+        container.classList.add('desplegado');
+        btn.classList.add('activo');
+        texto.textContent = 'Ocultar variantes';
+        icono.className = 'fas fa-chevron-up';
+        
+        // Hacer scroll hasta la variante seleccionada
+        setTimeout(() => {
+            const varianteActiva = container.querySelector('.variante-item-venta.activa');
+            if (varianteActiva) {
+                varianteActiva.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 100);
+    }
 }
 
 function seleccionarVarianteVisual(id, idx) {
@@ -330,16 +389,18 @@ function seleccionarVarianteVisual(id, idx) {
     
     varianteSeleccionada[id] = idx;
     
+    // Cambiar imagen principal con animación
     const imgPrincipal = document.getElementById(`img-principal-${id}`);
     if (imgPrincipal) {
-        imgPrincipal.style.opacity = '0.5';
+        imgPrincipal.style.opacity = '0.4';
         setTimeout(() => {
             imgPrincipal.src = sanitizarUrl(v.foto);
-            imgPrincipal.onerror = function() { this.src = 'https://via.placeholder.com/300x200?text=Sin+Imagen'; };
+            imgPrincipal.onerror = function() { this.src = 'https://via.placeholder.com/400x300?text=Sin+Imagen'; };
             imgPrincipal.style.opacity = '1';
         }, 150);
     }
     
+    // Actualizar input de cantidad
     const inputCantidad = document.getElementById(`q-${id}`);
     if (inputCantidad) {
         inputCantidad.max = v.stock;
@@ -347,20 +408,23 @@ function seleccionarVarianteVisual(id, idx) {
         if (v.stock === 0) inputCantidad.value = 0;
     }
     
+    // Actualizar badge de stock
     const badge = document.getElementById(`stock-badge-${id}`);
     if (badge) {
         badge.innerHTML = `<i class="fas fa-box"></i> Stock: ${v.stock}`;
         badge.className = `stock-badge ${v.stock <= 5 ? 'stock-bajo' : ''}`;
     }
     
+    // Actualizar info de variante
     const varianteInfo = document.getElementById(`variante-info-${id}`);
     if (varianteInfo) {
         varianteInfo.innerHTML = `
-            <span><i class="fas fa-check-circle"></i> ${escapeHtml(v.nombre)}</span>
-            <span style="font-size:10px;opacity:0.9">Stock: ${v.stock}</span>
+            <span><i class="fas fa-check-circle"></i> <strong>${escapeHtml(v.nombre)}</strong></span>
+            <span style="font-size:11px;opacity:0.9">Stock: ${v.stock}</span>
         `;
     }
     
+    // Actualizar clases activas
     const container = document.getElementById(`variantes-container-${id}`);
     if (container) {
         const todasVariantes = container.querySelectorAll('.variante-item-venta');
@@ -374,6 +438,7 @@ function seleccionarVarianteVisual(id, idx) {
         });
     }
     
+    // Actualizar botón de agregar
     const btnAdd = document.getElementById(`btn-add-${id}`);
     if (btnAdd) {
         if (v.stock === 0) {
@@ -463,6 +528,8 @@ function setMetodo(m){ metodoPago=m; document.querySelectorAll('.pago-btn').forE
 async function checkout(){ if(!carrito.length){ mostrarToast('Carrito vacío',true); return; } let cd={nombre:'Mostrador'}; if(logistica==='envio'){ let n=document.getElementById('env-nombre').value.trim(),d=document.getElementById('env-dni').value.trim(),c=document.getElementById('env-celular').value.trim(); if(!n||!d||!c){mostrarToast('Completá datos',true);return;} cd={nombre:n,dni:d,celular:c}; } let data=await safeFetch('/confirmar-venta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({carrito,pago:{total:totalVenta,metodo:metodoPago},logistica,cliente:cd,mayoristaConfig:{habilitado:mayoristaHabilitado}})}); if(data.success){ mostrarToast(`✅ Venta ${data.ventaId}`); carrito=[]; renderCart(); localStorage.removeItem('pos_carrito'); cargar(); cargarVentas(); } }
 function buscarProductos(){ let b=document.getElementById('buscador').value.toLowerCase(); document.querySelectorAll('#grid-prods .card').forEach(c=>c.style.display=c.getAttribute('data-nombre').includes(b)?'':'none'); }
 
+// ... (El resto de las funciones del admin se mantienen igual: renderAdmin, saveEdit, cargarDashboard, etc.)
+
 function renderAdmin(){
     const a=document.getElementById('admin-lista'); if(!a)return; a.innerHTML='';
     productos.forEach(p=>{
@@ -537,6 +604,7 @@ function imprimirTicket(id, tipo = 'termico') {
     }
 }
 
+// Funciones de configuración, dashboard, perfiles, logs, etc.
 async function subirLogo(i){if(!i.files?.[0])return;let f=new FormData();f.append('logo',i.files[0]);let d=await safeFetch('/subir-logo',{method:'POST',body:f});if(d.success){document.getElementById('logo-preview-img').src=d.url;document.getElementById('logo-preview-img').style.display='block';document.getElementById('logo-placeholder').style.display='none';mostrarToast('✅ Logo actualizado');}}
 async function eliminarLogo(){if(!confirm('¿Eliminar?'))return;await safeFetch('/eliminar-logo',{method:'POST'});document.getElementById('logo-preview-img').style.display='none';document.getElementById('logo-placeholder').style.display='block';mostrarToast('✅ Eliminado');}
 async function guardarConfiguracion(){await safeFetch('/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({empresa:{nombre:document.getElementById('empresa-nombre').value,telefono:document.getElementById('empresa-telefono').value,email:document.getElementById('empresa-email').value,direccion:document.getElementById('empresa-direccion').value},horarios:{lunesViernes:document.getElementById('horario-lv').value,sabados:document.getElementById('horario-sab').value,domingos:document.getElementById('horario-dom').value},redes:{instagram:document.getElementById('red-instagram').value,facebook:document.getElementById('red-facebook').value,tiktok:document.getElementById('red-tiktok').value,whatsapp:document.getElementById('red-whatsapp').value},pagos:{alias:document.getElementById('pago-alias').value,cbu:document.getElementById('pago-cbu').value,banco:document.getElementById('pago-banco').value,titular:document.getElementById('pago-titular').value}})});mostrarToast('✅ Guardado');}
@@ -556,9 +624,7 @@ function renderPedidosWeb(){const b=document.getElementById('lista-pedidos-body'
 async function confirmarPedidoWeb(id){if(!confirm('¿Confirmar?'))return;await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});mostrarToast('✅ Confirmado');cargarPedidosTienda();}
 async function marcarAbonado(id){await safeFetch('/tienda/marcar-abonado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});mostrarToast('✅ Abonado');cargarPedidosTienda();}
 async function cancelarPedidoAdmin(id){if(!confirm('¿Cancelar?'))return;await safeFetch('/tienda/cancelar-pedido-admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});mostrarToast('✅ Cancelado');cargarPedidosTienda();}
-
 function verDetallePedido(id) { const p = pedidosTienda.find(x => x.id === id); if (!p) return; const modal = document.createElement('div'); modal.className = 'modal active'; modal.innerHTML = `<div class="modal-content" style="max-width:600px"><div class="modal-header"><h3>Pedido ${p.id} ${p.pin ? '🔐 PIN: '+p.pin : ''}</h3><button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><p><strong>Cliente:</strong> ${p.cliente?.nombre} ${p.cliente?.apellido}</p><p><strong>Tel:</strong> ${p.cliente?.telefono} | <strong>Email:</strong> ${p.cliente?.email}</p><p><strong>Entrega:</strong> ${p.tipoEntrega} | <strong>Estado:</strong> ${p.estado}</p><p><strong>Total:</strong> ${fmt.format(p.total)}</p><h4>Productos:</h4>${p.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:8px;background:#f8fafc;border-radius:8px;margin-bottom:4px"><span>${i.cant}x ${i.pNom} (${i.vNom})</span><span>${fmt.format(i.precio*i.cant)}</span></div>`).join('')}</div></div>`; document.body.appendChild(modal); }
-
 async function verificarPINRetiro(){const p=document.getElementById('pin-retiro-input').value.trim();if(p.length!==4){mostrarToast('PIN de 4 dígitos',true);return;}const d=await safeFetch('/tienda/verificar-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p})});if(d.success){document.getElementById('pin-retiro-resultado').innerHTML=`<div style="background:#d1fae5;padding:20px;border-radius:16px"><h4>✅ ${d.pedido.id}</h4><p>Cliente: ${d.pedido.cliente.nombre} ${d.pedido.cliente.apellido}</p><p>Total: ${fmt.format(d.pedido.total)}</p><p>Items: ${d.pedido.items.map(i=>i.pNom).join(', ')}</p><button onclick="confirmarRetiro('${d.pedido.id}','${p}')" class="btn-confirm">Confirmar Retiro</button></div>`;}else document.getElementById('pin-retiro-resultado').innerHTML='<div style="color:#ef4444">❌ PIN no encontrado</div>';}
 async function confirmarRetiro(id,pin){await safeFetch('/tienda/retirar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id,pin})});mostrarToast('✅ Entregado');cargarPedidosTienda();}
 async function cargarDashboard(){try{const d=await safeFetch('/admin/estadisticas-avanzadas',{method:'POST'});const c=document.getElementById('estadisticas-avanzadas');if(!c)return;const rm=d.rendimientoMensual||{};c.innerHTML=`<div class="stats-grid"><div class="stat-card"><i class="fas fa-calendar-day" style="color:#6366f1"></i><h3>${fmt.format(d.ventasHoy)}</h3><p>Hoy (${d.cantidadHoy})</p></div><div class="stat-card"><i class="fas fa-calendar-alt" style="color:#10b981"></i><h3>${fmt.format(d.ventasMes)}</h3><p>Mes (${d.cantidadMes})</p></div><div class="stat-card"><i class="fas fa-chart-line" style="color:#f59e0b"></i><h3>${fmt.format(d.ticketPromedio)}</h3><p>Ticket Promedio</p></div><div class="stat-card"><i class="fas fa-users" style="color:#8b5cf6"></i><h3>${d.totalClientes}</h3><p>Clientes</p></div><div class="stat-card"><i class="fas fa-boxes" style="color:#ec4899"></i><h3>${d.totalProductos}</h3><p>Productos</p></div><div class="stat-card"><i class="fas fa-shopping-cart" style="color:#06b6d4"></i><h3>${d.pedidosPendientes}</h3><p>Pendientes</p></div></div><div class="config-section"><h4><i class="fas fa-chart-bar"></i> Rendimiento Mensual</h4><p>💵 Mostrador Efectivo: ${fmt.format(rm.efAdmin)} | 🏦 Mostrador Transf: ${fmt.format(rm.trAdmin)}</p><p>🌐 Web: ${fmt.format(rm.trWeb)}</p><p><strong>Total: ${fmt.format(rm.total)}</strong></p></div><div class="config-section" style="margin-top:24px"><h4><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i> Alertas</h4><p>📦 Pedidos pendientes: <strong>${d.pedidosPendientes}</strong></p><p>🚫 Agotados: <strong>${d.productosAgotados}</strong></p></div>`;await cargarEstadisticasVendedor();}catch(e){}}
@@ -574,16 +640,12 @@ async function buscarClientes(){const q=document.getElementById('busqueda-client
 async function exportarVentasCSV(){const r=await fetch('/admin/exportar-ventas',{method:'POST',headers:{'Authorization':`Bearer ${adminToken}`}});const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ventas.csv';a.click();mostrarToast('✅ Exportado');}
 
 async function verEstadoCaja(){try{const d=await safeFetch('/admin/estado-caja-profesional',{method:'POST'});const c=document.getElementById('estado-caja');if(!c)return;if(!d.abierta)c.innerHTML=`<div class="config-section" style="border-color:#f59e0b;margin-bottom:16px"><h4 style="color:#f59e0b"><i class="fas fa-cash-register"></i> Caja Cerrada</h4><button onclick="abrirCajaProfesional()" class="btn-confirm">🔓 Abrir Caja</button></div>`;else c.innerHTML=`<div class="config-section" style="margin-bottom:16px;border-color:#10b981"><h4 style="color:#10b981"><i class="fas fa-cash-register"></i> Caja Abierta - ${d.abiertaPor}</h4><div class="stats-grid" style="margin-top:8px"><div class="stat-card"><i class="fas fa-money-bill-wave" style="color:#10b981"></i><h3>${fmt.format(d.ventasEfectivo)}</h3><p>Efectivo</p></div><div class="stat-card"><i class="fas fa-exchange-alt" style="color:#3b82f6"></i><h3>${fmt.format(d.ventasTransferencia)}</h3><p>Transferencia</p></div><div class="stat-card"><i class="fas fa-globe" style="color:#8b5cf6"></i><h3>${fmt.format(d.ventasWeb)}</h3><p>Web</p></div><div class="stat-card"><i class="fas fa-receipt" style="color:#f59e0b"></i><h3>${d.cantidadVentas}</h3><p>Ventas</p></div></div><p>💵 Ef. esperado: <strong>${fmt.format(d.totalEsperadoEfectivo)}</strong> | 🏦 Transf esperado: <strong>${fmt.format(d.totalEsperadoTransferencia)}</strong></p><button onclick="cerrarCajaProfesional()" class="btn-confirm" style="background:#ef4444;margin-top:12px">🔒 Cerrar Caja</button></div>`;}catch(e){}}
-
 async function abrirCajaProfesional(){const modal=document.createElement('div');modal.className='modal active';modal.innerHTML=`<div class="modal-content" style="max-width:450px"><div class="modal-header"><h3>🔓 Apertura de Caja</h3><button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><div class="form-group"><label>💵 Efectivo inicial</label><input type="number" id="apertura-efectivo" value="0" style="font-size:18px;text-align:center"></div><div class="form-group"><label>🏦 Transferencia inicial</label><input type="number" id="apertura-transferencia" value="0" style="font-size:18px;text-align:center"></div></div><div class="modal-footer"><button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button><button onclick="confirmarAperturaCaja()" class="btn-confirm">Abrir Caja</button></div></div>`;document.body.appendChild(modal);}
 async function confirmarAperturaCaja(){const ef=parseFloat(document.getElementById('apertura-efectivo').value)||0;const tr=parseFloat(document.getElementById('apertura-transferencia').value)||0;const d=await safeFetch('/admin/apertura-caja-profesional',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({montoEfectivo:ef,montoTransferencia:tr})});if(d.success){mostrarToast('✅ Caja abierta');document.querySelector('.modal.active').remove();verEstadoCaja();}}
 async function cerrarCajaProfesional(){if(!confirm('¿Confirmar cierre de caja?'))return;const ef=parseFloat(prompt('💵 Efectivo total en caja ($):','0'))||0;const tr=parseFloat(prompt('🏦 Transferencias recibidas ($):','0'))||0;const d=await safeFetch('/admin/cierre-caja-profesional',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({efectivoEntregado:ef,transferenciaEntregada:tr})});if(d.success){const r=d.resumen;let msg=`✅ Caja cerrada\n💵 Dif efectivo: ${fmt.format(r.diferenciaEfectivo)}\n🏦 Dif transf: ${fmt.format(r.diferenciaTransferencia)}`;if(r.diferenciaEfectivo===0&&r.diferenciaTransferencia===0)msg+='\n✅ ¡Balance perfecto!';mostrarToast(msg);verEstadoCaja();}}
-
 async function cargarHistorialCajas(){const desde=document.getElementById('cajas-desde')?.value||'';const hasta=document.getElementById('cajas-hasta')?.value||'';const d=await safeFetch('/admin/historial-cajas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({desde,hasta})});const container=document.getElementById('historial-cajas');if(container&&d.lista){container.innerHTML=d.lista.map(c=>`<div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:8px"><strong>📅 ${c.fecha}</strong> | 💵 Ef: ${fmt.format(c.diferenciaEfectivo)} | 🏦 Transf: ${fmt.format(c.diferenciaTransferencia)} | 📦 ${c.cantidadVentas} ventas</div>`).join('');}}
-
 async function seleccionarPlantilla(p){await safeFetch('/save-plantilla',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plantilla:p})});mostrarToast('✅ Plantilla guardada');}
 async function cambiarIcono(i){await safeFetch('/save-icono',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({icono:i})});mostrarToast('✅ Ícono guardado');}
-
 async function cargarNotificaciones(){try{const d=await safeFetch('/notificaciones',{method:'POST'});notificaciones=d.lista||[];notificacionesNoLeidas=notificaciones.filter(n=>!n.leida).length;actualizarBadge();}catch(e){}}
 function actualizarBadge(){const b=document.getElementById('notif-count');if(notificacionesNoLeidas>0){b.style.display='flex';b.textContent=notificacionesNoLeidas>9?'9+':notificacionesNoLeidas;}else b.style.display='none';}
 function toggleNotificaciones(){const p=document.getElementById('notif-panel');p.style.display=p.style.display==='none'?'block':'none';if(p.style.display==='block')renderNotificaciones();}
