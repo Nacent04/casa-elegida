@@ -19,7 +19,10 @@ const PORT = process.env.PORT || 3000;
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
 });
 
 const BACKUP_DIR = path.join(__dirname, 'backups');
@@ -282,11 +285,12 @@ const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS',
 const storage = multer.diskStorage({ destination: (req, f, cb) => cb(null, './uploads/'), filename: (req, f, cb) => cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(f.originalname)) });
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: (req, f, cb) => { const a = /jpeg|jpg|png|gif|webp/; cb(null, a.test(path.extname(f.originalname).toLowerCase()) && a.test(f.mimetype)); } });
 
-app.use(express.json({ limit: '50mb' })); app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({ 
     secret: SESSION_SECRET, 
-    resave: true, 
-    saveUninitialized: true, 
+    resave: false, 
+    saveUninitialized: false, 
     cookie: { 
         maxAge: 24 * 60 * 60 * 1000,
         secure: false,
@@ -299,82 +303,52 @@ app.use('/uploads', express.static('uploads'));
 app.use(express.static('public'));
 
 // ============================================
-// ESTRATEGIA DE GOOGLE CORREGIDA
+// ESTRATEGIA DE GOOGLE SIMPLIFICADA
 // ============================================
 passport.use(new GoogleStrategy({ 
     clientID: GOOGLE_CLIENT_ID, 
     clientSecret: GOOGLE_CLIENT_SECRET, 
-    callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback',
-    passReqToCallback: true
+    callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback'
 },
-    async (req, accessToken, refreshToken, profile, done) => {
-        let client;
+    async (accessToken, refreshToken, profile, done) => {
         try {
-            console.log('🔵 Google Strategy - Email:', profile.emails[0].value);
-            client = await pool.connect();
+            console.log('🔵 Google login:', profile.emails[0].value);
             
-            // Buscar usuario por email o googleId
-            let u = (await client.query(
-                'SELECT * FROM usuarios WHERE email = $1 OR "googleId" = $2', 
-                [profile.emails[0].value, profile.id]
-            )).rows[0];
+            const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value]);
+            let u = result.rows[0];
             
             if (!u) {
-                // Crear nuevo usuario
                 const id = 'USR-' + Date.now();
-                console.log('🆕 Creando nuevo usuario:', profile.emails[0].value);
-                await client.query(
+                await pool.query(
                     'INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
                     [id, profile.name?.givenName || '', profile.name?.familyName || '', 
-                     profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '', 
-                     'cliente', 0]
+                     profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '', 'cliente', 1]
                 );
-                u = (await client.query('SELECT * FROM usuarios WHERE id = $1', [id])).rows[0];
-                console.log('✅ Usuario creado:', u.id);
+                const newResult = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+                u = newResult.rows[0];
+                console.log('✅ Usuario creado:', u.email);
             } else {
-                console.log('👤 Usuario existente:', u.email, '| googleId:', u.googleId || 'NO');
-                // Si ya existe pero no tenía googleId vinculado
-                if (!u.googleId) {
-                    console.log('🔗 Vinculando Google ID...');
-                    await client.query(
-                        'UPDATE usuarios SET "googleId" = $1, foto = COALESCE($2, foto), nombre = COALESCE(NULLIF($3,\'\'), nombre), apellido = COALESCE(NULLIF($4,\'\'), apellido) WHERE id = $5',
-                        [profile.id, profile.photos?.[0]?.value || null, 
-                         profile.name?.givenName || '', profile.name?.familyName || '', u.id]
-                    );
-                    u.googleId = profile.id;
-                    console.log('✅ Google ID vinculado');
-                }
+                console.log('✅ Usuario existente:', u.email);
             }
             
-            console.log('✅ Usuario listo para sesión:', u.email);
             return done(null, u);
         } catch(e) { 
-            console.error('❌ Error en Google Strategy:', e);
+            console.error('❌ Error Google Strategy:', e.message);
             return done(e, null); 
-        } finally {
-            if (client) client.release();
         }
     }
 ));
 
 passport.serializeUser((user, done) => {
-    console.log('💾 serializeUser:', user.id);
     done(null, user.id);
 });
 
-passport.deserializeUser(async (id, done) => { 
-    let client;
+passport.deserializeUser(async (id, done) => {
     try {
-        client = await pool.connect();
-        const result = await client.query('SELECT * FROM usuarios WHERE id = $1', [id]);
-        const user = result.rows[0];
-        console.log('📂 deserializeUser:', id, user ? 'encontrado' : 'NO encontrado');
-        done(null, user || null); 
+        const result = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
+        done(null, result.rows[0] || null);
     } catch(e) {
-        console.error('❌ Error deserializeUser:', e);
         done(e, null);
-    } finally {
-        if (client) client.release();
     }
 });
 
@@ -405,49 +379,55 @@ const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 app.get('/', (req, res) => res.redirect('/tienda'));
 
-app.get('/auth/google', (req, res, next) => {
-    console.log('🔵 Iniciando autenticación con Google...');
-    passport.authenticate('google', { 
-        scope: ['profile', 'email'],
-        prompt: 'select_account'
-    })(req, res, next);
-});
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-app.get('/auth/google/callback', (req, res, next) => {
-    console.log('🔵 Callback de Google recibido');
-    passport.authenticate('google', { 
-        failureRedirect: '/login?error=google',
-        session: true
-    })(req, res, next);
-}, async (req, res) => {
-    try {
-        console.log('✅ Usuario autenticado:', req.user?.email);
-        
-        if (!req.user) {
-            console.log('❌ No se encontró usuario');
-            return res.redirect('/login?error=nouser');
+app.get('/auth/google/callback', 
+    passport.authenticate('google', { failureRedirect: '/login?error=google' }),
+    async (req, res) => {
+        try {
+            console.log('✅ Usuario autenticado:', req.user?.email);
+            
+            if (!req.user) {
+                return res.redirect('/login?error=nouser');
+            }
+            
+            const token = jwt.sign(
+                { id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, 
+                JWT_SECRET, 
+                { expiresIn: '7d' }
+            );
+            
+            // Guardar token en cookie y localStorage via script
+            res.send(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Redirigiendo...</title>
+                    <script>
+                        localStorage.setItem('token', '${token}');
+                        localStorage.setItem('usuario', JSON.stringify({
+                            id: '${req.user.id}',
+                            nombre: '${req.user.nombre || ''}',
+                            apellido: '${req.user.apellido || ''}',
+                            email: '${req.user.email}'
+                        }));
+                        window.location.href = '/tienda';
+                    </script>
+                </head>
+                <body>
+                    <p>Redirigiendo a la tienda...</p>
+                    <p>Si no se redirige, <a href="/tienda">hacé clic aquí</a></p>
+                </body>
+                </html>
+            `);
+            
+        } catch(e) {
+            console.error('❌ Error en callback:', e);
+            res.redirect('/login?error=server');
         }
-        
-        const token = jwt.sign(
-            { id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, 
-            JWT_SECRET, 
-            { expiresIn: '7d' }
-        );
-        
-        const u = (await pool.query('SELECT "datosCompletos" FROM usuarios WHERE id=$1', [req.user.id])).rows[0];
-        
-        if (u && u.datosCompletos == 0) {
-            console.log('📝 Usuario necesita completar datos');
-            return res.redirect(`/completar-datos?token=${token}`);
-        }
-        
-        console.log('🏠 Redirigiendo a tienda');
-        res.redirect(`/tienda?token=${token}`);
-    } catch(e) {
-        console.error('❌ Error en callback de Google:', e);
-        res.redirect('/login?error=server');
     }
-});
+);
 
 app.post('/admin/login', async (req, res) => {
     try {
@@ -696,10 +676,12 @@ app.post('/confirmar-venta', async (req, res) => {
         res.json({ success: true, ventaId: id });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
 app.post('/listar-ventas', async (req, res) => {
     const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
     res.json({ lista: ventas.map(v => ({ ...v, items: JSON.parse(v.items||'[]'), cliente: JSON.parse(v.cliente||'{}'), pago: { total: v.total, metodo: v["metodoPago"] } })) });
 });
+
 app.post('/corte-caja', async (req, res) => {
     const v = (await pool.query("SELECT COALESCE(SUM(total),0) as total, COUNT(*) as cantidad FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ total: v.total, cantidad: v.cantidad });
@@ -713,6 +695,7 @@ app.post('/tienda/listar-productos', async (req, res) => {
     const metodos = (await pool.query('SELECT nombre FROM metodos_envio')).rows;
     res.json({ productos: prods, categorias: cats.map(x => ({ ...x, subcategorias: JSON.parse(x.subcategorias||'[]') })), metodosEnvio: metodos.map(m => m.nombre), configuracion: c });
 });
+
 app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
     try {
         const { carrito, cliente, total, tipoEntrega, metodoEnvio } = req.body;
@@ -733,10 +716,12 @@ app.post('/tienda/crear-pedido', authMiddleware, async (req, res) => {
         res.json({ success: true, pedidoId: id });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
 app.post('/tienda/listar-pedidos', async (req, res) => {
     const pedidos = (await pool.query('SELECT * FROM pedidos ORDER BY "fechaTimestamp" DESC')).rows;
     res.json({ lista: pedidos.map(p => ({ ...p, items: JSON.parse(p.items||'[]'), cliente: JSON.parse(p.cliente||'{}') })) });
 });
+
 app.post('/tienda/confirmar-pedido', async (req, res) => {
     try {
         const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND estado=$2', [req.body.pedidoId, 'pendiente'])).rows[0];
@@ -751,6 +736,7 @@ app.post('/tienda/confirmar-pedido', async (req, res) => {
         res.json({ success: true, ventaId: vid, pin });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
 app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND "usuarioId"=$2 AND estado=$3', [req.body.pedidoId, req.usuario.id, 'pendiente'])).rows[0];
     if (!p) return res.status(400).json({ error: 'No se puede cancelar' });
@@ -759,16 +745,19 @@ app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
     await logActividad('Sistema', 'CANCELAR_PEDIDO', `Pedido ${p.id} cancelado`, req);
     res.json({ success: true });
 });
+
 app.post('/tienda/marcar-abonado', async (req, res) => {
     await pool.query("UPDATE pedidos SET estado='abonado' WHERE id=$1", [req.body.pedidoId]);
     await logActividad('Admin', 'PEDIDO_ABONADO', `Pedido ${req.body.pedidoId} abonado`, req);
     res.json({ success: true });
 });
+
 app.post('/tienda/marcar-enviado', async (req, res) => {
     await pool.query("UPDATE pedidos SET estado='enviado' WHERE id=$1", [req.body.pedidoId]);
     await logActividad('Admin', 'PEDIDO_ENVIADO', `Pedido ${req.body.pedidoId} enviado`, req);
     res.json({ success: true });
 });
+
 app.post('/tienda/marcar-entregado', async (req, res) => { await pool.query("UPDATE pedidos SET estado='entregado' WHERE id=$1", [req.body.pedidoId]); res.json({ success: true }); });
 app.post('/tienda/cancelar-pedido-admin', async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1', [req.body.pedidoId])).rows[0];
@@ -777,6 +766,7 @@ app.post('/tienda/cancelar-pedido-admin', async (req, res) => {
     await pool.query("UPDATE pedidos SET estado='cancelado' WHERE id=$1", [p.id]);
     res.json({ success: true });
 });
+
 app.post('/tienda/retirar-pedido', async (req, res) => {
     const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND pin=$2', [req.body.pedidoId, req.body.pin])).rows[0];
     if (!p) return res.status(400).json({ error: 'PIN incorrecto' });
@@ -784,6 +774,7 @@ app.post('/tienda/retirar-pedido', async (req, res) => {
     await logActividad('Admin', 'RETIRO_PEDIDO', `Pedido ${req.body.pedidoId} retirado`, req);
     res.json({ success: true });
 });
+
 app.post('/tienda/verificar-pin', async (req, res) => {
     const p = (await pool.query("SELECT * FROM pedidos WHERE pin=$1 AND estado IN ('confirmado','abonado')", [req.body.pin])).rows[0];
     if (!p) return res.status(400).json({ error: 'PIN no encontrado' });
@@ -794,6 +785,7 @@ app.post('/dashboard/stats', async (req, res) => {
     const v = (await pool.query("SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM ventas WHERE fecha LIKE TO_CHAR(CURRENT_DATE, 'DD/MM/YYYY') || '%'")).rows[0];
     res.json({ ventasHoy: v.c, totalHoy: v.t });
 });
+
 app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), async (req, res) => {
     const mes = new Date().toLocaleDateString('es-AR').substring(3);
     const ventasMes = (await pool.query("SELECT * FROM ventas WHERE fecha LIKE $1", [`%${mes}%`])).rows;
@@ -813,11 +805,13 @@ app.post('/admin/estadisticas-avanzadas', adminMiddleware('dashboard'), async (r
         rendimientoMensual: { efAdmin, trAdmin, efWeb, trWeb, total: efAdmin+trAdmin+efWeb+trWeb }
     });
 });
+
 app.post('/admin/buscar-clientes', adminMiddleware(), async (req, res) => {
     const q = `%${req.body.query||''}%`;
     const clientes = (await pool.query('SELECT id, nombre, apellido, email, telefono, dni FROM usuarios WHERE nombre ILIKE $1 OR apellido ILIKE $1 OR email ILIKE $1 OR dni ILIKE $1 LIMIT 20', [q])).rows;
     res.json({ lista: clientes });
 });
+
 app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
     let csv = '\uFEFFFecha;ID;Cliente;Total;Pago;Origen\n';
     const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
