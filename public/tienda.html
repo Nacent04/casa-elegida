@@ -120,6 +120,46 @@
         .whatsapp-float:hover{transform:scale(1.1)}
         @media(min-width:640px){.products-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}.product-image{height:240px}.modal-body{grid-template-columns:1fr 1fr;gap:32px}}
         @media(max-width:768px){.modal-body{grid-template-columns:1fr}.producto-imagen-modal{height:280px}}
+
+        /* ============================================ */
+        /* ESTILOS RESPONSIVE PARA MÓVILES Y TABLETS */
+        /* ============================================ */
+        @media(max-width:1024px){
+            .main-content{flex-direction:column}
+            .filters-sidebar{width:100%}
+            .products-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+        }
+        @media(max-width:768px){
+            .header-main{flex-direction:column;gap:10px}
+            .search-bar{max-width:100%}
+            .header-actions{width:100%;justify-content:center}
+            .hero{padding:24px 12px}
+            .hero-text h2{font-size:22px}
+            .hero-text p{font-size:12px}
+            .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+            .product-image{height:160px}
+            .product-name{font-size:12px}
+            .price-current{font-size:15px}
+            .btn-add-product{font-size:11px;padding:8px}
+            .modal-body{grid-template-columns:1fr!important}
+            .producto-imagen-modal{height:250px}
+            .cart-sidebar{max-width:100%}
+            .footer-content{grid-template-columns:1fr 1fr;gap:16px}
+        }
+        @media(max-width:480px){
+            .header-top-content{font-size:10px;flex-direction:column;text-align:center}
+            .hero{padding:16px 8px}
+            .hero-text h2{font-size:18px}
+            .products-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+            .product-card{border-radius:12px}
+            .product-image{height:120px}
+            .product-info{padding:8px}
+            .product-name{font-size:11px}
+            .price-current{font-size:13px}
+            .filters-sidebar{display:none}
+            .category-chip{padding:6px 10px;font-size:10px}
+            .footer-content{grid-template-columns:1fr}
+        }
     </style>
 </head>
 <body>
@@ -165,16 +205,13 @@ let productos=[],categorias=[],carrito=[],configuracion={empresa:{},tienda:{},ma
 let productoModalActual=null,varianteSeleccionada=0,categoriaSeleccionada=null,subcategoriaSeleccionada=null,busquedaActual='',ordenActual='default',usuarioActual=null;
 const fmt=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0});
 
-// CARGAR TOKEN DESDE LOCALSTORAGE O URL
 (function() {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
     if (tokenFromUrl) {
         localStorage.setItem('token', tokenFromUrl);
-        // Limpiar URL
         window.history.replaceState({}, document.title, '/tienda');
     }
-    // También verificar si hay usuario guardado
     const usuarioGuardado = localStorage.getItem('usuario');
     if (usuarioGuardado) {
         try { usuarioActual = JSON.parse(usuarioGuardado); } catch(e) {}
