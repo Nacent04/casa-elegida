@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Casa Elegida | Panel de Administración</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
@@ -159,8 +159,80 @@
         .history-table{width:100%;border-collapse:collapse}
         .history-table th{background:#f8fafc;padding:12px;text-align:left;font-size:12px;font-weight:600;color:#64748b}
         .history-table td{padding:12px;border-bottom:1px solid #f1f5f9;font-size:13px}
-        @media(max-width:1024px){.layout-con-carrito{grid-template-columns:1fr}body{padding:16px}}
-        @media(max-width:768px){.form-row{grid-template-columns:1fr}.producto-header{flex-direction:column}}
+
+        /* ============================================ */
+        /* ESTILOS RESPONSIVE PARA MÓVILES Y TABLETS */
+        /* ============================================ */
+        @media(max-width:1024px){
+            body{padding:12px}
+            .layout-con-carrito{grid-template-columns:1fr}
+            .nav-tabs{gap:8px}
+            .tab-btn{padding:10px 16px;font-size:12px}
+            .grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+            .producto-imagen-principal{height:220px}
+            #v-cart{position:fixed!important;right:0!important;top:0!important;width:100%!important;max-width:420px!important;height:100vh!important;max-height:100vh!important;z-index:1001!important;border-radius:0!important}
+        }
+        @media(max-width:768px){
+            body{padding:8px}
+            .panel{padding:16px;border-radius:20px}
+            .nav-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:8px;gap:6px;-webkit-overflow-scrolling:touch}
+            .nav-tabs::-webkit-scrollbar{display:none}
+            .tab-btn{padding:8px 14px;font-size:11px;white-space:nowrap;flex-shrink:0}
+            .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+            .card{padding:10px;border-radius:16px}
+            .producto-imagen-principal{height:160px;border-radius:12px}
+            .card h4{font-size:13px}
+            .precio-producto{font-size:16px}
+            .variante-seleccionada-info{font-size:11px;padding:6px 10px}
+            .btn-desplegar-variantes{font-size:11px;padding:10px}
+            .variantes-grid{grid-template-columns:repeat(auto-fill,minmax(65px,1fr));gap:6px}
+            .variante-item-venta img{height:55px}
+            .variante-item-venta .variante-nombre{font-size:9px}
+            .cantidad-btn{width:32px;height:32px;font-size:16px}
+            .cantidad-input{width:45px;font-size:14px}
+            .btn-add{font-size:12px;padding:12px}
+            #v-cart{max-width:100%!important;width:100%!important}
+            .cart-item{padding:10px}
+            .form-row{grid-template-columns:1fr}
+            .modal-content{padding:16px;border-radius:20px;max-width:95%}
+            .producto-header{flex-direction:column}
+            .producto-imagen img{width:80px;height:80px}
+            .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+            .stat-card{padding:12px}
+            .stat-card h3{font-size:20px}
+            .backup-hero{padding:20px}
+            .backup-hero h2{font-size:20px}
+            .btn-backup-master{padding:14px 24px;font-size:14px}
+            .backup-cards{grid-template-columns:1fr}
+            .history-table{font-size:11px}
+            .history-table th,.history-table td{padding:6px}
+            .charts-container{grid-template-columns:1fr!important}
+            table{font-size:11px}
+            input,select,textarea{padding:10px 12px;font-size:13px}
+        }
+        @media(max-width:480px){
+            body{padding:4px}
+            .panel{padding:10px;border-radius:16px}
+            .tab-btn{padding:6px 10px;font-size:10px;gap:4px}
+            .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+            .producto-imagen-principal{height:130px}
+            .card h4{font-size:11px}
+            .precio-producto{font-size:14px}
+            .precio-mayor{font-size:10px}
+            .cantidad-btn{width:28px;height:28px;font-size:14px}
+            .cantidad-input{width:40px;font-size:13px;padding:4px}
+            .btn-add{font-size:11px;padding:10px}
+            .variantes-grid{grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:4px}
+            .variante-item-venta img{height:45px}
+            .variante-item-venta .variante-nombre{font-size:8px}
+            .cart-item{gap:8px}
+            .cart-img{width:40px;height:40px;border-radius:14px}
+            .stats-grid{grid-template-columns:1fr 1fr;gap:6px}
+            .stat-card{padding:8px}
+            .stat-card i{font-size:20px}
+            .stat-card h3{font-size:16px}
+            .stat-card p{font-size:10px}
+        }
     </style>
 </head>
 <body>
@@ -328,8 +400,7 @@ function agregarVariante(pid){const p=productos.find(x=>x.id==pid);if(!p)return;
 function eliminarVariante(pid,idx){const p=productos.find(x=>x.id==pid);if(!p||p.variantes.length<=1){mostrarToast('Mínimo 1',true);return;}p.variantes.splice(idx,1);const c=document.getElementById(`variantes-container-${pid}`);const b=document.getElementById(`btn-toggle-${pid}`);if(c){c.innerHTML=p.variantes.map((v,i)=>`<div class="variante-item"><div style="display:flex;align-items:center;gap:8px"><img src="${sanitizarUrl(v.foto)}" style="width:50px;height:50px;border-radius:12px;cursor:pointer" onclick="document.getElementById('input-var-foto-${pid}-${i}').click()"><input type="file" id="input-var-foto-${pid}-${i}" accept="image/*" style="display:none" onchange="subirFotoVariante(this,'${pid}',${i})"></div><div style="flex:1"><input type="text" id="vn-${pid}-${i}" value="${escapeHtml(v.nombre)}" style="padding:10px;border-radius:12px"></div><div style="width:80px"><input type="number" id="vs-${pid}-${i}" value="${v.stock}" min="0" style="padding:10px;border-radius:12px;text-align:center"></div>${p.variantes.length>1?`<button onclick="eliminarVariante('${pid}',${i})" style="background:#fee2e2;color:#ef4444;border:none;padding:8px 12px;border-radius:12px"><i class="fas fa-trash"></i></button>`:''}</div>`).join('');}if(b)b.innerHTML=`<i class="fas fa-layer-group"></i> Ocultar Variantes (${p.variantes.length}) <i class="fas fa-chevron-up"></i>`;mostrarToast('✅ Eliminada');}
 function aplicarStockATodas(pid){const p=productos.find(x=>x.id==pid);if(!p?.variantes?.length)return;const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:400px"><div class="modal-header"><h3>Aplicar Stock</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><input type="number" id="stock-global" value="0" min="0" style="font-size:24px;text-align:center;padding:16px;border-radius:16px"></div><div class="modal-footer"><button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button><button onclick="aplicarStockGlobal('${pid}')" class="btn-confirm">Aplicar</button></div></div>`;document.body.appendChild(m);}
 function aplicarStockGlobal(pid){const s=parseInt(document.getElementById('stock-global').value)||0;const p=productos.find(x=>x.id==pid);if(!p)return;p.variantes.forEach(v=>v.stock=s);const c=document.getElementById(`variantes-container-${pid}`);if(c){p.variantes.forEach((v,i)=>{const inp=document.getElementById(`vs-${pid}-${i}`);if(inp)inp.value=s;});}document.querySelector('.modal.active')?.remove();mostrarToast(`✅ Stock ${s} aplicado`);}
-function actualizarSubcategorias(pid){const catId=document.getElementById(`cat-${pid}`).value;const cat=categorias.find(c=>c.id==parseInt(catId));const sel=document.getElementById(`subcat-${pid}`);
-if(!sel)return;let h='<option value="">Sin subcategoría</option>';if(cat?.subcategorias?.length)h+=cat.subcategorias.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');sel.innerHTML=h;}
+function actualizarSubcategorias(pid){const catId=document.getElementById(`cat-${pid}`).value;const cat=categorias.find(c=>c.id==parseInt(catId));const sel=document.getElementById(`subcat-${pid}`);if(!sel)return;let h='<option value="">Sin subcategoría</option>';if(cat?.subcategorias?.length)h+=cat.subcategorias.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');sel.innerHTML=h;}
 async function subirFotoVariante(i,pid,idx){if(!i.files?.[0])return;const f=new FormData();f.append('foto',i.files[0]);try{const d=await safeFetch('/subir-imagen',{method:'POST',body:f});if(d.url){productos.find(x=>x.id==pid).variantes[idx].foto=d.url;document.getElementById(`img-var-${pid}-${idx}`).src=d.url;mostrarToast('✅ Subida');}}catch(e){}}
 
 async function saveEdit(id){
