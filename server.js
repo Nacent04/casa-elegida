@@ -279,6 +279,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'casa-elegida-session-secret';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const CALLBACK_URL = process.env.CALLBACK_URL || 'https://casaelegida.com.ar/auth/google/callback';
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
 
 ['./uploads', './public', './backups', './backups/temp'].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
@@ -302,21 +303,16 @@ app.use(passport.session());
 app.use('/uploads', express.static('uploads')); 
 app.use(express.static('public'));
 
-// ============================================
-// ESTRATEGIA DE GOOGLE SIMPLIFICADA
-// ============================================
 passport.use(new GoogleStrategy({ 
     clientID: GOOGLE_CLIENT_ID, 
     clientSecret: GOOGLE_CLIENT_SECRET, 
-    callbackURL: 'https://casa-elegida.onrender.com/auth/google/callback'
+    callbackURL: CALLBACK_URL
 },
     async (accessToken, refreshToken, profile, done) => {
         try {
             console.log('🔵 Google login:', profile.emails[0].value);
-            
             const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [profile.emails[0].value]);
             let u = result.rows[0];
-            
             if (!u) {
                 const id = 'USR-' + Date.now();
                 await pool.query(
@@ -330,7 +326,6 @@ passport.use(new GoogleStrategy({
             } else {
                 console.log('✅ Usuario existente:', u.email);
             }
-            
             return done(null, u);
         } catch(e) { 
             console.error('❌ Error Google Strategy:', e.message);
@@ -339,17 +334,13 @@ passport.use(new GoogleStrategy({
     }
 ));
 
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
+passport.serializeUser((user, done) => { done(null, user.id); });
 
 passport.deserializeUser(async (id, done) => {
     try {
         const result = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
         done(null, result.rows[0] || null);
-    } catch(e) {
-        done(e, null);
-    }
+    } catch(e) { done(e, null); }
 });
 
 const authMiddleware = (req, res, next) => { 
@@ -386,46 +377,16 @@ app.get('/auth/google/callback',
     async (req, res) => {
         try {
             console.log('✅ Usuario autenticado:', req.user?.email);
-            
-            if (!req.user) {
-                return res.redirect('/login?error=nouser');
-            }
-            
-            const token = jwt.sign(
-                { id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, 
-                JWT_SECRET, 
-                { expiresIn: '7d' }
-            );
-            
-            // Guardar token en cookie y localStorage via script
+            if (!req.user) return res.redirect('/login?error=nouser');
+            const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
             res.send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <title>Redirigiendo...</title>
-                    <script>
-                        localStorage.setItem('token', '${token}');
-                        localStorage.setItem('usuario', JSON.stringify({
-                            id: '${req.user.id}',
-                            nombre: '${req.user.nombre || ''}',
-                            apellido: '${req.user.apellido || ''}',
-                            email: '${req.user.email}'
-                        }));
-                        window.location.href = '/tienda';
-                    </script>
-                </head>
-                <body>
-                    <p>Redirigiendo a la tienda...</p>
-                    <p>Si no se redirige, <a href="/tienda">hacé clic aquí</a></p>
-                </body>
-                </html>
-            `);
-            
-        } catch(e) {
-            console.error('❌ Error en callback:', e);
-            res.redirect('/login?error=server');
-        }
+                <!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo...</title>
+                <script>
+                    localStorage.setItem('token', '${token}');
+                    localStorage.setItem('usuario', JSON.stringify({id:'${req.user.id}',nombre:'${req.user.nombre||''}',apellido:'${req.user.apellido||''}',email:'${req.user.email}'}));
+                    window.location.href = '/tienda';
+                </script></head><body><p>Redirigiendo...</p></body></html>`);
+        } catch(e) { console.error('❌ Error en callback:', e); res.redirect('/login?error=server'); }
     }
 );
 
@@ -903,6 +864,56 @@ app.post('/admin/estadisticas-vendedor', adminMiddleware('dashboard'), async (re
     res.json({ lista: Object.values(v) });
 });
 
+app.post('/admin/dashboard/data', adminMiddleware('dashboard'), async (req, res) => {
+    try {
+        const { periodo = 'mes' } = req.body;
+        let fechaInicio;
+        const ahora = new Date();
+        switch (periodo) {
+            case 'hoy': fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()); break;
+            case 'semana': fechaInicio = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000); break;
+            case 'mes': fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1); break;
+            case 'anio': fechaInicio = new Date(ahora.getFullYear(), 0, 1); break;
+            default: fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+        }
+        const ventasQuery = await pool.query("SELECT * FROM ventas WHERE \"fechaTimestamp\" >= $1", [fechaInicio.getTime()]);
+        const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const ventasPorDia = [0, 0, 0, 0, 0, 0, 0];
+        const efectivoPorDia = [0, 0, 0, 0, 0, 0, 0];
+        const transferenciaPorDia = [0, 0, 0, 0, 0, 0, 0];
+        ventasQuery.rows.forEach(v => {
+            const fecha = new Date(v.fechaTimestamp);
+            const dia = fecha.getDay();
+            ventasPorDia[dia] += v.total || 0;
+            if (v.metodoPago === 'efectivo') efectivoPorDia[dia] += v.total || 0;
+            if (v.metodoPago === 'transferencia') transferenciaPorDia[dia] += v.total || 0;
+        });
+        const productosCount = {};
+        ventasQuery.rows.forEach(v => {
+            const items = typeof v.items === 'string' ? JSON.parse(v.items) : (v.items || []);
+            items.forEach(i => { const key = i.pNom || 'Desconocido'; productosCount[key] = (productosCount[key] || 0) + (i.cant || 1); });
+        });
+        const productosTop = Object.entries(productosCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        const categoriasCount = {};
+        const productos = await pool.query('SELECT id, nombre, "categoriaId" FROM productos');
+        const categorias = await pool.query('SELECT id, nombre FROM categorias');
+        ventasQuery.rows.forEach(v => {
+            const items = typeof v.items === 'string' ? JSON.parse(v.items) : (v.items || []);
+            items.forEach(i => {
+                const prod = productos.rows.find(p => p.id == i.pId);
+                if (prod) { const cat = categorias.rows.find(c => c.id == prod.categoriaId); const catNombre = cat ? cat.nombre : 'Sin categoría'; categoriasCount[catNombre] = (categoriasCount[catNombre] || 0) + (i.precio * i.cant || 0); }
+            });
+        });
+        const categoriasTop = Object.entries(categoriasCount).sort((a, b) => b[1] - a[1]).slice(0, 7);
+        res.json({
+            ventasDia: { labels: diasSemana, valores: ventasPorDia },
+            productosTop: { labels: productosTop.length ? productosTop.map(p => p[0]) : ['Sin datos'], valores: productosTop.length ? productosTop.map(p => p[1]) : [0] },
+            metodosPago: { labels: diasSemana, efectivo: efectivoPorDia, transferencia: transferenciaPorDia },
+            categorias: { labels: categoriasTop.length ? categoriasTop.map(c => c[0]) : ['Sin datos'], valores: categoriasTop.length ? categoriasTop.map(c => c[1]) : [0] }
+        });
+    } catch (error) { console.error('Error en dashboard data:', error); res.json({ ventasDia: { labels: ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'], valores: [0,0,0,0,0,0,0] }, productosTop: { labels: ['Sin datos'], valores: [1] }, metodosPago: { labels: ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'], efectivo: [0,0,0,0,0,0,0], transferencia: [0,0,0,0,0,0,0] }, categorias: { labels: ['Sin datos'], valores: [1] } }); }
+});
+
 app.post('/notificaciones', async (req, res) => { res.json({ lista: (await pool.query('SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT 50')).rows }); });
 app.post('/notificaciones/leer', async (req, res) => { await pool.query('UPDATE notificaciones SET leida=1 WHERE id=$1', [req.body.id]); res.json({ success: true }); });
 app.post('/notificaciones/leer-todas', async (req, res) => { await pool.query('UPDATE notificaciones SET leida=1'); res.json({ success: true }); });
@@ -1045,7 +1056,7 @@ app.use((err, req, res, next) => { console.error(err); res.status(500).json({ er
 
 async function start() {
     await initDB(); await initConfig(); await initMetodosEnvio(); await initAdmin();
-    app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n📊 Panel Admin: http://localhost:${PORT}/admin\n🛍️ Tienda: http://localhost:${PORT}/tienda\n`));
+    app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n📊 Panel Admin: http://localhost:${PORT}/admin\n🛍️ Tienda: http://localhost:${PORT}/tienda\n🌐 Dominio: casaelegida.com.ar\n`));
 }
 start();
 process.on('SIGTERM', () => { pool.end(); process.exit(0); });
