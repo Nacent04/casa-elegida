@@ -231,7 +231,7 @@ document.addEventListener('click',(e)=>{const menu=document.getElementById('user
 
 async function cargarDatos(){try{const data=await safeFetch('/tienda/listar-productos',{method:'POST'});productos=data.productos||[];categorias=data.categorias||[];configuracion=data.configuracion||configuracion;
 document.getElementById('tienda-nombre').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-titulo').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-mensaje').textContent=configuracion.tienda?.mensajeBienvenida||'';
-if(configuracion.logo){document.getElementById('logo-container').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`}
+if(configuracion.logo){document.getElementById('logo-container').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`;document.getElementById('hero-logo').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`}
 if(configuracion.redes?.whatsapp){document.getElementById('whatsapp-float').href=`https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`}
 if(configuracion.empresa?.telefono)document.getElementById('header-phone').textContent=configuracion.empresa.telefono;
 if(configuracion.horarios)document.getElementById('header-hours-text').textContent=`L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
