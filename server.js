@@ -586,15 +586,21 @@ app.post('/listar-categorias', async (req, res) => {
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
     res.json({ lista: cats.map(c => ({ ...c, subcategorias: JSON.parse(c.subcategorias||'[]') })) });
 });
+
 app.post('/guardar-categoria', async (req, res) => {
     const { id, nombre, subcategorias } = req.body;
     if (!nombre?.trim()) return res.status(400).json({ error: 'Nombre requerido' });
     const existe = (await pool.query('SELECT id FROM categorias WHERE id=$1', [id])).rows[0];
-    if (existe) await pool.query('UPDATE categorias SET nombre=$1,subcategorias=$2 WHERE id=$3', [nombre.trim(), JSON.stringify(subcategorias||[]), id]);
-    else await pool.query('INSERT INTO categorias (id,nombre,subcategorias) VALUES ($1,$2,$3)', [id||Date.now(), nombre.trim(), JSON.stringify(subcategorias||[])]);
+    if (existe) {
+        await pool.query('UPDATE categorias SET nombre=$1,subcategorias=$2 WHERE id=$3', [nombre.trim(), JSON.stringify(subcategorias||[]), id]);
+    } else {
+        const nuevoId = id || Math.floor(Date.now() / 1000);
+        await pool.query('INSERT INTO categorias (id,nombre,subcategorias) VALUES ($1,$2,$3)', [nuevoId, nombre.trim(), JSON.stringify(subcategorias||[])]);
+    }
     await logActividad('Admin', 'GUARDAR_CATEGORIA', `Categoría: ${nombre}`, req);
     res.json({ success: true });
 });
+
 app.post('/eliminar-categoria', async (req, res) => { await pool.query('DELETE FROM categorias WHERE id=$1', [req.body.id]); res.json({ success: true }); });
 app.post('/listar-metodos-envio', async (req, res) => {
     const metodos = (await pool.query('SELECT nombre FROM metodos_envio')).rows;
