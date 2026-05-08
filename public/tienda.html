@@ -13,11 +13,15 @@
         .header-top{background:var(--primary);color:white;padding:8px 0;font-size:12px}
         .header-top-content{max-width:1400px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
         .header-main{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-        .logo{display:flex;align-items:center;gap:10px}
-        .logo-icon{width:40px;height:40px;background:var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px}
-        .logo-icon img{width:100%;height:100%;object-fit:contain;border-radius:12px}
-        .logo-text h1{font-size:18px;font-weight:700;color:var(--text-dark)}
-        .logo-text p{font-size:11px;color:var(--text-light)}
+        
+        /* LOGO MEJORADO */
+        .logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+        .logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#1a1a1a,#333);border-radius:14px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:all 0.3s}
+        .logo-icon img{width:100%;height:100%;object-fit:contain;border-radius:14px}
+        .logo:hover .logo-icon{transform:scale(1.05);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
+        .logo-text h1{font-size:20px;font-weight:800;color:var(--text-dark);letter-spacing:-0.5px;line-height:1.1}
+        .logo-text p{font-size:10px;color:var(--secondary);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+        
         .search-bar{flex:1;max-width:400px;position:relative}
         .search-bar input{width:100%;padding:12px 44px 12px 16px;border:2px solid #eee;border-radius:50px;font-size:14px;background:var(--bg-white);transition:all 0.3s}
         .search-bar input:focus{outline:none;border-color:var(--secondary)}
@@ -70,6 +74,17 @@
         .price-mayorista{font-size:10px;color:#FF8F00;font-weight:600}
         .btn-add-product{width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
         .btn-add-product:disabled{background:#CCC;cursor:not-allowed}
+        
+        /* PRODUCTO DESTACADO MEJORADO */
+        .destacado-card{background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 50%,#c9a96e 100%);border-radius:24px;padding:28px;color:white;display:flex;align-items:center;gap:24px;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;overflow:hidden}
+        .destacado-card::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:rgba(255,255,255,0.03);border-radius:50%}
+        .destacado-img{width:140px;height:140px;object-fit:cover;border-radius:18px;border:3px solid rgba(255,255,255,0.2);box-shadow:0 8px 24px rgba(0,0,0,0.2);flex-shrink:0}
+        .destacado-badge{display:inline-block;font-size:11px;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;margin-bottom:8px;font-weight:600;letter-spacing:0.5px}
+        .destacado-nombre{font-size:22px;font-weight:700;margin-bottom:4px}
+        .destacado-precio{font-size:26px;font-weight:800;margin-bottom:4px}
+        .destacado-btn{display:inline-block;background:white;color:#1a1a1a;padding:10px 24px;border-radius:30px;font-weight:700;font-size:13px;cursor:pointer;border:none;margin-top:8px;transition:all 0.3s}
+        .destacado-btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+        
         .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1000;justify-content:center;align-items:center;padding:16px}
         .modal.active{display:flex}
         .modal-content{background:var(--bg-white);border-radius:24px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto}
@@ -119,45 +134,30 @@
         .whatsapp-float{position:fixed;bottom:80px;right:20px;background:#25D366;color:white;width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;text-decoration:none;transition:all 0.3s}
         .whatsapp-float:hover{transform:scale(1.1)}
         @media(min-width:640px){.products-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}.product-image{height:240px}.modal-body{grid-template-columns:1fr 1fr;gap:32px}}
-        @media(max-width:768px){.modal-body{grid-template-columns:1fr}.producto-imagen-modal{height:280px}}
-
-        /* ============================================ */
-        /* ESTILOS RESPONSIVE PARA MÓVILES Y TABLETS */
-        /* ============================================ */
-        @media(max-width:1024px){
-            .main-content{flex-direction:column}
-            .filters-sidebar{width:100%}
-            .products-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-        }
         @media(max-width:768px){
-            .header-main{flex-direction:column;gap:10px}
-            .search-bar{max-width:100%}
-            .header-actions{width:100%;justify-content:center}
-            .hero{padding:24px 12px}
-            .hero-text h2{font-size:22px}
-            .hero-text p{font-size:12px}
+            .modal-body{grid-template-columns:1fr}.producto-imagen-modal{height:280px}
+            .destacado-card{flex-direction:column;text-align:center;padding:20px}
+            .destacado-img{width:120px;height:120px}
+            .destacado-nombre{font-size:18px}
+            .destacado-precio{font-size:22px}
+        }
+        @media(max-width:1024px){.main-content{flex-direction:column}.filters-sidebar{width:100%}.products-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
+        @media(max-width:768px){
+            .header-main{flex-direction:column;gap:10px}.search-bar{max-width:100%}.header-actions{width:100%;justify-content:center}
+            .hero{padding:24px 12px}.hero-text h2{font-size:22px}.hero-text p{font-size:12px}
             .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-            .product-image{height:160px}
-            .product-name{font-size:12px}
-            .price-current{font-size:15px}
-            .btn-add-product{font-size:11px;padding:8px}
-            .modal-body{grid-template-columns:1fr!important}
-            .producto-imagen-modal{height:250px}
-            .cart-sidebar{max-width:100%}
+            .product-image{height:160px}.product-name{font-size:12px}.price-current{font-size:15px}
+            .btn-add-product{font-size:11px;padding:8px}.modal-body{grid-template-columns:1fr!important}
+            .producto-imagen-modal{height:250px}.cart-sidebar{max-width:100%}
             .footer-content{grid-template-columns:1fr 1fr;gap:16px}
         }
         @media(max-width:480px){
             .header-top-content{font-size:10px;flex-direction:column;text-align:center}
-            .hero{padding:16px 8px}
-            .hero-text h2{font-size:18px}
+            .hero{padding:16px 8px}.hero-text h2{font-size:18px}
             .products-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-            .product-card{border-radius:12px}
-            .product-image{height:120px}
-            .product-info{padding:8px}
-            .product-name{font-size:11px}
-            .price-current{font-size:13px}
-            .filters-sidebar{display:none}
-            .category-chip{padding:6px 10px;font-size:10px}
+            .product-card{border-radius:12px}.product-image{height:120px}.product-info{padding:8px}
+            .product-name{font-size:11px}.price-current{font-size:13px}
+            .filters-sidebar{display:none}.category-chip{padding:6px 10px;font-size:10px}
             .footer-content{grid-template-columns:1fr}
         }
     </style>
@@ -231,7 +231,7 @@ document.addEventListener('click',(e)=>{const menu=document.getElementById('user
 
 async function cargarDatos(){try{const data=await safeFetch('/tienda/listar-productos',{method:'POST'});productos=data.productos||[];categorias=data.categorias||[];configuracion=data.configuracion||configuracion;
 document.getElementById('tienda-nombre').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-titulo').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-mensaje').textContent=configuracion.tienda?.mensajeBienvenida||'';
-if(configuracion.logo){document.getElementById('logo-container').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:12px">`}
+if(configuracion.logo){document.getElementById('logo-container').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`}
 if(configuracion.redes?.whatsapp){document.getElementById('whatsapp-float').href=`https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`}
 if(configuracion.empresa?.telefono)document.getElementById('header-phone').textContent=configuracion.empresa.telefono;
 if(configuracion.horarios)document.getElementById('header-hours-text').textContent=`L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
@@ -244,7 +244,7 @@ if(configuracion.redes?.instagram)document.getElementById('footer-instagram').in
 if(configuracion.redes?.facebook)document.getElementById('footer-facebook').innerHTML=`<a href="https://facebook.com/${configuracion.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${configuracion.redes.facebook}</a>`;
 renderizarCategorias();renderizarSubcategorias();renderizarProductos();cargarCarritoLocal();checkLogin();mostrarProductoDestacado()}catch(e){console.error(e)}}
 
-function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div style="background:linear-gradient(135deg,#1a1a1a,#c9a96e);border-radius:20px;padding:24px;color:white;display:flex;align-items:center;gap:20px"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;pointer-events:none;-webkit-user-drag:none;user-select:none"><div><div style="font-size:12px;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px">🌟 PRODUCTO DESTACADO</div><h3 style="font-size:22px;margin-bottom:4px">${escapeHtml(destacado.nombre)}</h3><p style="font-size:24px;font-weight:800">${fmt.format(destacado.precio)}</p><button onclick="abrirModalProducto(${destacado.id})" style="background:white;color:#1a1a1a;border:none;padding:10px 24px;border-radius:30px;font-weight:700;cursor:pointer;margin-top:8px">Ver producto</button></div></div>`}}
+function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='https://via.placeholder.com/140'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p><button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
 
 function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i> ${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
 function renderizarSubcategorias(){const c=document.getElementById('subcategory-list');const subs=[...new Set(productos.filter(p=>p.subcategoria).map(p=>p.subcategoria))];let h=`<label class="subcategory-item ${!subcategoriaSeleccionada?'active':''}"><input type="radio" name="subcategory" value="" ${!subcategoriaSeleccionada?'checked':''} onchange="filtrarPorSubcategoria(null)"><span>Todas</span></label>`;subs.sort().forEach(s=>h+=`<label class="subcategory-item ${subcategoriaSeleccionada===s?'active':''}"><input type="radio" name="subcategory" value="${escapeHtml(s)}" ${subcategoriaSeleccionada===s?'checked':''} onchange="filtrarPorSubcategoria('${escapeHtml(s)}')"><span>${escapeHtml(s)}</span></label>`);c.innerHTML=h}
