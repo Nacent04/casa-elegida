@@ -181,7 +181,6 @@
 <div class="cart-sidebar" id="cart-sidebar"><div class="cart-header"><h3><i class="fas fa-shopping-bag"></i> Mi Pedido</h3><button class="cart-close" onclick="toggleCarrito()">&times;</button></div><div id="progreso-mayorista-container" style="padding:0 18px;margin-bottom:8px"></div><div class="cart-items" id="cart-items"></div><div class="cart-footer"><div class="cart-total"><span>Total:</span><span id="cart-total">$0</span></div><button class="btn-checkout" id="checkout-btn" onclick="irACheckout()"><i class="fas fa-arrow-right"></i> Finalizar Compra</button></div></div>
 
 <a href="#" id="whatsapp-float" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
-
 <div id="toast-container"></div>
 
 <!-- ASISTENTE VIRTUAL -->
@@ -294,39 +293,30 @@ function recalcularPreciosMayoristas(){if(!configuracion.mayorista?.habilitado){
 function guardarCarritoLocal(){localStorage.setItem('tienda_carrito',JSON.stringify(carrito))}
 function cargarCarritoLocal(){const g=localStorage.getItem('tienda_carrito');if(g){try{carrito=JSON.parse(g);recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista()}catch(e){carrito=[]}}}
 
-// ASISTENTE VIRTUAL
-function toggleAsistente(){
-    const burbuja=document.getElementById('asistente-burbuja');
-    burbuja.style.display=burbuja.style.display==='block'?'none':'block';
-}
+function toggleAsistente(){const burbuja=document.getElementById('asistente-burbuja');burbuja.style.display=burbuja.style.display==='block'?'none':'block'}
 function asistenteResponder(tema){
     const msg=document.getElementById('asistente-mensaje');
     const opciones=document.getElementById('asistente-opciones');
     switch(tema){
-        case 'comprar':
-            msg.innerHTML='🛒 <strong>Para comprar es muy fácil:</strong><br><br>1️⃣ Navegá por las categorías o buscá un producto<br>2️⃣ Hacé clic en <strong>"Ver"</strong> para ver los detalles<br>3️⃣ Elegí la variante (color, tamaño) y la cantidad<br>4️⃣ Clic en <strong>"Agregar al Pedido"</strong><br>5️⃣ Cuando termines, andá al carrito 🛒<br>6️⃣ Presioná <strong>"Finalizar Compra"</strong><br><br>¿Querés que te ayude con algo más?';
-            break;
-        case 'mayorista':
-            msg.innerHTML='💎 <strong>¡Precios especiales por mayor!</strong><br><br>🏷️ Llevando <strong>cierta cantidad</strong> de productos, accedés a precios mayoristas con descuento.<br><br>📊 En el carrito vas a ver una <strong>barra de progreso</strong> que te muestra cuánto te falta para alcanzar el descuento.<br><br>🎉 ¡Al alcanzarlo, los precios se actualizan automáticamente!';
-            break;
-        case 'envios':
-            msg.innerHTML='🚚 <strong>Información de envíos:</strong><br><br>📦 Hacemos envíos a <strong>todo el país</strong><br>🚀 Despachamos dentro de las 24hs hábiles<br>📍 Podés elegir entre:<br>• Retiro en nuestro local<br>• Envío a domicilio<br><br>El costo se calcula al finalizar la compra según tu ubicación.';
-            break;
-        case 'pagos':
-            msg.innerHTML='💳 <strong>Medios de pago:</strong><br><br>💵 <strong>Efectivo</strong> (en el local)<br>🏦 <strong>Transferencia bancaria</strong><br>💳 <strong>Tarjeta de débito/crédito</strong><br>📱 <strong>MercadoPago</strong><br><br>¡Elegí el que más te convenga al finalizar!';
-            break;
-        case 'contacto':
-            const ws=configuracion.redes?.whatsapp||'';
-            const tel=configuracion.empresa?.telefono||'';
-            msg.innerHTML='📞 <strong>Contactanos:</strong><br><br>📱 WhatsApp: <strong>'+ws+'</strong><br>📞 Teléfono: <strong>'+tel+'</strong><br>📧 Email: <strong>'+ (configuracion.empresa?.email||'casaelegida20@gmail.com') +'</strong><br><br>⏰ Horarios:<br>'+ (configuracion.horarios?.lunesViernes||'9:00 a 18:00') +'<br>¡Te esperamos!';
-            break;
+        case 'comprar':msg.innerHTML='🛒 <strong>Para comprar es muy fácil:</strong><br><br>1️⃣ Navegá por las categorías o buscá un producto<br>2️⃣ Hacé clic en <strong>"Ver"</strong> para ver los detalles<br>3️⃣ Elegí la variante (color, tamaño) y la cantidad<br>4️⃣ Clic en <strong>"Agregar al Pedido"</strong><br>5️⃣ Cuando termines, andá al carrito 🛒<br>6️⃣ Presioná <strong>"Finalizar Compra"</strong><br><br>¿Querés que te ayude con algo más?';break;
+        case 'mayorista':msg.innerHTML='💎 <strong>¡Precios especiales por mayor!</strong><br><br>🏷️ Llevando <strong>cierta cantidad</strong> de productos, accedés a precios mayoristas con descuento.<br><br>📊 En el carrito vas a ver una <strong>barra de progreso</strong> que te muestra cuánto te falta para alcanzar el descuento.<br><br>🎉 ¡Al alcanzarlo, los precios se actualizan automáticamente!';break;
+        case 'envios':msg.innerHTML='🚚 <strong>Información de envíos:</strong><br><br>📦 Hacemos envíos a <strong>todo el país</strong><br>🚀 Despachamos dentro de las 24hs hábiles<br>📍 Podés elegir entre:<br>• Retiro en nuestro local<br>• Envío a domicilio<br><br>El costo se calcula al finalizar la compra según tu ubicación.';break;
+        case 'pagos':msg.innerHTML='💳 <strong>Medios de pago:</strong><br><br>💵 <strong>Efectivo</strong> (en el local)<br>🏦 <strong>Transferencia bancaria</strong><br>💳 <strong>Tarjeta de débito/crédito</strong><br>📱 <strong>MercadoPago</strong><br><br>¡Elegí el que más te convenga al finalizar!';break;
+        case 'contacto':const ws=configuracion.redes?.whatsapp||'';const tel=configuracion.empresa?.telefono||'';msg.innerHTML='📞 <strong>Contactanos:</strong><br><br>📱 WhatsApp: <strong>'+ws+'</strong><br>📞 Teléfono: <strong>'+tel+'</strong><br>📧 Email: <strong>'+ (configuracion.empresa?.email||'casaelegida20@gmail.com') +'</strong><br><br>⏰ Horarios:<br>'+ (configuracion.horarios?.lunesViernes||'9:00 a 18:00') +'<br>¡Te esperamos!';break;
     }
-    opciones.innerHTML='<button onclick="toggleAsistente()" style="padding:8px 14px;background:#6366f1;color:white;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;width:100%">✅ ¡Entendido! Seguir comprando</button>';
+    opciones.innerHTML='<button onclick="volverMenuAyuda()" style="padding:8px 14px;background:#6366f1;color:white;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;width:100%">🔙 Volver al menú</button>';
 }
-setTimeout(()=>{
-    const burbuja=document.getElementById('asistente-burbuja');
-    if(burbuja&&burbuja.style.display==='none'){burbuja.style.display='block';}
-},30000);
+function volverMenuAyuda(){
+    document.getElementById('asistente-mensaje').innerHTML='¡Hola! Soy el asistente de Casa Elegida. ¿En qué puedo ayudarte?';
+    document.getElementById('asistente-opciones').innerHTML=`
+        <button onclick="asistenteResponder('comprar')" style="padding:8px 14px;background:#eef2ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#6366f1">🛒 ¿Cómo comprar?</button>
+        <button onclick="asistenteResponder('mayorista')" style="padding:8px 14px;background:#f0fdf4;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#10b981">💎 Precios mayoristas</button>
+        <button onclick="asistenteResponder('envios')" style="padding:8px 14px;background:#fef3c7;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#f59e0b">🚚 Envíos</button>
+        <button onclick="asistenteResponder('pagos')" style="padding:8px 14px;background:#fce7f3;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#ec4899">💳 Medios de pago</button>
+        <button onclick="asistenteResponder('contacto')" style="padding:8px 14px;background:#e0e7ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#4f46e5">📞 Contacto</button>
+    `;
+}
+setTimeout(()=>{const burbuja=document.getElementById('asistente-burbuja');if(burbuja&&burbuja.style.display==='none'){burbuja.style.display='block';}},30000);
 
 document.addEventListener('DOMContentLoaded',()=>{
     cargarDatos();
