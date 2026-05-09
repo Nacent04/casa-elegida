@@ -127,7 +127,6 @@
         @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
         .whatsapp-float{position:fixed;bottom:80px;right:20px;background:#25D366;color:white;width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;text-decoration:none;transition:all 0.3s}
         .whatsapp-float:hover{transform:scale(1.1)}
-        /* BARRA DE PROGRESO MAYORISTA */
         .progreso-mayorista{background:#f8fafc;border-radius:16px;padding:14px;margin:12px 0;border:2px solid #e2e8f0}
         .progreso-mayorista-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px}
         .progreso-mayorista-titulo{font-weight:700;color:#6366f1;display:flex;align-items:center;gap:6px}
@@ -182,7 +181,27 @@
 <div class="cart-sidebar" id="cart-sidebar"><div class="cart-header"><h3><i class="fas fa-shopping-bag"></i> Mi Pedido</h3><button class="cart-close" onclick="toggleCarrito()">&times;</button></div><div id="progreso-mayorista-container" style="padding:0 18px;margin-bottom:8px"></div><div class="cart-items" id="cart-items"></div><div class="cart-footer"><div class="cart-total"><span>Total:</span><span id="cart-total">$0</span></div><button class="btn-checkout" id="checkout-btn" onclick="irACheckout()"><i class="fas fa-arrow-right"></i> Finalizar Compra</button></div></div>
 
 <a href="#" id="whatsapp-float" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
 <div id="toast-container"></div>
+
+<!-- ASISTENTE VIRTUAL -->
+<div id="asistente-compra" style="position:fixed;bottom:90px;right:20px;z-index:998">
+    <div id="asistente-burbuja" style="background:white;border-radius:20px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.2);max-width:340px;margin-bottom:12px;display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:18px">🤖</div>
+            <div><strong style="font-size:14px">Asistente Virtual</strong><p style="font-size:10px;color:#10b981">● En línea</p></div>
+        </div>
+        <p id="asistente-mensaje" style="font-size:13px;margin-bottom:12px;line-height:1.5">¡Hola! Soy el asistente de Casa Elegida. ¿En qué puedo ayudarte?</p>
+        <div id="asistente-opciones" style="display:flex;flex-wrap:wrap;gap:6px">
+            <button onclick="asistenteResponder('comprar')" style="padding:8px 14px;background:#eef2ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#6366f1">🛒 ¿Cómo comprar?</button>
+            <button onclick="asistenteResponder('mayorista')" style="padding:8px 14px;background:#f0fdf4;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#10b981">💎 Precios mayoristas</button>
+            <button onclick="asistenteResponder('envios')" style="padding:8px 14px;background:#fef3c7;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#f59e0b">🚚 Envíos</button>
+            <button onclick="asistenteResponder('pagos')" style="padding:8px 14px;background:#fce7f3;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#ec4899">💳 Medios de pago</button>
+            <button onclick="asistenteResponder('contacto')" style="padding:8px 14px;background:#e0e7ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#4f46e5">📞 Contacto</button>
+        </div>
+    </div>
+    <button id="asistente-btn" onclick="toggleAsistente()" style="width:55px;height:55px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:all 0.3s;display:flex;align-items:center;justify-content:center">🤖</button>
+</div>
 
 <script>
 let productos=[],categorias=[],carrito=[],configuracion={empresa:{},tienda:{},mayorista:{},redes:{},pagos:{}};
@@ -230,7 +249,7 @@ renderizarCategorias();renderizarSubcategorias();renderizarProductos();cargarCar
 
 function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='https://via.placeholder.com/140'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
 
-function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i>Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i>${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
+function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i> ${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
 function renderizarSubcategorias(){const c=document.getElementById('subcategory-list');const subs=[...new Set(productos.filter(p=>p.subcategoria).map(p=>p.subcategoria))];let h=`<label class="subcategory-item ${!subcategoriaSeleccionada?'active':''}"><input type="radio" name="subcategory" value="" ${!subcategoriaSeleccionada?'checked':''} onchange="filtrarPorSubcategoria(null)"><span>Todas</span></label>`;subs.sort().forEach(s=>h+=`<label class="subcategory-item ${subcategoriaSeleccionada===s?'active':''}"><input type="radio" name="subcategory" value="${escapeHtml(s)}" ${subcategoriaSeleccionada===s?'checked':''} onchange="filtrarPorSubcategoria('${escapeHtml(s)}')"><span>${escapeHtml(s)}</span></label>`);c.innerHTML=h}
 function filtrarPorCategoria(cat){categoriaSeleccionada=cat;document.querySelectorAll('.category-chip').forEach(c=>c.classList.remove('active'));if(!cat)document.querySelector('.category-chip').classList.add('active');else document.querySelectorAll('.category-chip').forEach(c=>{if(c.textContent.includes(cat))c.classList.add('active')});renderizarProductos()}
 function filtrarPorSubcategoria(sub){subcategoriaSeleccionada=sub;renderizarSubcategorias();renderizarProductos()}
@@ -274,6 +293,40 @@ function eliminarDelCarrito(i){carrito.splice(i,1);recalcularPreciosMayoristas()
 function recalcularPreciosMayoristas(){if(!configuracion.mayorista?.habilitado){carrito.forEach(i=>{if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal}});renderizarCarrito();actualizarProgresoMayorista();return}const cantTotal=carrito.reduce((s,i)=>s+i.cant,0);const montoTotal=carrito.reduce((s,i)=>s+i.precio*i.cant,0);const{modo,valorCantidad,valorMonto}=configuracion.mayorista;const cumple=modo==='cantidad'?cantTotal>=valorCantidad:modo==='monto'?montoTotal>=valorMonto:cantTotal>=valorCantidad&&montoTotal>=valorMonto;carrito.forEach(i=>{if(i.esManual)return;const p=productos.find(x=>x.id==i.pId);if(!p)return;if(cumple&&p.precioMayor>0){if(!i.precioOriginal)i.precioOriginal=i.precio;if(i.precio!==p.precioMayor)i.precio=p.precioMayor}else if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal}});renderizarCarrito();actualizarProgresoMayorista()}
 function guardarCarritoLocal(){localStorage.setItem('tienda_carrito',JSON.stringify(carrito))}
 function cargarCarritoLocal(){const g=localStorage.getItem('tienda_carrito');if(g){try{carrito=JSON.parse(g);recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista()}catch(e){carrito=[]}}}
+
+// ASISTENTE VIRTUAL
+function toggleAsistente(){
+    const burbuja=document.getElementById('asistente-burbuja');
+    burbuja.style.display=burbuja.style.display==='block'?'none':'block';
+}
+function asistenteResponder(tema){
+    const msg=document.getElementById('asistente-mensaje');
+    const opciones=document.getElementById('asistente-opciones');
+    switch(tema){
+        case 'comprar':
+            msg.innerHTML='🛒 <strong>Para comprar es muy fácil:</strong><br><br>1️⃣ Navegá por las categorías o buscá un producto<br>2️⃣ Hacé clic en <strong>"Ver"</strong> para ver los detalles<br>3️⃣ Elegí la variante (color, tamaño) y la cantidad<br>4️⃣ Clic en <strong>"Agregar al Pedido"</strong><br>5️⃣ Cuando termines, andá al carrito 🛒<br>6️⃣ Presioná <strong>"Finalizar Compra"</strong><br><br>¿Querés que te ayude con algo más?';
+            break;
+        case 'mayorista':
+            msg.innerHTML='💎 <strong>¡Precios especiales por mayor!</strong><br><br>🏷️ Llevando <strong>cierta cantidad</strong> de productos, accedés a precios mayoristas con descuento.<br><br>📊 En el carrito vas a ver una <strong>barra de progreso</strong> que te muestra cuánto te falta para alcanzar el descuento.<br><br>🎉 ¡Al alcanzarlo, los precios se actualizan automáticamente!';
+            break;
+        case 'envios':
+            msg.innerHTML='🚚 <strong>Información de envíos:</strong><br><br>📦 Hacemos envíos a <strong>todo el país</strong><br>🚀 Despachamos dentro de las 24hs hábiles<br>📍 Podés elegir entre:<br>• Retiro en nuestro local<br>• Envío a domicilio<br><br>El costo se calcula al finalizar la compra según tu ubicación.';
+            break;
+        case 'pagos':
+            msg.innerHTML='💳 <strong>Medios de pago:</strong><br><br>💵 <strong>Efectivo</strong> (en el local)<br>🏦 <strong>Transferencia bancaria</strong><br>💳 <strong>Tarjeta de débito/crédito</strong><br>📱 <strong>MercadoPago</strong><br><br>¡Elegí el que más te convenga al finalizar!';
+            break;
+        case 'contacto':
+            const ws=configuracion.redes?.whatsapp||'';
+            const tel=configuracion.empresa?.telefono||'';
+            msg.innerHTML='📞 <strong>Contactanos:</strong><br><br>📱 WhatsApp: <strong>'+ws+'</strong><br>📞 Teléfono: <strong>'+tel+'</strong><br>📧 Email: <strong>'+ (configuracion.empresa?.email||'casaelegida20@gmail.com') +'</strong><br><br>⏰ Horarios:<br>'+ (configuracion.horarios?.lunesViernes||'9:00 a 18:00') +'<br>¡Te esperamos!';
+            break;
+    }
+    opciones.innerHTML='<button onclick="toggleAsistente()" style="padding:8px 14px;background:#6366f1;color:white;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;width:100%">✅ ¡Entendido! Seguir comprando</button>';
+}
+setTimeout(()=>{
+    const burbuja=document.getElementById('asistente-burbuja');
+    if(burbuja&&burbuja.style.display==='none'){burbuja.style.display='block';}
+},30000);
 
 document.addEventListener('DOMContentLoaded',()=>{
     cargarDatos();
