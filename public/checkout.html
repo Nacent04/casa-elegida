@@ -987,6 +987,9 @@
                 
                 if (data.success) {
                     localStorage.removeItem('tienda_carrito');
+localStorage.removeItem('carrito_anonimo');
+localStorage.removeItem('carrito_' + localStorage.getItem('token'));
+localStorage.removeItem('carrito_timestamp');
                     mostrarToast(`✅ ¡Pedido #${data.pedidoId} confirmado! Te contactaremos pronto.`);
                     setTimeout(() => window.location.href = '/tienda', 3000);
                 } else {
