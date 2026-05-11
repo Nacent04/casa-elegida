@@ -164,74 +164,126 @@
         /* ESTILOS RESPONSIVE PARA MÓVILES Y TABLETS */
         /* ============================================ */
         @media(max-width:1024px){
-            body{padding:12px}
+            body{padding:8px}
             .layout-con-carrito{grid-template-columns:1fr}
-            .nav-tabs{gap:8px}
-            .tab-btn{padding:10px 16px;font-size:12px}
-            .grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-            .producto-imagen-principal{height:220px}
-            #v-cart{position:fixed!important;right:0!important;top:0!important;width:100%!important;max-width:420px!important;height:100vh!important;max-height:100vh!important;z-index:1001!important;border-radius:0!important}
+            .nav-tabs{gap:6px;padding:4px}
+            .tab-btn{padding:8px 14px;font-size:11px;gap:4px}
+            .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+            .producto-imagen-principal{height:200px}
+            #v-cart{
+                position:fixed!important;
+                right:0!important;
+                top:auto!important;
+                bottom:0!important;
+                left:0!important;
+                width:100%!important;
+                max-width:100%!important;
+                height:60vh!important;
+                max-height:60vh!important;
+                z-index:1001!important;
+                border-radius:24px 24px 0 0!important;
+                transition:transform 0.3s ease!important;
+                transform:translateY(0)!important;
+            }
+            #v-cart.hidden{transform:translateY(100%)!important;display:block!important}
+            .cart-item{gap:8px;padding:10px}
+            .cart-img{width:44px;height:44px;border-radius:16px}
+            .cart-controls button{width:32px;height:32px;font-size:16px}
+            .cart-precio{min-width:60px;font-size:14px}
+            .total-container{padding:16px;margin-top:12px}
+            .total-amount{font-size:28px}
+            .btn-confirm{padding:14px;font-size:14px}
         }
         @media(max-width:768px){
-            body{padding:8px}
-            .panel{padding:16px;border-radius:20px}
-            .nav-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:8px;gap:6px;-webkit-overflow-scrolling:touch}
-            .nav-tabs::-webkit-scrollbar{display:none}
-            .tab-btn{padding:8px 14px;font-size:11px;white-space:nowrap;flex-shrink:0}
-            .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-            .card{padding:10px;border-radius:16px}
-            .producto-imagen-principal{height:160px;border-radius:12px}
-            .card h4{font-size:13px}
-            .precio-producto{font-size:16px}
-            .variante-seleccionada-info{font-size:11px;padding:6px 10px}
-            .btn-desplegar-variantes{font-size:11px;padding:10px}
-            .variantes-grid{grid-template-columns:repeat(auto-fill,minmax(65px,1fr));gap:6px}
-            .variante-item-venta img{height:55px}
-            .variante-item-venta .variante-nombre{font-size:9px}
-            .cantidad-btn{width:32px;height:32px;font-size:16px}
-            .cantidad-input{width:45px;font-size:14px}
-            .btn-add{font-size:12px;padding:12px}
-            #v-cart{max-width:100%!important;width:100%!important}
-            .cart-item{padding:10px}
-            .form-row{grid-template-columns:1fr}
-            .modal-content{padding:16px;border-radius:20px;max-width:95%}
-            .producto-header{flex-direction:column}
-            .producto-imagen img{width:80px;height:80px}
-            .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-            .stat-card{padding:12px}
-            .stat-card h3{font-size:20px}
-            .backup-hero{padding:20px}
-            .backup-hero h2{font-size:20px}
-            .btn-backup-master{padding:14px 24px;font-size:14px}
-            .backup-cards{grid-template-columns:1fr}
-            .history-table{font-size:11px}
-            .history-table th,.history-table td{padding:6px}
-            .charts-container{grid-template-columns:1fr!important}
-            table{font-size:11px}
-            input,select,textarea{padding:10px 12px;font-size:13px}
-        }
-        @media(max-width:480px){
             body{padding:4px}
-            .panel{padding:10px;border-radius:16px}
-            .tab-btn{padding:6px 10px;font-size:10px;gap:4px}
-            .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-            .producto-imagen-principal{height:130px}
-            .card h4{font-size:11px}
+            .panel{padding:12px;border-radius:16px}
+            .nav-tabs{
+                overflow-x:auto;
+                flex-wrap:nowrap;
+                padding-bottom:6px;
+                gap:4px;
+                -webkit-overflow-scrolling:touch;
+                scrollbar-width:none;
+            }
+            .nav-tabs::-webkit-scrollbar{display:none}
+            .tab-btn{
+                padding:8px 12px;
+                font-size:10px;
+                white-space:nowrap;
+                flex-shrink:0;
+                border-radius:24px;
+            }
+            .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+            .card{padding:8px;border-radius:14px}
+            .producto-imagen-principal{height:140px;border-radius:10px}
+            .card h4{font-size:11px;margin:4px 0}
             .precio-producto{font-size:14px}
-            .precio-mayor{font-size:10px}
-            .cantidad-btn{width:28px;height:28px;font-size:14px}
-            .cantidad-input{width:40px;font-size:13px;padding:4px}
-            .btn-add{font-size:11px;padding:10px}
+            .precio-mayor{font-size:9px}
+            .variante-seleccionada-info{font-size:10px;padding:5px 8px}
+            .btn-desplegar-variantes{font-size:10px;padding:8px}
             .variantes-grid{grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:4px}
             .variante-item-venta img{height:45px}
             .variante-item-venta .variante-nombre{font-size:8px}
-            .cart-item{gap:8px}
-            .cart-img{width:40px;height:40px;border-radius:14px}
-            .stats-grid{grid-template-columns:1fr 1fr;gap:6px}
-            .stat-card{padding:8px}
+            .cantidad-selector{gap:4px;padding:3px}
+            .cantidad-btn{width:28px;height:28px;font-size:14px}
+            .cantidad-input{width:38px;font-size:13px;padding:4px}
+            .btn-add{font-size:11px;padding:10px}
+            #v-cart{height:70vh!important;max-height:70vh!important}
+            .cart-item{padding:8px}
+            .form-row{grid-template-columns:1fr}
+            .modal-content{padding:16px;border-radius:20px;max-width:95%}
+            .producto-header{flex-direction:column}
+            .producto-imagen img{width:70px;height:70px}
+            .stats-grid{grid-template-columns:repeat(2,1fr);gap:6px}
+            .stat-card{padding:10px}
             .stat-card i{font-size:20px}
             .stat-card h3{font-size:16px}
             .stat-card p{font-size:10px}
+            .backup-hero{padding:16px}
+            .backup-hero h2{font-size:18px}
+            .btn-backup-master{padding:12px 20px;font-size:13px}
+            .backup-cards{grid-template-columns:1fr}
+            .history-table{font-size:10px}
+            .history-table th,.history-table td{padding:5px}
+            .charts-container{grid-template-columns:1fr!important}
+            table{font-size:10px}
+            input,select,textarea{padding:8px 10px;font-size:12px;border-radius:14px}
+            .pago-btn,.entrega-btn{padding:10px;font-size:11px}
+            .notif-panel{width:280px;right:-10px}
+        }
+        @media(max-width:480px){
+            body{padding:2px}
+            .panel{padding:8px;border-radius:12px}
+            .tab-btn{padding:6px 8px;font-size:9px;gap:3px;border-radius:20px}
+            .tab-btn i{font-size:10px}
+            .grid{grid-template-columns:repeat(2,1fr);gap:6px}
+            .card{padding:6px;border-radius:10px}
+            .producto-imagen-principal{height:110px;border-radius:8px}
+            .card h4{font-size:10px;margin:2px 0}
+            .precio-producto{font-size:12px}
+            .precio-mayor{font-size:8px}
+            .variante-seleccionada-info{font-size:9px;padding:4px 6px;border-radius:10px}
+            .btn-desplegar-variantes{font-size:9px;padding:6px;border-radius:10px}
+            .variantes-grid{grid-template-columns:repeat(auto-fill,minmax(45px,1fr));gap:3px}
+            .variante-item-venta img{height:38px}
+            .variante-item-venta .variante-nombre{font-size:7px;padding:3px}
+            .cantidad-btn{width:24px;height:24px;font-size:12px}
+            .cantidad-input{width:32px;font-size:11px;padding:3px}
+            .btn-add{font-size:10px;padding:8px;border-radius:30px}
+            .cart-item{gap:6px;padding:6px}
+            .cart-img{width:34px;height:34px;border-radius:12px}
+            .cart-info h4{font-size:11px}
+            .cart-info p{font-size:9px}
+            .cart-controls button{width:24px;height:24px;font-size:14px}
+            .cart-precio{min-width:50px;font-size:12px}
+            .total-amount{font-size:22px}
+            .btn-confirm{padding:12px;font-size:12px}
+            .stats-grid{grid-template-columns:1fr 1fr;gap:4px}
+            .stat-card{padding:6px}
+            .stat-card i{font-size:16px}
+            .stat-card h3{font-size:13px}
+            .stat-card p{font-size:9px}
+            .stock-badge{font-size:9px;padding:3px 6px}
         }
     </style>
 </head>
@@ -269,7 +321,10 @@
     </div>
     <div id="main-container" class="layout"></div>
     <div id="v-cart" class="panel hidden" style="position:fixed;right:24px;top:120px;width:480px;max-height:calc(100vh - 140px);overflow-y:auto;z-index:50">
-        <h3 style="margin-top:0;margin-bottom:20px"><i class="fas fa-shopping-cart"></i> Pedido Actual</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0"><i class="fas fa-shopping-cart"></i> Pedido Actual</h3>
+            <button onclick="toggleCarritoMobile()" class="tab-btn" id="btn-cerrar-carrito" style="display:none;padding:8px 12px;font-size:12px"><i class="fas fa-times"></i></button>
+        </div>
         <div id="cart-items" style="max-height:320px;overflow-y:auto;margin-bottom:20px"></div>
         <label style="font-weight:600;margin-bottom:8px;display:block"><i class="fas fa-truck"></i> Entrega</label>
         <div class="entrega-tabs"><button id="l-local" class="entrega-btn active" onclick="setLog('local')"><i class="fas fa-store"></i> Retiro</button><button id="l-envio" class="entrega-btn" onclick="setLog('envio')"><i class="fas fa-shipping-fast"></i> Envío</button></div>
@@ -283,8 +338,11 @@
         <button onclick="toggleThemePanel()" style="width:50px;height:50px;border-radius:50%;background:#6366f1;color:white;border:none;cursor:pointer;font-size:20px;box-shadow:0 4px 20px rgba(99,102,241,0.4)"><i class="fas fa-palette"></i></button>
         <div id="theme-panel" style="display:none;position:absolute;bottom:60px;left:0;background:white;border-radius:20px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.15);width:300px"><h4 style="margin-bottom:12px"><i class="fas fa-palette"></i> Personalizar Tema</h4><div style="margin-bottom:12px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()"><span>🌙 Modo Oscuro</span></label></div></div>
     </div>
+    <button onclick="toggleCarritoMobile()" id="btn-carrito-flotante" class="tab-btn" style="display:none;position:fixed;bottom:20px;right:20px;z-index:1000;width:60px;height:60px;border-radius:50%;background:#6366f1;color:white;font-size:24px;box-shadow:0 4px 20px rgba(99,102,241,0.4);border:none;cursor:pointer;justify-content:center;align-items:center">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="carrito-contador-flotante" style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:white;border-radius:50%;width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700">0</span>
+    </button>
 </div>
-
 <script>
 let adminToken = localStorage.getItem('adminToken');
 let adminActual = null;
@@ -294,6 +352,7 @@ let varianteSeleccionada = {}, configuracion = {}, mayoristaHabilitado = false, 
 let notificaciones = [], notificacionesNoLeidas = 0;
 let chartsInstances = {};
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
+
 // Cargar configuración inmediatamente al iniciar
 (async function precargarConfiguracion() {
     if (adminToken) {
@@ -306,7 +365,7 @@ const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS',
         } catch(e) {}
     }
 })();
-    
+
 function mostrarToast(msg, error=false) { const t = document.createElement('div'); t.className = `toast-notification ${error?'error':''}`; t.innerHTML = `<i class="fas ${error?'fa-exclamation-circle':'fa-check-circle'}"></i> ${msg}`; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 function formatearNumero(n) { if(!n) return '0'; return Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
@@ -325,6 +384,7 @@ async function iniciarPanel() {
     setInterval(cargarNotificaciones, 30000); 
     cargarNotificaciones(); 
     aplicarPermisos(); 
+    verificarMobile();
 }
 if (adminToken) { document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-screen').style.display = 'block'; iniciarPanel(); }
 
@@ -379,7 +439,6 @@ function renderPaginaBackup() { return `<div class="panel"><div class="backup-he
 
 async function cargar() { 
     try { 
-        // SIEMPRE cargar la configuración para tener el mayorista actualizado
         const configData = await safeFetch('/get-config',{method:'POST'});
         if(configData && configData.mayorista) {
             mayoristaHabilitado = configData.mayorista.habilitado || false;
@@ -411,46 +470,36 @@ function cambiarCantidad(id,d){ const i=document.getElementById('q-'+id); if(i){
 
 async function addAlCarrito(id){ let p=productos.find(x=>x.id==id); if(!p)return; let idx=varianteSeleccionada[id]||0; let v=p.variantes[idx]; if(!v)return; let c=parseInt(document.getElementById('q-'+id).value); try{const res=await fetch('/verificar-stock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productoId:id,varianteNombre:v.nombre})});const data=await res.json();if(data.stock!==undefined){v.stock=data.stock;seleccionarVarianteVisual(id,idx);}}catch(e){} if(v.stock<c){mostrarToast('❌ Stock insuficiente. Disponible: '+v.stock,true);return;} let e=carrito.find(i=>i.pId===id&&i.vNom===v.nombre&&!i.esManual); if(e){if(v.stock<e.cant+c){mostrarToast('❌ Stock insuficiente',true);return;}e.cant+=c;}else{carrito.push({pId:id,pNom:p.nombre,vNom:v.nombre,vFoto:v.foto||'',precio:p.precio,precioMayor:p.precioMayor||0,cant:c,esManual:false});} calcularPreciosMayoristaEnVivo(); renderCart(); localStorage.setItem('pos_carrito',JSON.stringify(carrito)); mostrarToast('✅ Agregado'); }
 
-function calcularPreciosMayoristaEnVivo(){ 
-    console.log('🔍 MAYORISTA HABILITADO:', mayoristaHabilitado);
-    console.log('🔍 MODO:', mayoristaModo);
-    if(!mayoristaHabilitado){
-        carrito.forEach(i=>{if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal;}});
-        renderCart();
-        return;
-    } 
-    const cT=carrito.reduce((s,i)=>s+i.cant,0); 
-    const mT=carrito.reduce((s,i)=>s+(i.precioOriginal||i.precio)*i.cant,0); 
-    const cR=parseInt(document.getElementById('mayoristaCantidad')?.value)||3; 
-    const mR=desformatearNumero(document.getElementById('mayoristaMonto')?.value)||80000; 
-    console.log('🔍 CANTIDAD TOTAL:', cT, '| MONTO TOTAL:', mT);
-    console.log('🔍 UMBRAL CANTIDAD:', cR, '| UMBRAL MONTO:', mR);
-    let cumple=false; 
-    if(mayoristaModo==='cantidad')cumple=cT>=cR; 
-    else if(mayoristaModo==='monto')cumple=mT>=mR; 
-    else cumple=cT>=cR&&mT>=mR; 
-    console.log('🔍 ¿CUMPLE MAYORISTA?:', cumple);
-    carrito.forEach(i=>{
-        if(i.esManual)return;
-        const p=productos.find(x=>x.id==i.pId);
-        console.log('🔍 PRODUCTO:', p?.nombre, '| PRECIO MAYOR:', p?.precioMayor);
-        if(!p||!p.precioMayor)return;
-        if(cumple){
-            if(!i.precioOriginal)i.precioOriginal=i.precio;
-            i.precio=p.precioMayor;
-            console.log('✅ APLICADO MAYORISTA:', i.pNom, i.precio);
-        }else if(i.precioOriginal){
-            i.precio=i.precioOriginal;
-            delete i.precioOriginal;
-        }
-    }); 
-    renderCart(); 
-}
+function calcularPreciosMayoristaEnVivo(){ if(!mayoristaHabilitado){carrito.forEach(i=>{if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal;}});renderCart();return;} const cT=carrito.reduce((s,i)=>s+i.cant,0); const mT=carrito.reduce((s,i)=>s+(i.precioOriginal||i.precio)*i.cant,0); const cR=parseInt(document.getElementById('mayoristaCantidad')?.value)||3; const mR=desformatearNumero(document.getElementById('mayoristaMonto')?.value)||80000; let cumple=false; if(mayoristaModo==='cantidad')cumple=cT>=cR; else if(mayoristaModo==='monto')cumple=mT>=mR; else cumple=cT>=cR&&mT>=mR; carrito.forEach(i=>{if(i.esManual)return;const p=productos.find(x=>x.id==i.pId);if(!p||!p.precioMayor)return;if(cumple){if(!i.precioOriginal)i.precioOriginal=i.precio;i.precio=p.precioMayor;}else if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal;}}); renderCart(); }
 
-function renderCart(){ let d=document.getElementById('cart-items'); if(!d)return; totalVenta=0; d.innerHTML=''; if(!carrito.length) d.innerHTML='<div class="empty-cart"><i class="fas fa-shopping-cart"></i><br>Vacío</div>'; else carrito.forEach((it,i)=>{totalVenta+=it.precio*it.cant;d.innerHTML+=`<div class="cart-item ${it.precioOriginal&&it.precio<it.precioOriginal?'mayorista-applied':''}"><img src="${sanitizarUrl(it.vFoto)}" class="cart-img"><div class="cart-info"><h4>${escapeHtml(it.pNom)} ${it.precioOriginal&&it.precio<it.precioOriginal?'<span style="background:#10b981;color:white;padding:2px 6px;border-radius:10px;font-size:9px;margin-left:4px">MAY</span>':''}</h4><p>${escapeHtml(it.vNom)} • ${fmt.format(it.precio)} c/u</p></div><div class="cart-controls"><button onclick="modificarCantidadCarrito(${i},-1)">-</button><span>${it.cant}</span><button onclick="modificarCantidadCarrito(${i},1)">+</button></div><div class="cart-precio"><strong>${fmt.format(it.precio*it.cant)}</strong></div><button class="btn-eliminar-cart" onclick="eliminarDelCarrito(${i})"><i class="fas fa-trash-alt"></i></button></div>`;}); document.getElementById('total-txt').innerHTML=fmt.format(totalVenta);if(metodoPago==='mixto')calcularDiferenciaMixto(); }
+function renderCart(){ let d=document.getElementById('cart-items'); if(!d)return; totalVenta=0; d.innerHTML=''; if(!carrito.length) d.innerHTML='<div class="empty-cart"><i class="fas fa-shopping-cart"></i><br>Vacío</div>'; else carrito.forEach((it,i)=>{totalVenta+=it.precio*it.cant;d.innerHTML+=`<div class="cart-item ${it.precioOriginal&&it.precio<it.precioOriginal?'mayorista-applied':''}"><img src="${sanitizarUrl(it.vFoto)}" class="cart-img"><div class="cart-info"><h4>${escapeHtml(it.pNom)} ${it.precioOriginal&&it.precio<it.precioOriginal?'<span style="background:#10b981;color:white;padding:2px 6px;border-radius:10px;font-size:9px;margin-left:4px">MAY</span>':''}</h4><p>${escapeHtml(it.vNom)} • ${fmt.format(it.precio)} c/u</p></div><div class="cart-controls"><button onclick="modificarCantidadCarrito(${i},-1)">-</button><span>${it.cant}</span><button onclick="modificarCantidadCarrito(${i},1)">+</button></div><div class="cart-precio"><strong>${fmt.format(it.precio*it.cant)}</strong></div><button class="btn-eliminar-cart" onclick="eliminarDelCarrito(${i})"><i class="fas fa-trash-alt"></i></button></div>`;}); document.getElementById('total-txt').innerHTML=fmt.format(totalVenta);if(metodoPago==='mixto')calcularDiferenciaMixto();
+    // Actualizar contador flotante
+    const totalItems = carrito.reduce((s,i) => s + i.cant, 0);
+    const contador = document.getElementById('carrito-contador-flotante');
+    const btnFlotante = document.getElementById('btn-carrito-flotante');
+    if (contador) contador.textContent = totalItems > 99 ? '99+' : totalItems;
+}
 function modificarCantidadCarrito(i,d){ if(!carrito[i])return; let nc=carrito[i].cant+d; if(nc<1){eliminarDelCarrito(i);return;} carrito[i].cant=nc; calcularPreciosMayoristaEnVivo(); renderCart(); localStorage.setItem('pos_carrito',JSON.stringify(carrito)); }
 function eliminarDelCarrito(i){ carrito.splice(i,1); calcularPreciosMayoristaEnVivo(); renderCart(); localStorage.setItem('pos_carrito',JSON.stringify(carrito)); }
 function setLog(t){ logistica=t; document.getElementById('form-envio').classList.toggle('hidden',t!=='envio'); document.querySelectorAll('.entrega-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`l-${t}`).classList.add('active'); }
+
+// 🆕 Funciones para carrito mobile
+function toggleCarritoMobile() {
+    const cart = document.getElementById('v-cart');
+    if (cart) {
+        cart.classList.toggle('hidden');
+    }
+}
+function verificarMobile() {
+    const btnCerrar = document.getElementById('btn-cerrar-carrito');
+    const btnFlotante = document.getElementById('btn-carrito-flotante');
+    const esMobile = window.innerWidth <= 1024;
+    if (btnCerrar) btnCerrar.style.display = esMobile ? 'flex' : 'none';
+    if (btnFlotante) btnFlotante.style.display = esMobile ? 'flex' : 'none';
+}
+window.addEventListener('resize', verificarMobile);
+window.addEventListener('load', verificarMobile);
+
 function setMetodo(m){ metodoPago=m; document.querySelectorAll('.pago-btn').forEach(b=>b.classList.remove('active')); document.getElementById(m==='efectivo'?'p-ef':m==='transferencia'?'p-tr':'p-mx').classList.add('active'); document.getElementById('pago-mixto-fields').style.display=m==='mixto'?'block':'none'; if(m==='mixto'){calcularDiferenciaMixto();} }
 function formatearInputMixto(origen){const efInput=document.getElementById('pago-efectivo');const trInput=document.getElementById('pago-transferencia');if(!efInput||!trInput)return;let raw=origen==='efectivo'?efInput.value:trInput.value;raw=raw.replace(/\./g,'').replace(/[^0-9]/g,'');if(raw===''){if(origen==='efectivo')efInput.value='';else trInput.value='';calcularDiferenciaMixto(origen);return;}const num=parseInt(raw)||0;if(origen==='efectivo')efInput.value=formatearNumero(num);else trInput.value=formatearNumero(num);calcularDiferenciaMixto(origen);}
 function calcularDiferenciaMixto(origen){const efInput=document.getElementById('pago-efectivo');const trInput=document.getElementById('pago-transferencia');if(!efInput||!trInput)return;let ef=desformatearNumero(efInput.value)||0;let tr=desformatearNumero(trInput.value)||0;if(origen==='efectivo'&&ef>0){tr=Math.max(0,totalVenta-ef);trInput.value=formatearNumero(tr);}else if(origen==='transferencia'&&tr>0){ef=Math.max(0,totalVenta-tr);efInput.value=formatearNumero(ef);}const dif=totalVenta-ef-tr;const el=document.getElementById('pago-diferencia');if(el){el.textContent=fmt.format(dif);el.style.color=dif===0?'#10b981':'#ef4444';}}
