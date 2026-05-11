@@ -294,7 +294,19 @@ let varianteSeleccionada = {}, configuracion = {}, mayoristaHabilitado = false, 
 let notificaciones = [], notificacionesNoLeidas = 0;
 let chartsInstances = {};
 const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
-
+// Cargar configuración inmediatamente al iniciar
+(async function precargarConfiguracion() {
+    if (adminToken) {
+        try {
+            const d = await safeFetch('/get-config', { method: 'POST' });
+            if (d.mayorista) {
+                mayoristaHabilitado = d.mayorista.habilitado || false;
+                mayoristaModo = d.mayorista.modo || 'cantidad';
+            }
+        } catch(e) {}
+    }
+})();
+    
 function mostrarToast(msg, error=false) { const t = document.createElement('div'); t.className = `toast-notification ${error?'error':''}`; t.innerHTML = `<i class="fas ${error?'fa-exclamation-circle':'fa-check-circle'}"></i> ${msg}`; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
 function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 function formatearNumero(n) { if(!n) return '0'; return Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
