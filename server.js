@@ -439,17 +439,16 @@ app.post('/admin/crear-perfil', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/admin/editar-perfil', adminMiddleware(), async (req, res) => {
+app.post('/admin/eliminar-perfil', adminMiddleware(), async (req, res) => {
     try {
-        const { id, nombre, permisos, activo } = req.body;
+        const { id, adminPassword } = req.body;
         const p = (await pool.query('SELECT * FROM perfiles WHERE id = $1', [id])).rows[0];
-        if (!p || p.rol === 'admin') return res.status(400).json({ error: 'No se puede editar' });
-        let activoValor = activo;
-        if (typeof activo === 'boolean') activoValor = activo ? 1 : 0;
-        if (activoValor === undefined || activoValor === null) activoValor = p.activo;
-        await pool.query('UPDATE perfiles SET nombre=$1, permisos=$2, activo=$3 WHERE id=$4',
-            [nombre||p.nombre, JSON.stringify(permisos||[]), activoValor, id]);
-        await logActividad(req.admin.nombre, 'EDITAR_PERFIL', `Editó perfil: ${id}`, req);
+        if (!p) return res.status(404).json({ error: 'Perfil no encontrado' });
+        if (p.rol === 'admin') return res.status(400).json({ error: 'No se puede eliminar al admin' });
+        const adminPerfil = (await pool.query("SELECT * FROM perfiles WHERE usuario = $1", [req.admin.usuario])).rows[0];
+        if (!(await bcrypt.compare(adminPassword, adminPerfil.password))) return res.status(401).json({ error: 'Contraseña incorrecta' });
+        await pool.query('DELETE FROM perfiles WHERE id = $1', [id]);
+        await logActividad(req.admin.nombre, 'ELIMINAR_PERFIL', `Perfil eliminado: ${p.nombre} (${p.usuario})`, req);
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
