@@ -345,7 +345,7 @@
 </div>
 <script>
 let adminToken = localStorage.getItem('adminToken');
-let adminActual = null;
+let adminActual = JSON.parse(localStorage.getItem('adminActual') || 'null');
 let productos = [], carrito = [], metodoPago = 'efectivo', logistica = 'local', totalVenta = 0;
 let ventasHistorial = [], pedidosTienda = [], categorias = [], metodosEnvio = [];
 let varianteSeleccionada = {}, configuracion = {}, mayoristaHabilitado = false, mayoristaModo = 'cantidad';
@@ -373,7 +373,7 @@ function desformatearNumero(t) { if(!t) return 0; return parseInt(t.toString().r
 function sanitizarUrl(url) { if(!url || url === '') return 'https://via.placeholder.com/180'; if(url.startsWith('/uploads/')||url.startsWith('http://')||url.startsWith('https://')) return url; return 'https://via.placeholder.com/180'; }
 async function safeFetch(url, options={}) { if (adminToken) options.headers = { ...options.headers, 'Authorization': `Bearer ${adminToken}` }; try { const res = await fetch(url, options); if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error || `HTTP ${res.status}`); return await res.json(); } catch(e) { mostrarToast(e.message, true); throw e; } }
 
-async function loginAdmin() { const usuario = document.getElementById('login-usuario').value.trim(); const password = document.getElementById('login-password').value; if (!usuario || !password) { document.getElementById('login-error').textContent = 'Completá todos los campos'; return; } try { const res = await fetch('/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({usuario,password}) }); const data = await res.json(); if (data.success) { localStorage.setItem('adminToken', data.token); adminToken = data.token; adminActual = data.perfil; document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-screen').style.display = 'block'; iniciarPanel(); } else { document.getElementById('login-error').textContent = data.error || 'Error'; } } catch(e) { document.getElementById('login-error').textContent = 'Error de conexión'; } }
+async function loginAdmin() { const usuario = document.getElementById('login-usuario').value.trim(); const password = document.getElementById('login-password').value; if (!usuario || !password) { document.getElementById('login-error').textContent = 'Completá todos los campos'; return; } try { const res = await fetch('/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({usuario,password}) }); const data = await res.json(); if (data.success) { localStorage.setItem('adminToken', data.token); adminToken = data.token; adminActual = data.perfil; localStorage.setItem('adminActual', JSON.stringify(data.perfil)); document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-screen').style.display = 'block'; iniciarPanel(); } else { document.getElementById('login-error').textContent = data.error || 'Error'; } } catch(e) { document.getElementById('login-error').textContent = 'Error de conexión'; } }
 function cerrarSesionAdmin() { localStorage.removeItem('adminToken'); localStorage.removeItem('pos_carrito'); adminToken = null; adminActual = null; location.reload(); }
 async function iniciarPanel() { 
     await cargarConfiguracion();
