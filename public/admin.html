@@ -648,45 +648,87 @@ function abrirModalEditarPerfil(id, nombre, usuario, permisosEncoded){
         {id:'web', nombre:'Edición Web', icono:'fa-paint-brush', color:'#8b5cf6'},
         {id:'backup', nombre:'Backup', icono:'fa-database', color:'#f59e0b'}
     ];
+  function abrirModalCrearPerfil(){
     const m=document.createElement('div');
     m.className='modal active';
     m.innerHTML=`
     <div class="modal-content" style="max-width:700px">
         <div class="modal-header">
-            <h3><i class="fas fa-user-edit"></i> Editar Perfil: ${escapeHtml(nombre)}</h3>
+            <h3><i class="fas fa-user-plus"></i> Nuevo Perfil</h3>
             <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
         </div>
         <div class="modal-body">
-            <input type="hidden" id="edit-perfil-id" value="${id}">
+            <div style="margin-bottom:20px">
+                <label style="font-weight:600;margin-bottom:6px;display:block">🔐 Contraseña Admin</label>
+                <input type="password" id="nuevo-perfil-admin-pass" placeholder="Confirmá tu identidad" style="font-size:14px">
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
                 <div>
                     <label style="font-weight:600;margin-bottom:6px;display:block">👤 Nombre</label>
-                    <input type="text" id="edit-perfil-nombre" value="${escapeHtml(nombre)}">
+                    <input type="text" id="nuevo-perfil-nombre" placeholder="Ej: Vendedor 1">
                 </div>
                 <div>
                     <label style="font-weight:600;margin-bottom:6px;display:block">📧 Usuario</label>
-                    <input type="text" id="edit-perfil-usuario" value="${escapeHtml(usuario)}" readonly style="background:#f1f5f9;cursor:not-allowed">
+                    <input type="text" id="nuevo-perfil-usuario" placeholder="usuario123">
                 </div>
             </div>
             <div style="margin-bottom:24px">
-                <label style="font-weight:600;margin-bottom:6px;display:block">🔒 Nueva Contraseña (dejar vacío para no cambiar)</label>
-                <input type="password" id="edit-perfil-password" placeholder="Mínimo 4 caracteres" style="font-size:14px">
+                <label style="font-weight:600;margin-bottom:6px;display:block">🔒 Contraseña</label>
+                <input type="password" id="nuevo-perfil-password" placeholder="Mínimo 4 caracteres" style="font-size:14px">
             </div>
             <div style="background:#f8fafc;border-radius:16px;padding:20px;margin-bottom:20px">
                 <h4 style="margin:0 0 16px 0;color:#475569;font-size:14px"><i class="fas fa-shield-alt"></i> Permisos de acceso</h4>
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-                    ${todosPermisos.map(p=>`
-                        <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
-                            <input type="checkbox" id="edit-perm-${p.id}" ${permisosActuales.includes(p.id)?'checked':''} style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
-                            <span><i class="fas ${p.icono}" style="color:${p.color};width:20px"></i> ${p.nombre}</span>
-                        </label>
-                    `).join('')}
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-ventas" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-cash-register" style="color:#6366f1;width:20px"></i> Ventas</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-listado" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-list" style="color:#3b82f6;width:20px"></i> Listado</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-stock" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-boxes" style="color:#f59e0b;width:20px"></i> Stock</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-dashboard" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-chart-pie" style="color:#8b5cf6;width:20px"></i> Dashboard</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-config" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-sliders-h" style="color:#06b6d4;width:20px"></i> Config</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-retiro" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-qrcode" style="color:#f59e0b;width:20px"></i> Retirar</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-pedidos" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-shopping-cart" style="color:#10b981;width:20px"></i> Pedidos</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-perfiles" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-users-cog" style="color:#ec4899;width:20px"></i> Perfiles</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-logs" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-history" style="color:#64748b;width:20px"></i> Logs</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-web" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-paint-brush" style="color:#8b5cf6;width:20px"></i> Edición Web</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-backup" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-database" style="color:#f59e0b;width:20px"></i> Backup</span>
+                    </label>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
             <button onclick="this.closest('.modal').remove()" class="tab-btn" style="padding:12px 24px"><i class="fas fa-times"></i> Cancelar</button>
-            <button onclick="guardarEdicionPerfil()" class="btn-confirm" style="width:auto;padding:12px 32px"><i class="fas fa-save"></i> Guardar Cambios</button>
+            <button onclick="crearPerfil()" class="btn-confirm" style="width:auto;padding:12px 32px"><i class="fas fa-save"></i> Crear Perfil</button>
         </div>
     </div>`;
     document.body.appendChild(m);
