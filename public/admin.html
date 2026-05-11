@@ -736,11 +736,16 @@ async function crearPerfil(){
     if(document.getElementById('perm-web').checked)perms.push('web');
     if(document.getElementById('perm-backup').checked)perms.push('backup');
     if(!ap||!n||!u||!p){mostrarToast('Completá todos',true);return;}
-    const d=await safeFetch('/admin/crear-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ap,usuario:u,password:p,nombre:n,permisos:perms})});
+    const d=await safeFetch('/admin/crear-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ap,usuario:u,password:p,nombre:n,permisos:perms,activo:true})});
     if(d.success){mostrarToast('✅ Creado');document.querySelector('.modal.active').remove();cargarPerfiles();}
     else mostrarToast(d.error,true);
 }
-async function togglePerfil(id,activo){await safeFetch('/admin/editar-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,activo})});mostrarToast(activo?'✅ Activado':'🔒 Desactivado');cargarPerfiles();}
+async function togglePerfil(id,activo){
+    if(!confirm(activo?'¿Activar perfil?':'¿Desactivar perfil?')) return;
+    await safeFetch('/admin/editar-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,activo:activo})});
+    mostrarToast(activo?'✅ Activado':'🔒 Desactivado');
+    cargarPerfiles();
+}
 function abrirModalCambiarPassword(){const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:400px"><div class="modal-header"><h3>Cambiar Contraseña</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><div><label>Actual</label><input type="password" id="pass-actual"></div><div><label>Nueva</label><input type="password" id="pass-nueva"></div></div><div class="modal-footer"><button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button><button onclick="cambiarPassword()" class="btn-confirm">Guardar</button></div></div>`;document.body.appendChild(m);}
 async function cambiarPassword(){const a=document.getElementById('pass-actual').value,n=document.getElementById('pass-nueva').value;if(!a||!n)return mostrarToast('Completá',true);const d=await safeFetch('/admin/cambiar-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passwordActual:a,passwordNueva:n})});if(d.success){mostrarToast('✅ Actualizada');document.querySelector('.modal.active').remove();}else mostrarToast(d.error,true);}
 function abrirBuscadorClientes(){const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:600px"><div class="modal-header"><h3>Buscar Clientes</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><input type="text" id="busqueda-cliente" placeholder="Buscar..." onkeyup="buscarClientes()"><div id="resultado-clientes"></div></div></div>`;document.body.appendChild(m);}
