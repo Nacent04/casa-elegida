@@ -633,7 +633,71 @@ async function cargarGraficosDashboard(){
 async function cargarEstadisticasVendedor(){try{const d=await safeFetch('/admin/estadisticas-vendedor',{method:'POST'});const c=document.getElementById('estadisticas-vendedor');if(c&&d.lista?.length)c.innerHTML='<h4>Rendimiento</h4>'+d.lista.map(v=>`<div style="display:flex;justify-content:space-between;padding:12px"><span>${v.nombre}</span><span>🛒 ${v.ventas}</span></div>`).join('');}catch(e){}}
 
 async function cargarPerfiles(){try{const d=await safeFetch('/admin/perfiles',{method:'POST'});const c=document.getElementById('lista-perfiles');if(!c)return;c.innerHTML=d.lista.map(p=>`<div class="perfil-card"><div><h5>${p.nombre} ${p.rol==='admin'?'👑':''}</h5><p>${p.usuario} | ${(p.permisos||[]).join(',')||'Sin permisos'} | ${p.activo?'✅':'❌'}</p></div><div>${p.rol!=='admin'?`<button onclick="togglePerfil('${p.id}',${!p.activo})" class="tab-btn ${p.activo?'btn-danger':'btn-success'}">${p.activo?'Desactivar':'Activar'}</button>`:''}</div></div>`).join('');}catch(e){}}
-function abrirModalCrearPerfil(){const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:520px"><div class="modal-header"><h3>Nuevo Perfil</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><div style="margin-bottom:20px"><label>Contraseña Admin</label><input type="password" id="nuevo-perfil-admin-pass"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label>Nombre</label><input type="text" id="nuevo-perfil-nombre"></div><div><label>Usuario</label><input type="text" id="nuevo-perfil-usuario"></div></div><div style="margin-bottom:16px"><label>Contraseña</label><input type="password" id="nuevo-perfil-password"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label><input type="checkbox" id="perm-ventas"> Ventas</label><label><input type="checkbox" id="perm-stock"> Stock</label><label><input type="checkbox" id="perm-pedidos"> Pedidos</label><label><input type="checkbox" id="perm-config"> Config</label><label><input type="checkbox" id="perm-dashboard"> Dashboard</label><label><input type="checkbox" id="perm-logs"> Logs</label></div></div><div class="modal-footer"><button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button><button onclick="crearPerfil()" class="btn-confirm">Crear</button></div></div>`;document.body.appendChild(m);}
+function abrirModalCrearPerfil(){
+    const m=document.createElement('div');
+    m.className='modal active';
+    m.innerHTML=`
+    <div class="modal-content" style="max-width:650px">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Nuevo Perfil</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:20px">
+                <label style="font-weight:600;margin-bottom:6px;display:block">🔐 Contraseña Admin</label>
+                <input type="password" id="nuevo-perfil-admin-pass" placeholder="Confirmá tu identidad" style="font-size:14px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+                <div>
+                    <label style="font-weight:600;margin-bottom:6px;display:block">👤 Nombre</label>
+                    <input type="text" id="nuevo-perfil-nombre" placeholder="Ej: Vendedor 1">
+                </div>
+                <div>
+                    <label style="font-weight:600;margin-bottom:6px;display:block">📧 Usuario</label>
+                    <input type="text" id="nuevo-perfil-usuario" placeholder="usuario123">
+                </div>
+            </div>
+            <div style="margin-bottom:24px">
+                <label style="font-weight:600;margin-bottom:6px;display:block">🔒 Contraseña</label>
+                <input type="password" id="nuevo-perfil-password" placeholder="Mínimo 4 caracteres" style="font-size:14px">
+            </div>
+            <div style="background:#f8fafc;border-radius:16px;padding:20px;margin-bottom:20px">
+                <h4 style="margin:0 0 16px 0;color:#475569;font-size:14px"><i class="fas fa-shield-alt"></i> Permisos de acceso</h4>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
+                        <input type="checkbox" id="perm-ventas" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-cash-register" style="color:#6366f1;width:20px"></i> Ventas</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
+                        <input type="checkbox" id="perm-stock" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-boxes" style="color:#f59e0b;width:20px"></i> Stock</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
+                        <input type="checkbox" id="perm-pedidos" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-shopping-cart" style="color:#10b981;width:20px"></i> Pedidos</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
+                        <input type="checkbox" id="perm-dashboard" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-chart-pie" style="color:#8b5cf6;width:20px"></i> Dashboard</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
+                        <input type="checkbox" id="perm-config" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-sliders-h" style="color:#06b6d4;width:20px"></i> Config</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s" onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='#e2e8f0'">
+                        <input type="checkbox" id="perm-logs" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-history" style="color:#64748b;width:20px"></i> Logs</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="this.closest('.modal').remove()" class="tab-btn" style="padding:12px 24px"><i class="fas fa-times"></i> Cancelar</button>
+            <button onclick="crearPerfil()" class="btn-confirm" style="width:auto;padding:12px 32px"><i class="fas fa-save"></i> Crear Perfil</button>
+        </div>
+    </div>`;
+    document.body.appendChild(m);
+}
 async function crearPerfil(){const ap=document.getElementById('nuevo-perfil-admin-pass').value,n=document.getElementById('nuevo-perfil-nombre').value.trim(),u=document.getElementById('nuevo-perfil-usuario').value.trim(),p=document.getElementById('nuevo-perfil-password').value,perms=[];if(document.getElementById('perm-ventas').checked)perms.push('ventas');if(document.getElementById('perm-stock').checked)perms.push('stock');if(document.getElementById('perm-pedidos').checked)perms.push('pedidos');if(document.getElementById('perm-config').checked)perms.push('config');if(document.getElementById('perm-dashboard').checked)perms.push('dashboard');if(document.getElementById('perm-logs').checked)perms.push('logs');if(!ap||!n||!u||!p){mostrarToast('Completá todos',true);return;}const d=await safeFetch('/admin/crear-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ap,usuario:u,password:p,nombre:n,permisos:perms})});if(d.success){mostrarToast('✅ Creado');document.querySelector('.modal.active').remove();cargarPerfiles();}else mostrarToast(d.error,true);}
 async function togglePerfil(id,activo){await safeFetch('/admin/editar-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,activo})});mostrarToast(activo?'✅ Activado':'🔒 Desactivado');cargarPerfiles();}
 function abrirModalCambiarPassword(){const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:400px"><div class="modal-header"><h3>Cambiar Contraseña</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><div><label>Actual</label><input type="password" id="pass-actual"></div><div><label>Nueva</label><input type="password" id="pass-nueva"></div></div><div class="modal-footer"><button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button><button onclick="cambiarPassword()" class="btn-confirm">Guardar</button></div></div>`;document.body.appendChild(m);}
