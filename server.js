@@ -444,8 +444,11 @@ app.post('/admin/editar-perfil', adminMiddleware(), async (req, res) => {
         const { id, nombre, permisos, activo } = req.body;
         const p = (await pool.query('SELECT * FROM perfiles WHERE id = $1', [id])).rows[0];
         if (!p || p.rol === 'admin') return res.status(400).json({ error: 'No se puede editar' });
+        let activoValor = activo;
+        if (typeof activo === 'boolean') activoValor = activo ? 1 : 0;
+        if (activoValor === undefined || activoValor === null) activoValor = p.activo;
         await pool.query('UPDATE perfiles SET nombre=$1, permisos=$2, activo=$3 WHERE id=$4',
-            [nombre||p.nombre, JSON.stringify(permisos||[]), activo!==undefined?activo:p.activo, id]);
+            [nombre||p.nombre, JSON.stringify(permisos||[]), activoValor, id]);
         await logActividad(req.admin.nombre, 'EDITAR_PERFIL', `Editó perfil: ${id}`, req);
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
