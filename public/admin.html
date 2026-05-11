@@ -391,10 +391,26 @@ if (adminToken) { document.getElementById('login-screen').style.display = 'none'
 function aplicarPermisos() {
     if (!adminActual || adminActual.rol === 'admin') return;
     const permisos = adminActual.permisos || [];
-    document.querySelectorAll('#nav-tabs .tab-btn[data-permiso]').forEach(btn => {
-        const permiso = btn.getAttribute('data-permiso');
-        if (permiso === 'admin') { btn.style.display = 'none'; return; }
-        if (!permisos.includes(permiso)) btn.style.display = 'none';
+    
+    const botones = {
+        't-v': 'ventas',
+        't-r': 'listado',
+        't-a': 'stock',
+        't-dash': 'dashboard',
+        't-c': 'config',
+        't-retiro': 'retiro',
+        't-p': 'pedidos',
+        't-perfiles': 'perfiles',
+        't-logs': 'logs',
+        't-web': 'web',
+        't-backup': 'backup'
+    };
+    
+    Object.entries(botones).forEach(([id, permiso]) => {
+        const btn = document.getElementById(id);
+        if (btn && !permisos.includes(permiso)) {
+            btn.style.display = 'none';
+        }
     });
 }
 
