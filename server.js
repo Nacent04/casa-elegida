@@ -439,18 +439,31 @@ app.post('/admin/crear-perfil', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/admin/eliminar-perfil', adminMiddleware(), async (req, res) => {
+app.post('/admin/editar-perfil', adminMiddleware(), async (req, res) => {
     try {
-        const { id, adminPassword } = req.body;
+        const { id, nombre, permisos, activo, password } = req.body;
         const p = (await pool.query('SELECT * FROM perfiles WHERE id = $1', [id])).rows[0];
         if (!p) return res.status(404).json({ error: 'Perfil no encontrado' });
-        if (p.rol === 'admin') return res.status(400).json({ error: 'No se puede eliminar al admin' });
-        const adminPerfil = (await pool.query("SELECT * FROM perfiles WHERE usuario = $1", [req.admin.usuario])).rows[0];
-        if (!(await bcrypt.compare(adminPassword, adminPerfil.password))) return res.status(401).json({ error: 'Contraseña incorrecta' });
-        await pool.query('DELETE FROM perfiles WHERE id = $1', [id]);
-        await logActividad(req.admin.nombre, 'ELIMINAR_PERFIL', `Perfil eliminado: ${p.nombre} (${p.usuario})`, req);
+        if (p.rol === 'admin' && req.admin.rol !== 'admin') return res.status(400).json({ error: 'No se puede editar al admin' });
+        
+        let activoValor = activo;
+        if (typeof activo === 'boolean') activoValor = activo ? 1 : 0;
+        if (activoValor === undefined || activoValor === null) activoValor = p.activo;
+        
+        if (password && password.length >= 4) {
+            const hash = await bcrypt.hash(password, 10);
+            await pool.query('UPDATE perfiles SET nombre=$1, permisos=$2, activo=$3, password=$4 WHERE id=$5',
+                [nombre || p.nombre, JSON.stringify(permisos || []), activoValor, hash, id]);
+        } else {
+            await pool.query('UPDATE perfiles SET nombre=$1, permisos=$2, activo=$3 WHERE id=$4',
+                [nombre || p.nombre, JSON.stringify(permisos || []), activoValor, id]);
+        }
+        await logActividad(req.admin.nombre, 'EDITAR_PERFIL', `Editó perfil: ${nombre || p.nombre}`, req);
         res.json({ success: true });
-    } catch(e) { res.status(500).json({ error: e.message }); }
+    } catch(e) { 
+        console.error('Error editar-perfil:', e);
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
 app.post('/auth/registro', async (req, res) => {
