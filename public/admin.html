@@ -379,10 +379,13 @@ function renderPaginaBackup() { return `<div class="panel"><div class="backup-he
 
 async function cargar() { 
     try { 
-        // Primero cargar la configuración para saber si mayorista está activo
-        if (!configuracion || Object.keys(configuracion).length === 0) {
-            await cargarConfiguracion();
+        // SIEMPRE cargar la configuración para tener el mayorista actualizado
+        const configData = await safeFetch('/get-config',{method:'POST'});
+        if(configData && configData.mayorista) {
+            mayoristaHabilitado = configData.mayorista.habilitado || false;
+            mayoristaModo = configData.mayorista.modo || 'cantidad';
         }
+        
         const d = await safeFetch('/listar',{method:'POST'}); 
         productos = d.lista || []; 
         calcularPreciosMayoristaEnVivo(); 
