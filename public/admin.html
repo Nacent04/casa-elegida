@@ -777,6 +777,28 @@ function abrirModalCrearPerfil(){
     </div>`;
     document.body.appendChild(m);
 }
+    async function crearPerfil(){
+    const ap=document.getElementById('nuevo-perfil-admin-pass').value,
+          n=document.getElementById('nuevo-perfil-nombre').value.trim(),
+          u=document.getElementById('nuevo-perfil-usuario').value.trim(),
+          p=document.getElementById('nuevo-perfil-password').value,
+          perms=[];
+    if(document.getElementById('perm-ventas').checked)perms.push('ventas');
+    if(document.getElementById('perm-listado').checked)perms.push('listado');
+    if(document.getElementById('perm-stock').checked)perms.push('stock');
+    if(document.getElementById('perm-dashboard').checked)perms.push('dashboard');
+    if(document.getElementById('perm-config').checked)perms.push('config');
+    if(document.getElementById('perm-retiro').checked)perms.push('retiro');
+    if(document.getElementById('perm-pedidos').checked)perms.push('pedidos');
+    if(document.getElementById('perm-perfiles').checked)perms.push('perfiles');
+    if(document.getElementById('perm-logs').checked)perms.push('logs');
+    if(document.getElementById('perm-web').checked)perms.push('web');
+    if(document.getElementById('perm-backup').checked)perms.push('backup');
+    if(!ap||!n||!u||!p){mostrarToast('Completá todos',true);return;}
+    const d=await safeFetch('/admin/crear-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ap,usuario:u,password:p,nombre:n,permisos:perms,activo:1})});
+    if(d.success){mostrarToast('✅ Creado');document.querySelector('.modal.active').remove();cargarPerfiles();}
+    else mostrarToast(d.error||'Error',true);
+}
 async function guardarEdicionPerfil(){
     const id = document.getElementById('edit-perfil-id').value;
     const nombre = document.getElementById('edit-perfil-nombre').value.trim();
