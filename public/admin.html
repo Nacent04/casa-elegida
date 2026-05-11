@@ -329,7 +329,7 @@ function tab(t) {
         }
     }
     const container = document.getElementById('main-container'), cartPanel = document.getElementById('v-cart');
-    if (t==='v') { container.className='layout-con-carrito'; container.innerHTML=renderPaginaVentas(); cartPanel.classList.remove('hidden'); setTimeout(()=>{cargar();cargarMetodosEnvio();cargarNotificaciones();},100); }
+    if (t==='v') { container.className='layout-con-carrito'; container.innerHTML=renderPaginaVentas(); cartPanel.classList.remove('hidden'); setTimeout(async ()=>{await cargarConfiguracion();cargar();cargarMetodosEnvio();cargarNotificaciones();},100); }
     else if (t==='r') { container.className='layout'; container.innerHTML=renderPaginaListadoVentas(); cartPanel.classList.add('hidden'); cargarVentas(); }
     else if (t==='a') { container.className='layout'; container.innerHTML=renderPaginaGestionStock(); cartPanel.classList.add('hidden'); cargarCategorias(); setTimeout(cargarYRenderAdmin,100); }
     else if (t==='dash') { container.className='layout'; container.innerHTML=renderPaginaDashboard(); cartPanel.classList.add('hidden'); setTimeout(cargarDashboard,100); }
