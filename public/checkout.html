@@ -177,10 +177,7 @@
             font-weight: 500;
         }
         
-        .campo-bloqueado-aviso i {
-            margin-right: 4px;
-            font-size: 10px;
-        }
+        .campo-bloqueado-aviso i { margin-right: 4px; font-size: 10px; }
         
         .readonly-badge {
             display: inline-block;
@@ -497,14 +494,10 @@
         <h1><i class="fas fa-shopping-cart"></i> Finalizar Compra</h1>
     </div>
     
-    <div class="checkout-container" id="checkout-container">
-        <!-- El contenido se cargará dinámicamente -->
-    </div>
-    
+    <div class="checkout-container" id="checkout-container"></div>
     <div id="toast-container"></div>
 
     <script>
-        // Variables
         let carrito = [];
         let configuracion = { 
             pagos: {}, redes: {}, empresa: {},
@@ -518,28 +511,18 @@
         
         const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
         
-        // ========== MOSTRAR PANTALLA DE LOGIN REQUERIDO ==========
         function mostrarPantallaLoginRequerido() {
             const container = document.getElementById('checkout-container');
             localStorage.setItem('returnUrl', '/checkout');
-            
             container.innerHTML = `
                 <div class="checkout-form-section" style="grid-column: 1/-1;">
                     <div class="redirect-message">
                         <i class="fas fa-user-lock"></i>
                         <h2>Debés iniciar sesión para continuar</h2>
                         <p>Para finalizar tu compra necesitás estar registrado</p>
-                        <a href="/login" class="btn-action">
-                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                        </a>
-                        <a href="/registro" class="btn-secondary-action">
-                            <i class="fas fa-user-plus"></i> Crear Cuenta
-                        </a>
-                        <p style="margin-top: 20px; font-size: 14px;">
-                            <a href="/tienda" style="color: var(--primary);">
-                                <i class="fas fa-arrow-left"></i> Seguir comprando
-                            </a>
-                        </p>
+                        <a href="/login" class="btn-action"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</a>
+                        <a href="/registro" class="btn-secondary-action"><i class="fas fa-user-plus"></i> Crear Cuenta</a>
+                        <p style="margin-top: 20px; font-size: 14px;"><a href="/tienda" style="color: var(--primary);"><i class="fas fa-arrow-left"></i> Seguir comprando</a></p>
                     </div>
                 </div>
             `;
@@ -553,98 +536,54 @@
                         <i class="fas fa-shopping-bag"></i>
                         <h2>Tu pedido está vacío</h2>
                         <p>Agregá productos desde la tienda para continuar</p>
-                        <button class="btn-action" onclick="window.location.href='/tienda'">
-                            <i class="fas fa-store"></i> Ir a la Tienda
-                        </button>
+                        <button class="btn-action" onclick="window.location.href='/tienda'"><i class="fas fa-store"></i> Ir a la Tienda</button>
                     </div>
                 </div>
             `;
         }
         
-        // ========== CARGAR DATOS ==========
         async function cargarDatos() {
             const token = localStorage.getItem('token');
-            
-            if (!token) {
-                mostrarPantallaLoginRequerido();
-                return;
-            }
-            
+            if (!token) { mostrarPantallaLoginRequerido(); return; }
             try {
-                const userRes = await fetch('/auth/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!userRes.ok) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('usuario');
-                    mostrarPantallaLoginRequerido();
-                    return;
-                }
-                
+                const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
                 usuarioActual = await userRes.json();
-                
                 const res = await fetch('/tienda/listar-productos', { method: 'POST' });
                 if (!res.ok) throw new Error('Error al cargar productos');
-                
                 const data = await res.json();
                 configuracion = data.configuracion || configuracion;
                 metodosEnvio = data.metodosEnvio || [];
                 productos = data.productos || [];
-                
                 cargarCarrito();
-                
-                if (carrito.length === 0) {
-                    mostrarCarritoVacio();
-                    return;
-                }
-                
+                if (carrito.length === 0) { mostrarCarritoVacio(); return; }
                 recalcularPreciosMayoristas();
                 renderizarCheckout();
                 actualizarMetodosEnvio();
-                
-            } catch(e) { 
-                console.error('Error:', e); 
-                mostrarToast('Error al cargar los datos', 'error');
-            }
+            } catch(e) { console.error('Error:', e); mostrarToast('Error al cargar los datos', 'error'); }
         }
         
         function cargarCarrito() {
             const guardado = localStorage.getItem('tienda_carrito');
-            if (guardado) {
-                try { 
-                    carrito = JSON.parse(guardado);
-                } catch(e) { 
-                    carrito = []; 
-                }
-            }
+            if (guardado) { try { carrito = JSON.parse(guardado); } catch(e) { carrito = []; } }
         }
         
         function recalcularPreciosMayoristas() {
             if (!configuracion.mayorista?.habilitado || !productos.length) {
-                carrito.forEach(i => { 
-                    if (i.precioOriginal) { 
-                        i.precio = i.precioOriginal; 
-                        delete i.precioOriginal; 
-                    } 
-                });
+                carrito.forEach(i => { if (i.precioOriginal) { i.precio = i.precioOriginal; delete i.precioOriginal; } });
                 return;
             }
-            
             const cant = carrito.reduce((s,i) => s + i.cant, 0);
             const monto = carrito.reduce((s,i) => s + (i.precioOriginal || i.precio) * i.cant, 0);
             const { modo, valorCantidad = 3, valorMonto = 80000 } = configuracion.mayorista;
-            
             let cumple = false;
             if (modo === 'cantidad') cumple = cant >= valorCantidad;
             else if (modo === 'monto') cumple = monto >= valorMonto;
             else cumple = cant >= valorCantidad && monto >= valorMonto;
-            
             carrito.forEach(i => {
                 if (i.esManual) return;
                 const p = productos.find(x => x.id == i.pId);
                 if (!p) return;
-                
                 if (cumple && p.precioMayor > 0) {
                     if (!i.precioOriginal) i.precioOriginal = i.precio;
                     i.precio = p.precioMayor;
@@ -663,159 +602,56 @@
             
             container.innerHTML = `
                 <div class="checkout-form-section">
-                    <h2>
-                        <i class="fas fa-user"></i> Datos del Cliente 
-                        <span class="readonly-badge"><i class="fas fa-shield-alt"></i> Verificado</span>
-                    </h2>
-                    
+                    <h2><i class="fas fa-user"></i> Datos del Cliente <span class="readonly-badge"><i class="fas fa-shield-alt"></i> Verificado</span></h2>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fas fa-user"></i> Nombre *</label>
-                            <input type="text" id="cliente-nombre" value="${usuarioActual?.nombre || ''}" 
-                                class="campo-bloqueado" readonly>
-                            <span class="campo-bloqueado-aviso">
-                                <i class="fas fa-lock"></i> Dato de tu perfil - No editable
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-user"></i> Apellido *</label>
-                            <input type="text" id="cliente-apellido" value="${usuarioActual?.apellido || ''}" 
-                                class="campo-bloqueado" readonly>
-                            <span class="campo-bloqueado-aviso">
-                                <i class="fas fa-lock"></i> Dato de tu perfil - No editable
-                            </span>
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-user"></i> Nombre *</label><input type="text" id="cliente-nombre" value="${usuarioActual?.nombre || ''}" class="campo-bloqueado" readonly><span class="campo-bloqueado-aviso"><i class="fas fa-lock"></i> Dato de tu perfil - No editable</span></div>
+                        <div class="form-group"><label><i class="fas fa-user"></i> Apellido *</label><input type="text" id="cliente-apellido" value="${usuarioActual?.apellido || ''}" class="campo-bloqueado" readonly><span class="campo-bloqueado-aviso"><i class="fas fa-lock"></i> Dato de tu perfil - No editable</span></div>
                     </div>
-                    
                     <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fas fa-id-card"></i> DNI *</label>
-                            <input type="text" id="cliente-dni" value="${usuarioActual?.dni || ''}" 
-                                class="campo-bloqueado" readonly>
-                            <span class="campo-bloqueado-aviso">
-                                <i class="fas fa-lock"></i> Dato de tu perfil - No editable
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-phone"></i> Teléfono *</label>
-                            <input type="tel" id="cliente-telefono" value="${usuarioActual?.telefono || ''}" 
-                                placeholder="Ingresá tu teléfono">
-                            <span style="font-size: 10px; color: var(--text-light); margin-top: 4px; display: block;">
-                                <i class="fas fa-info-circle"></i> Podés editarlo si cambió
-                            </span>
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-id-card"></i> DNI *</label><input type="text" id="cliente-dni" value="${usuarioActual?.dni || ''}" class="campo-bloqueado" readonly><span class="campo-bloqueado-aviso"><i class="fas fa-lock"></i> Dato de tu perfil - No editable</span></div>
+                        <div class="form-group"><label><i class="fas fa-phone"></i> Teléfono *</label><input type="tel" id="cliente-telefono" value="${usuarioActual?.telefono || ''}" placeholder="Ingresá tu teléfono"><span style="font-size: 10px; color: var(--text-light); margin-top: 4px; display: block;"><i class="fas fa-info-circle"></i> Podés editarlo si cambió</span></div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label><i class="fas fa-envelope"></i> Email *</label>
-                        <input type="email" id="cliente-email" value="${usuarioActual?.email || ''}" 
-                            class="campo-bloqueado" readonly>
-                        <span class="campo-bloqueado-aviso">
-                            <i class="fas fa-lock"></i> Dato de tu perfil - No editable
-                        </span>
-                    </div>
+                    <div class="form-group"><label><i class="fas fa-envelope"></i> Email *</label><input type="email" id="cliente-email" value="${usuarioActual?.email || ''}" class="campo-bloqueado" readonly><span class="campo-bloqueado-aviso"><i class="fas fa-lock"></i> Dato de tu perfil - No editable</span></div>
                     
                     <h2 style="margin-top: 32px;"><i class="fas fa-truck"></i> Tipo de Entrega</h2>
-                    
                     <div class="delivery-options">
-                        <div class="delivery-option active" data-type="local" onclick="seleccionarTipoEntrega('local')">
-                            <i class="fas fa-store"></i>
-                            <h3>Retiro en Local</h3>
-                            <p>Retirá tu pedido sin costo</p>
-                        </div>
-                        <div class="delivery-option" data-type="envio" onclick="seleccionarTipoEntrega('envio')">
-                            <i class="fas fa-shipping-fast"></i>
-                            <h3>Envío a Domicilio</h3>
-                            <p>Recibilo en tu casa</p>
-                        </div>
+                        <div class="delivery-option active" data-type="local" onclick="seleccionarTipoEntrega('local')"><i class="fas fa-store"></i><h3>Retiro en Local</h3><p>Retirá tu pedido sin costo</p></div>
+                        <div class="delivery-option" data-type="envio" onclick="seleccionarTipoEntrega('envio')"><i class="fas fa-shipping-fast"></i><h3>Envío a Domicilio</h3><p>Recibilo en tu casa</p></div>
                     </div>
                     
                     <div id="envio-fields" style="display: none;">
-                        <div class="form-group">
-                            <label><i class="fas fa-truck"></i> Método de envío *</label>
-                            <select id="metodo-envio">
-                                <option value="">Seleccionar método</option>
-                            </select>
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-truck"></i> Método de envío *</label><select id="metodo-envio"><option value="">Seleccionar método</option></select></div>
                         <div class="form-row">
-                            <div class="form-group">
-                                <label><i class="fas fa-map"></i> Provincia *</label>
-                                <select id="cliente-provincia">
-                                    <option value="">Seleccionar</option>
-                                    <option>Buenos Aires</option><option>CABA</option><option>Catamarca</option><option>Chaco</option>
-                                    <option>Chubut</option><option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option>
-                                    <option>Formosa</option><option>Jujuy</option><option>La Pampa</option><option>La Rioja</option>
-                                    <option>Mendoza</option><option>Misiones</option><option>Neuquén</option><option>Río Negro</option>
-                                    <option>Salta</option><option>San Juan</option><option>San Luis</option><option>Santa Cruz</option>
-                                    <option>Santa Fe</option><option>Santiago del Estero</option><option>Tierra del Fuego</option><option>Tucumán</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-city"></i> Localidad *</label>
-                                <input type="text" id="cliente-localidad" placeholder="San Miguel">
-                            </div>
+                            <div class="form-group"><label><i class="fas fa-map"></i> Provincia *</label><select id="cliente-provincia"><option value="">Seleccionar</option><option>Buenos Aires</option><option>CABA</option><option>Catamarca</option><option>Chaco</option><option>Chubut</option><option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option><option>Formosa</option><option>Jujuy</option><option>La Pampa</option><option>La Rioja</option><option>Mendoza</option><option>Misiones</option><option>Neuquén</option><option>Río Negro</option><option>Salta</option><option>San Juan</option><option>San Luis</option><option>Santa Cruz</option><option>Santa Fe</option><option>Santiago del Estero</option><option>Tierra del Fuego</option><option>Tucumán</option></select></div>
+                            <div class="form-group"><label><i class="fas fa-city"></i> Localidad *</label><input type="text" id="cliente-localidad" placeholder="San Miguel"></div>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-mail-bulk"></i> Código Postal *</label>
-                            <input type="text" id="cliente-cp" placeholder="4000">
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-mail-bulk"></i> Código Postal *</label><input type="text" id="cliente-cp" placeholder="4000"></div>
                         <div class="form-row">
-                            <div class="form-group">
-                                <label><i class="fas fa-road"></i> Dirección *</label>
-                                <input type="text" id="cliente-direccion" placeholder="Av. Independencia">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-hashtag"></i> Altura *</label>
-                                <input type="text" id="cliente-altura" placeholder="1234 o S/N">
-                            </div>
+                            <div class="form-group"><label><i class="fas fa-road"></i> Dirección *</label><input type="text" id="cliente-direccion" placeholder="Av. Independencia"></div>
+                            <div class="form-group"><label><i class="fas fa-hashtag"></i> Altura *</label><input type="text" id="cliente-altura" placeholder="1234 o S/N"></div>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-info-circle"></i> Referencias</label>
-                            <textarea id="cliente-referencias" rows="2" placeholder="Entre calles, timbre, color de casa..."></textarea>
-                        </div>
+                        <div class="form-group"><label><i class="fas fa-info-circle"></i> Referencias</label><textarea id="cliente-referencias" rows="2" placeholder="Entre calles, timbre, color de casa..."></textarea></div>
                     </div>
                     
-                    <div class="form-group">
-                        <label><i class="fas fa-pencil-alt"></i> Notas adicionales</label>
-                        <textarea id="cliente-notas" rows="2" placeholder="Horario de entrega preferido, etc..."></textarea>
-                    </div>
+                    <div class="form-group"><label><i class="fas fa-pencil-alt"></i> Notas adicionales</label><textarea id="cliente-notas" rows="2" placeholder="Horario de entrega preferido, etc..."></textarea></div>
                 </div>
                 
                 <div class="order-summary">
                     <h3><i class="fas fa-receipt"></i> Resumen del Pedido</h3>
                     <div class="summary-items" id="summary-items"></div>
-                    
-                    ${esMayorista ? `
-                        <div class="mayorista-info">
-                            <p><i class="fas fa-tags"></i> ¡Precio mayorista aplicado! Ahorro: ${fmt.format(ahorro)}</p>
-                        </div>
-                    ` : ''}
-                    
+                    ${esMayorista ? `<div class="mayorista-info"><p><i class="fas fa-tags"></i> ¡Precio mayorista aplicado! Ahorro: ${fmt.format(ahorro)}</p></div>` : ''}
                     <div class="summary-total">
-                        <div class="summary-total-row">
-                            <span>Subtotal:</span>
-                            <span id="summary-subtotal">$0</span>
-                        </div>
-                        <div class="summary-total-row final">
-                            <span>Total:</span>
-                            <span id="summary-total">$0</span>
-                        </div>
+                        <div class="summary-total-row"><span>Subtotal:</span><span id="summary-subtotal">$0</span></div>
+                        <div class="summary-total-row final"><span>Total:</span><span id="summary-total">$0</span></div>
                     </div>
-                    
                     <div class="payment-info-box">
                         <h4><i class="fas fa-credit-card"></i> Datos para Transferencia</h4>
                         <div class="payment-details" id="payment-details"></div>
-                        <p style="font-size: 12px; margin-top: 12px; color: #166534;">
-                            <i class="fas fa-info-circle"></i> Una vez realizada la transferencia, enviá el comprobante al WhatsApp.
-                        </p>
+                        <p style="font-size: 12px; margin-top: 12px; color: #166534;"><i class="fas fa-info-circle"></i> Una vez realizada la transferencia, enviá el comprobante al WhatsApp.</p>
                     </div>
-                    
-                    <button class="btn-confirm" id="confirm-btn" onclick="confirmarPedido()">
-                        <i class="fas fa-check-circle"></i> Confirmar Pedido
-                    </button>
+                    <button class="btn-confirm" id="confirm-btn" onclick="confirmarPedido()"><i class="fas fa-check-circle"></i> Confirmar Pedido</button>
                 </div>
             `;
-            
             renderizarResumen();
             mostrarDatosPago();
         }
@@ -824,24 +660,21 @@
             const select = document.getElementById('metodo-envio');
             if (select) {
                 select.innerHTML = '<option value="">Seleccionar método</option>';
-                metodosEnvio.forEach(m => { 
-                    select.innerHTML += `<option value="${m}">${m}</option>`; 
-                });
+                metodosEnvio.forEach(m => { select.innerHTML += `<option value="${m}">${m}</option>`; });
             }
         }
         
         function renderizarResumen() {
             const container = document.getElementById('summary-items');
             if (!container) return;
-            
             let html = '', total = 0;
             carrito.forEach(it => {
                 total += it.precio * it.cant;
                 const esMayorista = it.precioOriginal && it.precio < it.precioOriginal;
-                const imagen = (it.vFoto && it.vFoto.startsWith('/uploads/')) ? it.vFoto : 'https://via.placeholder.com/60';
+                const imagen = (it.vFoto && (it.vFoto.startsWith('/uploads/') || it.vFoto.startsWith('http'))) ? it.vFoto : 'https://via.placeholder.com/60';
                 
                 html += `<div class="summary-item">
-                    <img src="${imagen}" onerror="this.src='https://via.placeholder.com/60/F5EDE6/8B5E3C?text=Producto'">
+                    <img src="${imagen}" onerror="this.src='https://via.placeholder.com/60/F5EDE6/8B5E3C?text=Producto'" style="object-fit:cover">
                     <div class="summary-item-info">
                         <h4>${it.pNom} ${esMayorista ? '<span class="mayorista-badge-small"><i class="fas fa-tag"></i> MAY</span>' : ''}</h4>
                         <p>${it.vNom} x ${it.cant}</p>
@@ -849,9 +682,7 @@
                     <div class="summary-item-price">${fmt.format(it.precio * it.cant)}</div>
                 </div>`;
             });
-            
             container.innerHTML = html || '<p style="text-align:center;color:#94a3b8;">No hay productos</p>';
-            
             const subtotalEl = document.getElementById('summary-subtotal');
             const totalEl = document.getElementById('summary-total');
             if (subtotalEl) subtotalEl.textContent = fmt.format(total);
@@ -863,7 +694,6 @@
             const w = configuracion.redes?.whatsapp || configuracion.empresa?.telefono || '';
             const detailsDiv = document.getElementById('payment-details');
             if (!detailsDiv) return;
-            
             let html = '';
             if (p.titular) html += `<p><i class="fas fa-user"></i> <strong>Titular:</strong> ${p.titular}</p>`;
             if (p.banco) html += `<p><i class="fas fa-university"></i> <strong>Banco:</strong> ${p.banco}</p>`;
@@ -873,7 +703,6 @@
                 const waNum = w.replace(/\D/g, '');
                 html += `<a href="https://wa.me/${waNum}" target="_blank" class="whatsapp-link"><i class="fab fa-whatsapp"></i> Enviar comprobante al ${w}</a>`;
             }
-            
             detailsDiv.innerHTML = html || '<p style="color: var(--text-light);">Configurá los datos de pago en el panel de administración.</p>';
         }
         
@@ -885,11 +714,8 @@
         }
         
         function copiar(texto) { 
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(texto).then(() => mostrarToast('✅ Copiado al portapapeles')); 
-            } else {
-                mostrarToast('📋 Texto: ' + texto);
-            }
+            if (navigator.clipboard) { navigator.clipboard.writeText(texto).then(() => mostrarToast('✅ Copiado al portapapeles')); } 
+            else { mostrarToast('📋 Texto: ' + texto); }
         }
         
         function mostrarToast(mensaje, tipo = 'success') {
@@ -908,17 +734,12 @@
             const dni = document.getElementById('cliente-dni')?.value.trim();
             const telefono = document.getElementById('cliente-telefono')?.value.trim();
             const email = document.getElementById('cliente-email')?.value.trim();
-            
             if (!nombre) { mostrarToast('Completá tu nombre en el perfil', 'error'); return false; }
             if (!apellido) { mostrarToast('Completá tu apellido en el perfil', 'error'); return false; }
             if (!dni) { mostrarToast('Completá tu DNI en el perfil', 'error'); return false; }
             if (!telefono) { mostrarToast('Ingresá tu teléfono', 'error'); return false; }
             if (!email) { mostrarToast('Completá tu email en el perfil', 'error'); return false; }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { 
-                mostrarToast('Email inválido', 'error'); 
-                return false; 
-            }
-            
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { mostrarToast('Email inválido', 'error'); return false; }
             if (tipoEntregaSeleccionado === 'envio') {
                 const metodo = document.getElementById('metodo-envio')?.value;
                 const provincia = document.getElementById('cliente-provincia')?.value;
@@ -926,7 +747,6 @@
                 const cp = document.getElementById('cliente-cp')?.value.trim();
                 const direccion = document.getElementById('cliente-direccion')?.value.trim();
                 const altura = document.getElementById('cliente-altura')?.value.trim();
-                
                 if (!metodo) { mostrarToast('Seleccioná un método de envío', 'error'); return false; }
                 if (!provincia) { mostrarToast('Seleccioná una provincia', 'error'); return false; }
                 if (!localidad) { mostrarToast('Ingresá tu localidad', 'error'); return false; }
@@ -939,11 +759,9 @@
         
         async function confirmarPedido() {
             if (!validarFormulario()) return;
-            
             const btn = document.getElementById('confirm-btn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> Procesando...';
-            
             const cliente = {
                 nombre: document.getElementById('cliente-nombre').value.trim(),
                 apellido: document.getElementById('cliente-apellido').value.trim(),
@@ -952,7 +770,6 @@
                 email: document.getElementById('cliente-email').value.trim(),
                 notas: document.getElementById('cliente-notas')?.value.trim() || ''
             };
-            
             if (tipoEntregaSeleccionado === 'envio') {
                 cliente.provincia = document.getElementById('cliente-provincia').value;
                 cliente.localidad = document.getElementById('cliente-localidad').value.trim();
@@ -961,40 +778,24 @@
                 cliente.altura = document.getElementById('cliente-altura').value.trim();
                 cliente.referencias = document.getElementById('cliente-referencias')?.value.trim() || '';
             }
-            
             const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
             const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
-            
             try {
                 const token = localStorage.getItem('token');
                 const res = await fetch('/tienda/crear-pedido', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        carrito, cliente, total, 
-                        esMayorista,
-                        razonMayorista: esMayorista ? 'Pedido mayorista' : '',
-                        tipoEntrega: tipoEntregaSeleccionado,
-                        metodoEnvio: tipoEntregaSeleccionado === 'envio' ? 
-                            document.getElementById('metodo-envio').value : ''
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ carrito, cliente, total, esMayorista, razonMayorista: esMayorista ? 'Pedido mayorista' : '', tipoEntrega: tipoEntregaSeleccionado, metodoEnvio: tipoEntregaSeleccionado === 'envio' ? document.getElementById('metodo-envio').value : '' })
                 });
-                
                 const data = await res.json();
-                
                 if (data.success) {
                     localStorage.removeItem('tienda_carrito');
-localStorage.removeItem('carrito_anonimo');
-localStorage.removeItem('carrito_' + localStorage.getItem('token'));
-localStorage.removeItem('carrito_timestamp');
+                    localStorage.removeItem('carrito_anonimo');
+                    localStorage.removeItem('carrito_' + localStorage.getItem('token'));
+                    localStorage.removeItem('carrito_timestamp');
                     mostrarToast(`✅ ¡Pedido #${data.pedidoId} confirmado! Te contactaremos pronto.`);
                     setTimeout(() => window.location.href = '/tienda', 3000);
-                } else {
-                    throw new Error(data.error || 'Error al procesar el pedido');
-                }
+                } else { throw new Error(data.error || 'Error al procesar el pedido'); }
             } catch(e) {
                 mostrarToast('Error: ' + e.message, 'error');
                 btn.disabled = false;
