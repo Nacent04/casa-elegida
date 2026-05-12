@@ -53,6 +53,8 @@ async function initDB() {
                 "fechaCreacion" TEXT DEFAULT NOW(),
                 destacado INTEGER DEFAULT 0,
 orden INTEGER DEFAULT 0
+);
+orden INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
