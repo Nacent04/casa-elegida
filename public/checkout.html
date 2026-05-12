@@ -549,6 +549,10 @@
                 const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
                 usuarioActual = await userRes.json();
+                if (usuarioActual && usuarioActual.datosCompletos == 0) {
+    usuarioActual.dni = '';
+    usuarioActual.telefono = '';
+}
                 const res = await fetch('/tienda/listar-productos', { method: 'POST' });
                 if (!res.ok) throw new Error('Error al cargar productos');
                 const data = await res.json();
