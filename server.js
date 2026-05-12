@@ -1117,7 +1117,22 @@ async function start() {
         await initConfig();
         await initMetodosEnvio();
         await initAdmin();
+        async function start() {
+    try {
         app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - Puerto ${PORT}\n`));
+        await initDB();
+        await initConfig();
+        await initMetodosEnvio();
+        await initAdmin();
+    } catch(e) {
+        console.error('Error al iniciar:', e.message);
+        if (e.code === 'EADDRINUSE') {
+            console.log('Puerto ocupado, reintentando en 5 segundos...');
+            setTimeout(start, 5000);
+        }
+    }
+}
+start();
     } catch(e) {
         console.error('Error al iniciar:', e.message);
         console.log('Reintentando en 5 segundos...');
