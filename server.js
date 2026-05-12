@@ -20,9 +20,13 @@ const PORT = process.env.PORT || 3000;
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
-    max: 20,
+    max: 5,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 15000,
+});
+
+pool.on('error', (err) => {
+    console.error('Error en pool PostgreSQL:', err.message);
 });
 
 const BACKUP_DIR = path.join(__dirname, 'backups');
@@ -1098,10 +1102,27 @@ app.post('/admin/backup/restaurar-desde-archivo', adminMiddleware(), uploadBacku
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Error interno' }); });
 
+process.on('uncaughtException', (err) => {
+    console.error('Error no capturado:', err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Promesa rechazada:', reason);
+});
 async function start() {
-    await initDB(); await initConfig(); await initMetodosEnvio(); await initAdmin();
-    app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - http://localhost:${PORT}\n📊 Panel Admin: http://localhost:${PORT}/admin\n🛍️ Tienda: http://localhost:${PORT}/tienda\n🌐 Dominio: casaelegida.com.ar\n`));
+    try {
+        await initDB();
+        await initConfig();
+        await initMetodosEnvio();
+        await initAdmin();
+        app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - Puerto ${PORT}\n`));
+    } catch(e) {
+        console.error('Error al iniciar:', e.message);
+        console.log('Reintentando en 5 segundos...');
+        setTimeout(start, 5000);
+    }
 }
+start();
 start();
 process.on('SIGTERM', () => { pool.end(); process.exit(0); });
 process.on('SIGINT', () => { pool.end(); process.exit(0); });
