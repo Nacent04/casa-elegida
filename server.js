@@ -47,7 +47,8 @@ async function initDB() {
                 "categoriaId" INTEGER,
                 subcategoria TEXT DEFAULT '',
                 "fechaCreacion" TEXT DEFAULT NOW(),
-                destacado INTEGER DEFAULT 0
+                destacado INTEGER DEFAULT 0,
+orden INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
@@ -547,7 +548,7 @@ app.post('/auth/completar-datos', authMiddleware, async (req, res) => {
 });
 
 app.post('/listar', async (req, res) => {
-    const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
+    const prods = (await pool.query('SELECT * FROM productos ORDER BY orden ASC, id DESC')).rows;
     for (const p of prods) {
         p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
     }
@@ -583,7 +584,17 @@ app.post('/eliminar-producto', async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/reordenar-productos', (req, res) => res.json({ success: true }));
+app.post('/reordenar-productos', async (req, res) => {
+    try {
+        const { lista } = req.body;
+        if (lista && lista.length) {
+            for (const item of lista) {
+                await pool.query('UPDATE productos SET orden = $1 WHERE id = $2', [item.orden, item.id]);
+            }
+        }
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
 app.post('/verificar-stock', async (req, res) => {
     const v = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [req.body.productoId, req.body.varianteNombre])).rows[0];
     if (!v) return res.status(404).json({ error: 'No encontrada' });
