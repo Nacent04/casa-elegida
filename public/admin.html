@@ -412,6 +412,7 @@ function aplicarPermisos() {
         't-logs': 'logs',
         't-web': 'web',
         't-backup': 'backup'
+        't-clientes': 'clientes',
     };
     
     Object.entries(botones).forEach(([id, permiso]) => {
@@ -797,6 +798,10 @@ function abrirModalCrearPerfil(){
                         <input type="checkbox" id="perm-backup" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
                         <span><i class="fas fa-database" style="color:#f59e0b;width:20px"></i> Backup</span>
                     </label>
+                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:white;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer;font-size:13px;font-weight:500">
+                        <input type="checkbox" id="perm-clientes" style="width:18px;height:18px;accent-color:#6366f1;cursor:pointer">
+                        <span><i class="fas fa-users" style="color:#06b6d4;width:20px"></i> Clientes</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -807,6 +812,7 @@ function abrirModalCrearPerfil(){
     </div>`;
     document.body.appendChild(m);
 }
+    
     async function crearPerfil(){
     const ap=document.getElementById('nuevo-perfil-admin-pass').value,
           n=document.getElementById('nuevo-perfil-nombre').value.trim(),
