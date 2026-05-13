@@ -820,6 +820,15 @@ app.post('/admin/buscar-clientes', adminMiddleware(), async (req, res) => {
     res.json({ lista: clientes });
 });
 
+app.post('/admin/historial-cliente', adminMiddleware(), async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const ventas = (await pool.query('SELECT id, fecha, total FROM ventas WHERE cliente::text LIKE $1 ORDER BY "fechaTimestamp" DESC LIMIT 50', [`%${userId}%`])).rows;
+        const pedidos = (await pool.query('SELECT id, fecha, total, estado FROM pedidos WHERE "usuarioId" = $1 ORDER BY "fechaTimestamp" DESC LIMIT 50', [userId])).rows;
+        res.json({ ventas, pedidos });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/admin/exportar-ventas', adminMiddleware(), async (req, res) => {
     let csv = '\uFEFFFecha;ID;Cliente;Total;Pago;Origen\n';
     const ventas = (await pool.query('SELECT * FROM ventas ORDER BY "fechaTimestamp" DESC')).rows;
