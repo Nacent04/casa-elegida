@@ -290,7 +290,7 @@ function agregarDesdeModal(){if(!productoModalActual)return;const v=productoModa
 function cerrarModal(){document.getElementById('product-modal').classList.remove('active');productoModalActual=null}
 function toggleCarrito(){document.getElementById('cart-sidebar').classList.toggle('active');document.getElementById('cart-overlay').classList.toggle('active')}
 function actualizarWhatsAppPago(){const wsp=configuracion.redes?.whatsapp||'';const el=document.getElementById('whatsapp-pago');if(el&&wsp){el.style.display='flex';el.href=`https://wa.me/${wsp.replace(/\D/g,'')}?text=Hola%20Casa%20Elegida%20adjunto%20comprobante%20de%20pago`}}
-function irACheckout(){if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}const token=localStorage.getItem('token');if(configuracion.registroObligatorio&&!token){mostrarToast('🔐 Iniciá sesión para finalizar','error');setTimeout(()=>window.location.href='/login',1500);return}guardarCarritoLocal();localStorage.setItem('tienda_carrito',JSON.stringify(carrito));window.location.href='/checkout'}
+function irACheckout(){if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}const token=localStorage.getItem('token');if(configuracion.registroObligatorio&&!token){guardarCarritoLocal();localStorage.setItem('carrito_pendiente',JSON.stringify(carrito));mostrarToast('🔐 Iniciá sesión para finalizar','error');setTimeout(()=>window.location.href='/login',1500);return}guardarCarritoLocal();localStorage.setItem('tienda_carrito',JSON.stringify(carrito));window.location.href='/checkout'}
 
 function actualizarProgresoMayorista(){
     const container=document.getElementById('progreso-mayorista-container');
@@ -314,7 +314,7 @@ function modificarCantidadCarrito(i,d){const it=carrito[i];if(!it)return;const n
 function eliminarDelCarrito(i){carrito.splice(i,1);recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();actualizarProgresoMayorista();mostrarToast('🗑️ Producto eliminado')}
 function recalcularPreciosMayoristas(){if(!configuracion.mayorista?.habilitado){carrito.forEach(i=>{if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal}});renderizarCarrito();actualizarProgresoMayorista();return}const cantTotal=carrito.reduce((s,i)=>s+i.cant,0);const montoTotal=carrito.reduce((s,i)=>{const p=productos.find(x=>x.id==i.pId);const precioCalc=p?.precioMayor||i.precio;return s+precioCalc*i.cant},0);const{modo,valorCantidad,valorMonto}=configuracion.mayorista;const cumple=modo==='cantidad'?cantTotal>=valorCantidad:modo==='monto'?montoTotal>=valorMonto:cantTotal>=valorCantidad&&montoTotal>=valorMonto;carrito.forEach(i=>{if(i.esManual)return;const p=productos.find(x=>x.id==i.pId);if(!p)return;if(cumple&&p.precioMayor>0){if(!i.precioOriginal)i.precioOriginal=i.precio;if(i.precio!==p.precioMayor)i.precio=p.precioMayor}else if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal}});renderizarCarrito();actualizarProgresoMayorista()}
 function guardarCarritoLocal(){const token=localStorage.getItem('token');const key=token?'carrito_'+token:'carrito_anonimo';localStorage.setItem(key,JSON.stringify(carrito));localStorage.setItem('carrito_timestamp',Date.now())}
-function cargarCarritoLocal(){const token=localStorage.getItem('token');const key=token?'carrito_'+token:'carrito_anonimo';const g=localStorage.getItem(key);const ts=localStorage.getItem('carrito_timestamp');if(g&&ts&&(Date.now()-ts<7*24*60*60*1000)){try{carrito=JSON.parse(g);recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista()}catch(e){carrito=[]}}}
+function cargarCarritoLocal(){const pendiente=localStorage.getItem('carrito_pendiente');if(pendiente&&(!carrito||carrito.length===0)){try{carrito=JSON.parse(pendiente);localStorage.removeItem('carrito_pendiente');recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista();return}catch(e){}}const token=localStorage.getItem('token');const key=token?'carrito_'+token:'carrito_anonimo';const g=localStorage.getItem(key);const ts=localStorage.getItem('carrito_timestamp');if(g&&ts&&(Date.now()-ts<7*24*60*60*1000)){try{carrito=JSON.parse(g);recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista()}catch(e){carrito=[]}}}
 
 function toggleAsistente(){const burbuja=document.getElementById('asistente-burbuja');burbuja.style.display=burbuja.style.display==='block'?'none':'block'}
 function asistenteResponder(tema){
@@ -342,6 +342,14 @@ function volverMenuAyuda(){
 setTimeout(()=>{const burbuja=document.getElementById('asistente-burbuja');if(burbuja&&burbuja.style.display==='none'){burbuja.style.display='block';}},30000);
 
 document.addEventListener('DOMContentLoaded',()=>{
+    // Recuperar carrito pendiente al cargar la página
+    const pendiente = localStorage.getItem('carrito_pendiente');
+    if (pendiente && carrito.length === 0) {
+        try {
+            carrito = JSON.parse(pendiente);
+            localStorage.removeItem('carrito_pendiente');
+        } catch(e) {}
+    }
     cargarDatos();
     document.addEventListener('dragstart',(e)=>{if(e.target.tagName==='IMG')e.preventDefault()});
     document.getElementById('search-input').addEventListener('keypress',e=>{if(e.key==='Enter')buscarProductos()});
