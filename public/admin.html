@@ -401,19 +401,19 @@ function aplicarPermisos() {
     const permisos = adminActual.permisos || [];
     
     const botones = {
-        't-v': 'ventas',
-        't-r': 'listado',
-        't-a': 'stock',
-        't-dash': 'dashboard',
-        't-c': 'config',
-        't-retiro': 'retiro',
-        't-p': 'pedidos',
-        't-perfiles': 'perfiles',
-        't-logs': 'logs',
-        't-web': 'web',
-        't-backup': 'backup'
-        't-clientes': 'clientes',
-    };
+    't-v': 'ventas',
+    't-r': 'listado',
+    't-a': 'stock',
+    't-dash': 'dashboard',
+    't-c': 'config',
+    't-retiro': 'retiro',
+    't-p': 'pedidos',
+    't-perfiles': 'perfiles',
+    't-logs': 'logs',
+    't-web': 'web',
+    't-backup': 'backup',
+    't-clientes': 'clientes'
+};
     
     Object.entries(botones).forEach(([id, permiso]) => {
         const btn = document.getElementById(id);
@@ -446,7 +446,6 @@ function tab(t) {
     else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); cargarPedidosTienda(); }
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
     else if (t==='logs') { container.className='layout'; container.innerHTML=renderPaginaLogs(); cartPanel.classList.add('hidden'); cargarLogs(); }
-    else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
     else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
     else if (t==='web') { container.className='layout'; container.innerHTML=renderPaginaEdicionWeb(); cartPanel.classList.add('hidden'); }
     else if (t==='backup') { container.className='layout'; container.innerHTML=renderPaginaBackup(); cartPanel.classList.add('hidden'); setTimeout(cargarHistorialBackups,100); }
@@ -663,8 +662,6 @@ async function cargarGraficosDashboard(){
 async function cargarEstadisticasVendedor(){try{const d=await safeFetch('/admin/estadisticas-vendedor',{method:'POST'});const c=document.getElementById('estadisticas-vendedor');if(c&&d.lista?.length)c.innerHTML='<h4>Rendimiento</h4>'+d.lista.map(v=>`<div style="display:flex;justify-content:space-between;padding:12px"><span>${v.nombre}</span><span>🛒 ${v.ventas}</span></div>`).join('');}catch(e){}}
 
 async function cargarPerfiles(){try{const d=await safeFetch('/admin/perfiles',{method:'POST'});const c=document.getElementById('lista-perfiles');if(!c)return;c.innerHTML=d.lista.map(p=>`<div class="perfil-card"><div><h5>${escapeHtml(p.nombre)} ${p.rol==='admin'?'👑':''}</h5><p>${escapeHtml(p.usuario)} | ${(p.permisos||[]).join(', ')||'Sin permisos'} | ${p.activo?'✅ Activo':'❌ Inactivo'}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${p.rol!=='admin'?`<button onclick="abrirModalEditarPerfil('${p.id}','${escapeHtml(p.nombre)}','${escapeHtml(p.usuario)}','${encodeURIComponent(JSON.stringify(p.permisos||[]))}')" class="tab-btn btn-info" style="padding:8px 16px"><i class="fas fa-edit"></i> Editar</button><button onclick="togglePerfil('${p.id}',${!p.activo})" class="tab-btn ${p.activo?'btn-danger':'btn-success'}" style="padding:8px 16px">${p.activo?'<i class="fas fa-ban"></i> Desactivar':'<i class="fas fa-check"></i> Activar'}</button><button onclick="eliminarPerfilDefinitivo('${p.id}','${escapeHtml(p.nombre)}')" class="tab-btn" style="padding:8px 16px;background:#fee2e2;color:#ef4444"><i class="fas fa-trash"></i> Eliminar</button>`:'<span style="color:#94a3b8;font-size:12px">👑 Admin</span>'}</div></div>`).join('');}catch(e){}}
-function abrirModalEditarPerfil(id, nombre, usuario, permisosEncoded){
-    const permisosActuales = JSON.parse(decodeURIComponent(permisosEncoded));
        const todosPermisos = [
         {id:'ventas', nombre:'Ventas', icono:'fa-cash-register', color:'#6366f1'},
         {id:'listado', nombre:'Listado', icono:'fa-list', color:'#3b82f6'},
@@ -676,8 +673,8 @@ function abrirModalEditarPerfil(id, nombre, usuario, permisosEncoded){
         {id:'perfiles', nombre:'Perfiles', icono:'fa-users-cog', color:'#ec4899'},
         {id:'logs', nombre:'Logs', icono:'fa-history', color:'#64748b'},
         {id:'web', nombre:'Edición Web', icono:'fa-paint-brush', color:'#8b5cf6'},
-        {id:'backup', nombre:'Backup', icono:'fa-database', color:'#f59e0b'}
-        {id:'clientes', nombre:'Clientes', icono:'fa-users', color:'#06b6d4'},
+        {id:'backup', nombre:'Backup', icono:'fa-database', color:'#f59e0b'},
+        {id:'clientes', nombre:'Clientes', icono:'fa-users', color:'#06b6d4'}
     ];
     const m=document.createElement('div');
     m.className='modal active';
@@ -841,7 +838,7 @@ async function guardarEdicionPerfil(){
     const nombre = document.getElementById('edit-perfil-nombre').value.trim();
     const password = document.getElementById('edit-perfil-password').value;
     const perms = [];
-    const todosPermisos = ['ventas','listado','stock','dashboard','config','retiro','pedidos','perfiles','logs','web','backup'];
+    const todosPermisos = ['ventas','listado','stock','dashboard','config','retiro','pedidos','perfiles','logs','web','backup','clientes'];
     todosPermisos.forEach(p => {
         const cb = document.getElementById('edit-perm-' + p);
         if(cb && cb.checked) perms.push(p);
