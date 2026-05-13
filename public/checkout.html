@@ -549,6 +549,11 @@
                 const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
                 usuarioActual = await userRes.json();
+// Forzar que siempre pida los datos en el checkout
+usuarioActual.nombre = '';
+usuarioActual.apellido = '';
+usuarioActual.dni = '';
+usuarioActual.telefono = '';
                 if (usuarioActual && usuarioActual.datosCompletos == 0) {
     usuarioActual.dni = '';
     usuarioActual.telefono = '';
@@ -601,6 +606,20 @@
         function renderizarCheckout() {
             const container = document.getElementById('checkout-container');
             const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
+            // Guardar datos en el perfil
+try {
+    const token = localStorage.getItem('token');
+    await fetch('/auth/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+            nombre: cliente.nombre,
+            apellido: cliente.apellido,
+            dni: cliente.dni,
+            telefono: cliente.telefono
+        })
+    });
+} catch(e) {}
             const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
             const ahorro = carrito.reduce((s,i) => s + ((i.precioOriginal || i.precio) - i.precio) * i.cant, 0);
             
