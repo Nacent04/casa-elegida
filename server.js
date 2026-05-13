@@ -322,7 +322,7 @@ passport.use(new GoogleStrategy({
                 await pool.query(
                     'INSERT INTO usuarios (id, nombre, apellido, email, "googleId", foto, rol, "datosCompletos") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
                     [id, profile.name?.givenName || '', profile.name?.familyName || '', 
-                     profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '', 'cliente', 1]
+                     profile.emails[0].value, profile.id, profile.photos?.[0]?.value || '', 'cliente', 0]  // ← Cambiado de 1 a 0
                 );
                 const newResult = await pool.query('SELECT * FROM usuarios WHERE id = $1', [id]);
                 u = newResult.rows[0];
@@ -383,15 +383,14 @@ app.get('/auth/google/callback',
             console.log('✅ Usuario autenticado:', req.user?.email);
             if (!req.user) return res.redirect('/login?error=nouser');
             const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
-const datosCompletos = req.user.datosCompletos;
-const returnUrl = datosCompletos == 1 ? '/tienda' : '/completar-datos';
-res.send(`
-    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo...</title>
-    <script>
-        localStorage.setItem('token', '${token}');
-        localStorage.setItem('usuario', JSON.stringify({id:'${req.user.id}',nombre:'${req.user.nombre||''}',apellido:'${req.user.apellido||''}',email:'${req.user.email}'}));
-        window.location.href = '${returnUrl}';
-    </script></head><body><p>Redirigiendo...</p></body></html>`);
+            const returnUrl = '/tienda';   // ← Siempre redirige a la tienda
+            res.send(`
+                <!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo...</title>
+                <script>
+                    localStorage.setItem('token', '${token}');
+                    localStorage.setItem('usuario', JSON.stringify({id:'${req.user.id}',nombre:'${req.user.nombre||''}',apellido:'${req.user.apellido||''}',email:'${req.user.email}'}));
+                    window.location.href = '${returnUrl}';
+                </script></head><body><p>Redirigiendo...</p></body></html>`);
         } catch(e) { console.error('❌ Error en callback:', e); res.redirect('/login?error=server'); }
     }
 );
