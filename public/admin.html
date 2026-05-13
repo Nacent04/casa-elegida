@@ -1024,7 +1024,10 @@ function renderizarTablaClientes(lista) {
             <td>${escapeHtml(c.telefono || '-')}</td>
             <td>${escapeHtml(c.dni || '-')}</td>
             <td><small>${[c.localidad, c.provincia].filter(Boolean).join(', ') || '-'}</small></td>
-            <td><button onclick="verHistorialClienteCompleto('${c.id}','${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}')" class="btn-print btn-info"><i class="fas fa-history"></i> Historial</button></td>
+            <td style="display:flex;gap:6px">
+    <button onclick="verHistorialClienteCompleto('${c.id}','${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}')" class="btn-print btn-info"><i class="fas fa-history"></i> Historial</button>
+    <button onclick="eliminarCliente('${c.id}','${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}')" class="btn-print" style="background:#ef4444"><i class="fas fa-trash"></i> Eliminar</button>
+</td>
         </tr>
     `).join('');
 }
@@ -1044,6 +1047,27 @@ async function verHistorialClienteCompleto(userId, nombreCliente) {
     </div>`;
     document.body.appendChild(m);
     try {
+        async function eliminarCliente(userId, nombreCliente) {
+    if (!confirm(`¿Eliminar definitivamente a "${nombreCliente}"?\n\n⚠️ Se borrarán todos sus datos, pedidos y compras.\n\nAl volver a registrarse será tratado como un cliente nuevo.`)) return;
+    if (!confirm('¿Estás completamente seguro? Esta acción no se puede deshacer.')) return;
+    const pass = prompt('🔐 Confirmá tu contraseña de admin:');
+    if (!pass) return;
+    try {
+        const d = await safeFetch('/admin/eliminar-cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, adminPassword: pass })
+        });
+        if (d.success) {
+            mostrarToast('🗑️ Cliente eliminado correctamente');
+            cargarClientes();
+        } else {
+            mostrarToast(d.error || 'Error al eliminar', true);
+        }
+    } catch(e) {
+        mostrarToast('Error: ' + e.message, true);
+    }
+}
         const d = await safeFetch('/admin/historial-cliente', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
