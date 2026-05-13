@@ -310,6 +310,7 @@
         <button id="t-p" class="tab-btn" data-permiso="pedidos" onclick="tab('p')"><i class="fas fa-shopping-cart"></i> Pedidos</button>
         <button id="t-perfiles" class="tab-btn btn-info" data-permiso="admin" onclick="tab('perfiles')"><i class="fas fa-users-cog"></i> Perfiles</button>
         <button id="t-logs" class="tab-btn btn-info" data-permiso="logs" onclick="tab('logs')"><i class="fas fa-history"></i> Logs</button>
+        <button id="t-clientes" class="tab-btn btn-info" data-permiso="ventas" onclick="tab('clientes')"><i class="fas fa-users"></i> Clientes</button>
         <button id="t-web" class="tab-btn" data-permiso="web" onclick="tab('web')"><i class="fas fa-paint-brush"></i> Edición Web</button>
         <button id="t-backup" class="tab-btn btn-warning" data-permiso="config" onclick="tab('backup')"><i class="fas fa-database"></i> Backup</button>
         <div style="margin-left:auto;position:relative">
@@ -442,6 +443,7 @@ function tab(t) {
     else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); cargarPedidosTienda(); }
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
     else if (t==='logs') { container.className='layout'; container.innerHTML=renderPaginaLogs(); cartPanel.classList.add('hidden'); cargarLogs(); }
+    else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
     else if (t==='web') { container.className='layout'; container.innerHTML=renderPaginaEdicionWeb(); cartPanel.classList.add('hidden'); }
     else if (t==='backup') { container.className='layout'; container.innerHTML=renderPaginaBackup(); cartPanel.classList.add('hidden'); setTimeout(cargarHistorialBackups,100); }
     document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
@@ -455,6 +457,7 @@ function renderPaginaRetiro() { return `<div class="panel"><h3><i class="fas fa-
 function renderPaginaPedidosWeb() { return `<div class="panel"><h3><i class="fas fa-shopping-cart"></i> Pedidos Web</h3><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Fecha/ID</th><th>Cliente</th><th>Items</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="lista-pedidos-body"></tbody></table></div></div>`; }
 function renderPaginaPerfiles() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-users-cog"></i> Gestión de Perfiles</span><button onclick="abrirModalCrearPerfil()" class="tab-btn btn-success"><i class="fas fa-user-plus"></i> Nuevo Perfil</button></h3><div id="lista-perfiles"></div></div>`; }
 function renderPaginaLogs() { return `<div class="panel"><h3><i class="fas fa-history"></i> Registro de Actividad</h3><div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"><input type="text" id="logs-filtro" placeholder="🔍 Buscar..." style="flex:1;min-width:200px" onkeyup="cargarLogs()"><input type="date" id="logs-desde" style="width:150px" onchange="cargarLogs()"><input type="date" id="logs-hasta" style="width:150px" onchange="cargarLogs()"><button onclick="document.getElementById('logs-filtro').value='';document.getElementById('logs-desde').value='';document.getElementById('logs-hasta').value='';cargarLogs();" class="tab-btn">Limpiar</button></div><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Fecha</th><th>Admin</th><th>Acción</th><th>Detalles</th></tr></thead><tbody id="logs-body"></tbody></table></div></div>`; }
+function renderPaginaClientes() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-users"></i> Clientes Registrados</span><div style="display:flex;gap:8px"><input type="text" id="clientes-buscador" placeholder="🔍 Buscar cliente..." onkeyup="filtrarClientes()" style="padding:10px 16px;border-radius:20px;border:1px solid #e2e8f0;width:250px"></div></h3><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Cliente</th><th>Email</th><th>Teléfono</th><th>DNI</th><th>Ubicación</th><th>Acciones</th></tr></thead><tbody id="lista-clientes-body"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="loader"></div><p>Cargando clientes...</p></td></tr></tbody></table></div></div>`; }
 function renderPaginaEdicionWeb() { return `<div class="panel"><h3><i class="fas fa-paint-brush"></i> Edición Web</h3><div class="config-section"><h4><i class="fas fa-swatchbook"></i> Plantillas de Tienda</h4><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"><div class="plantilla-card" style="border:2px solid #6366f1;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('moderna')"><div style="background:linear-gradient(135deg,#1a1a1a,#333);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Moderna</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('clasica')"><div style="background:linear-gradient(135deg,#8B5E3C,#D4A574);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Clásica</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('minimalista')"><div style="background:linear-gradient(135deg,#fafafa,#e2e8f0);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Minimalista</strong></div></div></div><div class="config-section"><h4><i class="fas fa-icons"></i> Íconos de la Tienda</h4><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="tab-btn" onclick="cambiarIcono('store')"><i class="fas fa-store"></i> Tienda</button><button class="tab-btn" onclick="cambiarIcono('home')"><i class="fas fa-home"></i> Hogar</button><button class="tab-btn" onclick="cambiarIcono('star')"><i class="fas fa-star"></i> Premium</button><button class="tab-btn" onclick="cambiarIcono('gem')"><i class="fas fa-gem"></i> Lujo</button></div></div></div>`; }
 function renderPaginaConfiguracion() { return `<div class="panel"><h3><i class="fas fa-sliders-h"></i> Configuración</h3><div class="config-section" style="border-color:#10b981"><h3 style="color:#10b981"><i class="fas fa-tags"></i> Ventas Mayoristas <button id="btnMayoristaToggle" class="tab-btn" style="margin-left:auto;background:#10b981;color:white" onclick="toggleMayorista()"><i class="fas fa-toggle-on"></i> Activado</button></h3><div id="mayoristaPanel"><div style="margin-bottom:20px"><label>Modo:</label><div style="display:flex;gap:12px;margin-top:12px"><div class="modo-option active" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')"><i class="fas fa-boxes"></i><br><strong>Cantidad</strong></div><div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')"><i class="fas fa-money-bill-wave"></i><br><strong>Monto</strong></div><div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')"><i class="fas fa-chart-line"></i><br><strong>Ambas</strong></div></div></div><div style="display:flex;gap:20px"><div id="configCantidad"><label>Cantidad mínima</label><input type="number" id="mayoristaCantidad" value="3"></div><div id="configMonto" style="display:none"><label>Monto mínimo</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b">$</span><input type="text" id="mayoristaMonto" value="80000" style="padding-left:28px"></div></div></div><button onclick="guardarMayorista()" class="btn-confirm" style="margin-top:16px"><i class="fas fa-save"></i> Guardar Mayorista</button></div></div><div class="config-section"><h3><i class="fas fa-image"></i> Logo</h3><div class="logo-preview"><img id="logo-preview-img" style="display:none;max-width:200px;max-height:80px"><div id="logo-placeholder"><i class="fas fa-store" style="font-size:48px;color:#cbd5e1"></i></div><div class="logo-actions"><label class="tab-btn" style="background:#6366f1;color:white"><i class="fas fa-upload"></i> Subir <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)"></label><button onclick="eliminarLogo()" class="tab-btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button></div></div></div><div class="config-section"><h3><i class="fas fa-building"></i> Empresa</h3><input type="text" id="empresa-nombre" placeholder="Nombre"><div class="form-row"><input type="text" id="empresa-telefono" placeholder="Teléfono"><input type="email" id="empresa-email" placeholder="Email"></div><input type="text" id="empresa-direccion" placeholder="Dirección"><h4 style="margin-top:20px"><i class="fas fa-clock"></i> Horarios</h4><div class="form-row"><input type="text" id="horario-lv" placeholder="L a V"><input type="text" id="horario-sab" placeholder="Sábados"></div><input type="text" id="horario-dom" placeholder="Domingos"><h4 style="margin-top:20px"><i class="fas fa-hashtag"></i> Redes Sociales</h4><div class="form-row"><input type="text" id="red-instagram" placeholder="Instagram"><input type="text" id="red-facebook" placeholder="Facebook"></div><div class="form-row"><input type="text" id="red-tiktok" placeholder="TikTok"><input type="text" id="red-whatsapp" placeholder="WhatsApp"></div><h4 style="margin-top:20px"><i class="fas fa-credit-card"></i> Datos de Pago</h4><div class="form-row"><input type="text" id="pago-alias" placeholder="Alias"><input type="text" id="pago-cbu" placeholder="CBU"></div><div class="form-row"><input type="text" id="pago-banco" placeholder="Banco"><input type="text" id="pago-titular" placeholder="Titular"></div><button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Empresa</button></div><div class="config-section"><h3><i class="fas fa-palette"></i> Diseño Tienda</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px"><div><label>Color Principal</label><input type="color" id="tienda-color-primary" value="#1a1a1a"></div><div><label>Color Secundario</label><input type="color" id="tienda-color-secondary" value="#c9a96e"></div><div><label>Color Fondo</label><input type="color" id="tienda-color-bg" value="#fafafa"></div><div><label>Color Texto</label><input type="color" id="tienda-color-text" value="#1a1a1a"></div></div><button onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top:16px">Aplicar Colores</button></div><div class="config-section"><h3><i class="fas fa-store"></i> Tienda Online</h3><div style="margin-bottom:16px"><label>Habilitar</label><div class="pago-tabs"><button id="tienda-on" class="pago-btn active" onclick="setTiendaHabilitada(true)">Activada</button><button id="tienda-off" class="pago-btn" onclick="setTiendaHabilitada(false)">Desactivada</button></div></div><input type="text" id="tienda-titulo" placeholder="Título"><textarea id="tienda-mensaje" rows="2" placeholder="Mensaje"></textarea><button onclick="guardarConfiguracionTienda()" class="btn-confirm">Guardar Tienda</button></div><div class="config-section"><h3><i class="fas fa-truck"></i> Métodos de Envío</h3><p style="color:#64748b;margin-bottom:12px">Un método por línea</p><textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani"></textarea><button onclick="guardarMetodosEnvio()" class="btn-confirm">Guardar Métodos</button></div></div>`; }
 
@@ -979,6 +982,99 @@ function renderNotificaciones(){document.getElementById('notif-list').innerHTML=
 async function leerNotif(id){await safeFetch('/notificaciones/leer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});cargarNotificaciones();}
 async function marcarTodasLeidas(){await safeFetch('/notificaciones/leer-todas',{method:'POST'});cargarNotificaciones();}
 async function cargarLogs(){const filtro=document.getElementById('logs-filtro')?.value||'';try{const d=await safeFetch('/logs/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filtro})});const t=document.getElementById('logs-body');if(t&&d.lista)t.innerHTML=d.lista.map(l=>`<tr><td>${l.fechaLocal||l.fecha}</td><td>${l.admin||'Sistema'}</td><td>${l.accion}</td><td>${l.detalles||''}</td></tr>`).join('');}catch(e){}}
+let todosClientes = [];
+async function cargarClientes() {
+    try {
+        const d = await safeFetch('/admin/listar-clientes', { method: 'POST' });
+        todosClientes = d.lista || [];
+        renderizarTablaClientes(todosClientes);
+    } catch(e) {
+        document.getElementById('lista-clientes-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444">Error al cargar clientes</td></tr>';
+    }
+}
+function filtrarClientes() {
+    const q = document.getElementById('clientes-buscador').value.toLowerCase();
+    const filtrados = todosClientes.filter(c => 
+        (c.nombre || '').toLowerCase().includes(q) ||
+        (c.apellido || '').toLowerCase().includes(q) ||
+        (c.email || '').toLowerCase().includes(q) ||
+        (c.dni || '').toLowerCase().includes(q) ||
+        (c.telefono || '').toLowerCase().includes(q)
+    );
+    renderizarTablaClientes(filtrados);
+}
+function renderizarTablaClientes(lista) {
+    const tbody = document.getElementById('lista-clientes-body');
+    if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No se encontraron clientes</td></tr>';
+        return;
+    }
+    tbody.innerHTML = lista.map(c => `
+        <tr>
+            <td><strong>${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}</strong></td>
+            <td>${escapeHtml(c.email || '-')}</td>
+            <td>${escapeHtml(c.telefono || '-')}</td>
+            <td>${escapeHtml(c.dni || '-')}</td>
+            <td><small>${[c.localidad, c.provincia].filter(Boolean).join(', ') || '-'}</small></td>
+            <td><button onclick="verHistorialClienteCompleto('${c.id}','${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}')" class="btn-print btn-info"><i class="fas fa-history"></i> Historial</button></td>
+        </tr>
+    `).join('');
+}
+async function verHistorialClienteCompleto(userId, nombreCliente) {
+    const m = document.createElement('div');
+    m.className = 'modal active';
+    m.innerHTML = `
+    <div class="modal-content" style="max-width:800px">
+        <div class="modal-header">
+            <h3><i class="fas fa-history"></i> Historial: ${escapeHtml(nombreCliente)}</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+        </div>
+        <div class="modal-body" id="historial-completo-body" style="text-align:center;padding:40px">
+            <div class="loader"></div>
+            <p>Cargando historial...</p>
+        </div>
+    </div>`;
+    document.body.appendChild(m);
+    try {
+        const d = await safeFetch('/admin/historial-cliente', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({userId: userId})
+        });
+        const body = document.getElementById('historial-completo-body');
+        let html = '';
+        if (d.ventas?.length) {
+            html += `<h4 style="margin-bottom:12px;color:#6366f1"><i class="fas fa-cash-register"></i> Ventas en Local (${d.ventas.length})</h4>`;
+            html += `<table style="width:100%;margin-bottom:20px"><thead><tr style="background:#f8fafc"><th>ID</th><th>Fecha</th><th>Total</th><th>Acciones</th></tr></thead><tbody>`;
+            d.ventas.forEach(v => {
+                html += `<tr style="border-bottom:1px solid #e2e8f0">
+                    <td><strong>${v.id}</strong></td>
+                    <td>${v.fecha}</td>
+                    <td style="font-weight:700;color:#6366f1">${fmt.format(v.total)}</td>
+                    <td><button onclick="verDetalleVenta('${v.id}')" class="btn-print btn-info" style="font-size:10px"><i class="fas fa-eye"></i></button></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+        if (d.pedidos?.length) {
+            html += `<h4 style="margin:16px 0 12px;color:#10b981"><i class="fas fa-shopping-cart"></i> Pedidos Web (${d.pedidos.length})</h4>`;
+            html += `<table style="width:100%"><thead><tr style="background:#f0fdf4"><th>ID</th><th>Fecha</th><th>Estado</th><th>Total</th><th>Acciones</th></tr></thead><tbody>`;
+            d.pedidos.forEach(p => {
+                html += `<tr style="border-bottom:1px solid #e2e8f0">
+                    <td><strong>${p.id}</strong></td>
+                    <td>${p.fecha}</td>
+                    <td><span class="estado-badge estado-${p.estado}">${p.estado}</span></td>
+                    <td style="font-weight:700;color:#10b981">${fmt.format(p.total)}</td>
+                    <td><button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info" style="font-size:10px"><i class="fas fa-eye"></i></button></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+        body.innerHTML = html || '<p style="color:#94a3b8">Sin historial de compras</p>';
+    } catch(e) {
+        document.getElementById('historial-completo-body').innerHTML = '<p style="color:#ef4444">Error al cargar</p>';
+    }
+}
 function cargarCarritoGuardado(){let g=localStorage.getItem('pos_carrito');if(g){try{carrito=JSON.parse(g);calcularPreciosMayoristaEnVivo();renderCart();}catch(e){carrito=[];}}}
 function actualizarEstadisticasRapidas(){verEstadoCaja();}
 
