@@ -53,8 +53,8 @@ async function initDB() {
                 "fechaCreacion" TEXT DEFAULT NOW(),
                 destacado INTEGER DEFAULT 0
 );
-orden INTEGER DEFAULT 0
-            );
+destacado INTEGER DEFAULT 0
+);
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
                 "productoId" BIGINT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
