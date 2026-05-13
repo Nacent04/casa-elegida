@@ -662,6 +662,8 @@ async function cargarGraficosDashboard(){
 async function cargarEstadisticasVendedor(){try{const d=await safeFetch('/admin/estadisticas-vendedor',{method:'POST'});const c=document.getElementById('estadisticas-vendedor');if(c&&d.lista?.length)c.innerHTML='<h4>Rendimiento</h4>'+d.lista.map(v=>`<div style="display:flex;justify-content:space-between;padding:12px"><span>${v.nombre}</span><span>🛒 ${v.ventas}</span></div>`).join('');}catch(e){}}
 
 async function cargarPerfiles(){try{const d=await safeFetch('/admin/perfiles',{method:'POST'});const c=document.getElementById('lista-perfiles');if(!c)return;c.innerHTML=d.lista.map(p=>`<div class="perfil-card"><div><h5>${escapeHtml(p.nombre)} ${p.rol==='admin'?'👑':''}</h5><p>${escapeHtml(p.usuario)} | ${(p.permisos||[]).join(', ')||'Sin permisos'} | ${p.activo?'✅ Activo':'❌ Inactivo'}</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">${p.rol!=='admin'?`<button onclick="abrirModalEditarPerfil('${p.id}','${escapeHtml(p.nombre)}','${escapeHtml(p.usuario)}','${encodeURIComponent(JSON.stringify(p.permisos||[]))}')" class="tab-btn btn-info" style="padding:8px 16px"><i class="fas fa-edit"></i> Editar</button><button onclick="togglePerfil('${p.id}',${!p.activo})" class="tab-btn ${p.activo?'btn-danger':'btn-success'}" style="padding:8px 16px">${p.activo?'<i class="fas fa-ban"></i> Desactivar':'<i class="fas fa-check"></i> Activar'}</button><button onclick="eliminarPerfilDefinitivo('${p.id}','${escapeHtml(p.nombre)}')" class="tab-btn" style="padding:8px 16px;background:#fee2e2;color:#ef4444"><i class="fas fa-trash"></i> Eliminar</button>`:'<span style="color:#94a3b8;font-size:12px">👑 Admin</span>'}</div></div>`).join('');}catch(e){}}
+function abrirModalEditarPerfil(id, nombre, usuario, permisosEncoded){
+    const permisosActuales = JSON.parse(decodeURIComponent(permisosEncoded));
        const todosPermisos = [
         {id:'ventas', nombre:'Ventas', icono:'fa-cash-register', color:'#6366f1'},
         {id:'listado', nombre:'Listado', icono:'fa-list', color:'#3b82f6'},
@@ -956,6 +958,27 @@ async function buscarClientes(){
         document.getElementById('historial-cliente-body').innerHTML = '<p style="color:#ef4444">Error al cargar</p>';
     }
 }
+async function eliminarCliente(userId, nombreCliente) {
+    if (!confirm(`¿Eliminar definitivamente a "${nombreCliente}"?\n\n⚠️ Se borrarán todos sus datos, pedidos y compras.\n\nAl volver a registrarse será tratado como un cliente nuevo.`)) return;
+    if (!confirm('¿Estás completamente seguro? Esta acción no se puede deshacer.')) return;
+    const pass = prompt('🔐 Confirmá tu contraseña de admin:');
+    if (!pass) return;
+    try {
+        const d = await safeFetch('/admin/eliminar-cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, adminPassword: pass })
+        });
+        if (d.success) {
+            mostrarToast('🗑️ Cliente eliminado correctamente');
+            cargarClientes();
+        } else {
+            mostrarToast(d.error || 'Error al eliminar', true);
+        }
+    } catch(e) {
+        mostrarToast('Error: ' + e.message, true);
+    }
+}
 async function exportarVentasCSV(){const r=await fetch('/admin/exportar-ventas',{method:'POST',headers:{'Authorization':`Bearer ${adminToken}`}});const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ventas.csv';a.click();}
 
 async function verEstadoCaja(){try{const d=await safeFetch('/admin/estado-caja-profesional',{method:'POST'});const c=document.getElementById('estado-caja');if(!c)return;if(!d.abierta)c.innerHTML=`<div class="config-section" style="border-color:#f59e0b"><h4>Caja Cerrada</h4><button onclick="abrirCajaProfesional()" class="btn-confirm">🔓 Abrir</button></div>`;else c.innerHTML=`<div class="config-section" style="border-color:#10b981"><h4>Caja Abierta</h4><button onclick="cerrarCajaProfesional()" class="btn-confirm" style="background:#ef4444">🔒 Cerrar</button></div>`;}catch(e){}}
@@ -1047,27 +1070,6 @@ async function verHistorialClienteCompleto(userId, nombreCliente) {
     </div>`;
     document.body.appendChild(m);
     try {
-        async function eliminarCliente(userId, nombreCliente) {
-    if (!confirm(`¿Eliminar definitivamente a "${nombreCliente}"?\n\n⚠️ Se borrarán todos sus datos, pedidos y compras.\n\nAl volver a registrarse será tratado como un cliente nuevo.`)) return;
-    if (!confirm('¿Estás completamente seguro? Esta acción no se puede deshacer.')) return;
-    const pass = prompt('🔐 Confirmá tu contraseña de admin:');
-    if (!pass) return;
-    try {
-        const d = await safeFetch('/admin/eliminar-cliente', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, adminPassword: pass })
-        });
-        if (d.success) {
-            mostrarToast('🗑️ Cliente eliminado correctamente');
-            cargarClientes();
-        } else {
-            mostrarToast(d.error || 'Error al eliminar', true);
-        }
-    } catch(e) {
-        mostrarToast('Error: ' + e.message, true);
-    }
-}
         const d = await safeFetch('/admin/historial-cliente', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
