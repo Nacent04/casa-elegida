@@ -820,6 +820,13 @@ app.post('/admin/buscar-clientes', adminMiddleware(), async (req, res) => {
     res.json({ lista: clientes });
 });
 
+app.post('/admin/listar-clientes', adminMiddleware(), async (req, res) => {
+    try {
+        const clientes = (await pool.query('SELECT id, nombre, apellido, email, telefono, dni, provincia, localidad FROM usuarios WHERE rol = $1 ORDER BY "fechaRegistro" DESC LIMIT 200', ['cliente'])).rows;
+        res.json({ lista: clientes });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/admin/historial-cliente', adminMiddleware(), async (req, res) => {
     try {
         const { userId } = req.body;
