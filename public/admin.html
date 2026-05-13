@@ -862,7 +862,89 @@ async function togglePerfil(id,activo){
 function abrirModalCambiarPassword(){const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:400px"><div class="modal-header"><h3>Cambiar Contraseña</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><div><label>Actual</label><input type="password" id="pass-actual"></div><div><label>Nueva</label><input type="password" id="pass-nueva"></div></div><div class="modal-footer"><button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button><button onclick="cambiarPassword()" class="btn-confirm">Guardar</button></div></div>`;document.body.appendChild(m);}
 async function cambiarPassword(){const a=document.getElementById('pass-actual').value,n=document.getElementById('pass-nueva').value;if(!a||!n)return mostrarToast('Completá',true);const d=await safeFetch('/admin/cambiar-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passwordActual:a,passwordNueva:n})});if(d.success){mostrarToast('✅ Actualizada');document.querySelector('.modal.active').remove();}else mostrarToast(d.error,true);}
 function abrirBuscadorClientes(){const m=document.createElement('div');m.className='modal active';m.innerHTML=`<div class="modal-content" style="max-width:600px"><div class="modal-header"><h3>Buscar Clientes</h3><button onclick="this.closest('.modal').remove()">&times;</button></div><div class="modal-body"><input type="text" id="busqueda-cliente" placeholder="Buscar..." onkeyup="buscarClientes()"><div id="resultado-clientes"></div></div></div>`;document.body.appendChild(m);}
-async function buscarClientes(){const q=document.getElementById('busqueda-cliente').value.trim();if(q.length<2)return;const d=await safeFetch('/admin/buscar-clientes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})});document.getElementById('resultado-clientes').innerHTML=d.lista?.length?d.lista.map(c=>`<div style="background:#f8fafc;border-radius:12px;padding:16px"><strong>${c.nombre} ${c.apellido}</strong></div>`).join(''):'<p>Sin resultados</p>';}
+async function buscarClientes(){
+    const q = document.getElementById('busqueda-cliente').value.trim();
+    if(q.length < 2) return;
+    try {
+        const d = await safeFetch('/admin/buscar-clientes', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({query:q})
+        });
+        const cont = document.getElementById('resultado-clientes');
+        if(d.lista?.length) {
+            cont.innerHTML = d.lista.map(c => `
+                <div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                        <strong>${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}</strong>
+                        <div style="font-size:12px;color:#64748b;margin-top:4px">
+                            ${c.email ? `<div><i class="fas fa-envelope"></i> ${escapeHtml(c.email)}</div>` : ''}
+                            ${c.telefono ? `<div><i class="fas fa-phone"></i> ${escapeHtml(c.telefono)}</div>` : ''}
+                            ${c.dni ? `<div><i class="fas fa-id-card"></i> ${escapeHtml(c.dni)}</div>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="verHistorialCliente('${c.id}')" class="tab-btn btn-info" style="padding:8px 16px;white-space:nowrap"><i class="fas fa-history"></i> Historial</button>
+                </div>
+            `).join('');
+        } else {
+            cont.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px">No se encontraron clientes</p>';
+        }
+    } catch(e) {
+        console.error('Error buscando clientes:', e);
+    }
+}
+    async function verHistorialCliente(userId) {
+    const m = document.createElement('div');
+    m.className = 'modal active';
+    m.innerHTML = `
+    <div class="modal-content" style="max-width:700px">
+        <div class="modal-header">
+            <h3><i class="fas fa-history"></i> Historial del Cliente</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+        </div>
+        <div class="modal-body" id="historial-cliente-body" style="text-align:center;padding:40px">
+            <div class="loader"></div>
+            <p>Cargando historial...</p>
+        </div>
+    </div>`;
+    document.body.appendChild(m);
+    
+    try {
+        const d = await safeFetch('/admin/historial-cliente', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({userId: userId})
+        });
+        const body = document.getElementById('historial-cliente-body');
+        if (d.pedidos?.length || d.ventas?.length) {
+            let html = '';
+            if (d.ventas?.length) {
+                html += `<h4 style="margin-bottom:12px;color:#6366f1"><i class="fas fa-cash-register"></i> Compras en Local (${d.ventas.length})</h4>`;
+                d.ventas.forEach(v => {
+                    html += `<div style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:8px">
+                        <strong>${v.id}</strong> - ${v.fecha}
+                        <span style="float:right;font-weight:700;color:#6366f1">${fmt.format(v.total)}</span>
+                    </div>`;
+                });
+            }
+            if (d.pedidos?.length) {
+                html += `<h4 style="margin:16px 0 12px;color:#10b981"><i class="fas fa-shopping-cart"></i> Pedidos Web (${d.pedidos.length})</h4>`;
+                d.pedidos.forEach(p => {
+                    html += `<div style="background:#f0fdf4;border-radius:12px;padding:12px;margin-bottom:8px">
+                        <strong>${p.id}</strong> - ${p.fecha}
+                        <span class="estado-badge estado-${p.estado}" style="margin-left:8px">${p.estado}</span>
+                        <span style="float:right;font-weight:700;color:#10b981">${fmt.format(p.total)}</span>
+                    </div>`;
+                });
+            }
+            body.innerHTML = html;
+        } else {
+            body.innerHTML = '<p style="color:#94a3b8">Sin historial de compras</p>';
+        }
+    } catch(e) {
+        document.getElementById('historial-cliente-body').innerHTML = '<p style="color:#ef4444">Error al cargar</p>';
+    }
+}
 async function exportarVentasCSV(){const r=await fetch('/admin/exportar-ventas',{method:'POST',headers:{'Authorization':`Bearer ${adminToken}`}});const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ventas.csv';a.click();}
 
 async function verEstadoCaja(){try{const d=await safeFetch('/admin/estado-caja-profesional',{method:'POST'});const c=document.getElementById('estado-caja');if(!c)return;if(!d.abierta)c.innerHTML=`<div class="config-section" style="border-color:#f59e0b"><h4>Caja Cerrada</h4><button onclick="abrirCajaProfesional()" class="btn-confirm">🔓 Abrir</button></div>`;else c.innerHTML=`<div class="config-section" style="border-color:#10b981"><h4>Caja Abierta</h4><button onclick="cerrarCajaProfesional()" class="btn-confirm" style="background:#ef4444">🔒 Cerrar</button></div>`;}catch(e){}}
