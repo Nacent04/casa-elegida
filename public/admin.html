@@ -310,7 +310,7 @@
         <button id="t-p" class="tab-btn" data-permiso="pedidos" onclick="tab('p')"><i class="fas fa-shopping-cart"></i> Pedidos</button>
         <button id="t-perfiles" class="tab-btn btn-info" data-permiso="admin" onclick="tab('perfiles')"><i class="fas fa-users-cog"></i> Perfiles</button>
         <button id="t-logs" class="tab-btn btn-info" data-permiso="logs" onclick="tab('logs')"><i class="fas fa-history"></i> Logs</button>
-        <button id="t-clientes" class="tab-btn btn-info" data-permiso="ventas" onclick="tab('clientes')"><i class="fas fa-users"></i> Clientes</button>
+        <button id="t-clientes" class="tab-btn btn-info" data-permiso="clientes" onclick="tab('clientes')"><i class="fas fa-users"></i> Clientes</button>
         <button id="t-web" class="tab-btn" data-permiso="web" onclick="tab('web')"><i class="fas fa-paint-brush"></i> Edición Web</button>
         <button id="t-backup" class="tab-btn btn-warning" data-permiso="config" onclick="tab('backup')"><i class="fas fa-database"></i> Backup</button>
         <div style="margin-left:auto;position:relative">
@@ -443,6 +443,7 @@ function tab(t) {
     else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); cargarPedidosTienda(); }
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
     else if (t==='logs') { container.className='layout'; container.innerHTML=renderPaginaLogs(); cartPanel.classList.add('hidden'); cargarLogs(); }
+    else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
     else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
     else if (t==='web') { container.className='layout'; container.innerHTML=renderPaginaEdicionWeb(); cartPanel.classList.add('hidden'); }
     else if (t==='backup') { container.className='layout'; container.innerHTML=renderPaginaBackup(); cartPanel.classList.add('hidden'); setTimeout(cargarHistorialBackups,100); }
