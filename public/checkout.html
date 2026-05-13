@@ -543,20 +543,35 @@
         }
         
         async function cargarDatos() {
-            const token = localStorage.getItem('token');
-            if (!token) { mostrarPantallaLoginRequerido(); return; }
-            try {
-                const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
-                usuarioActual = await userRes.json();
-// Forzar que siempre pida los datos en el checkout
-usuarioActual.nombre = '';
-usuarioActual.apellido = '';
-usuarioActual.dni = '';
-usuarioActual.telefono = '';
-                if (usuarioActual && usuarioActual.datosCompletos == 0) {
-    usuarioActual.dni = '';
-    usuarioActual.telefono = '';
+    const token = localStorage.getItem('token');
+    if (!token) { mostrarPantallaLoginRequerido(); return; }
+    try {
+        const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
+        usuarioActual = await userRes.json();
+        // Forzar que siempre pida los datos en el checkout
+        usuarioActual.nombre = '';
+        usuarioActual.apellido = '';
+        usuarioActual.dni = '';
+        usuarioActual.telefono = '';
+        
+        const res = await fetch('/tienda/listar-productos', { method: 'POST' });
+        if (!res.ok) throw new Error('Error al cargar productos');
+        const data = await res.json();
+        configuracion = data.configuracion || configuracion;
+        metodosEnvio = data.metodosEnvio || [];
+        productos = data.productos || [];
+        
+        cargarCarrito();
+        if (carrito.length === 0) { mostrarCarritoVacio(); return; }
+        recalcularPreciosMayoristas();
+        renderizarCheckout();
+        actualizarMetodosEnvio();
+    } catch(e) { 
+        console.error('Error:', e); 
+        const container = document.getElementById('checkout-container');
+        container.innerHTML = '<div class="checkout-form-section" style="grid-column:1/-1"><div class="redirect-message"><i class="fas fa-exclamation-triangle"></i><h2>Error al cargar</h2><button class="btn-action" onclick="location.reload()"><i class="fas fa-sync"></i> Reintentar</button></div></div>';
+    }
 }
                 const res = await fetch('/tienda/listar-productos', { method: 'POST' });
                 if (!res.ok) throw new Error('Error al cargar productos');
@@ -573,9 +588,17 @@ usuarioActual.telefono = '';
         }
         
         function cargarCarrito() {
-            const guardado = localStorage.getItem('tienda_carrito');
-            if (guardado) { try { carrito = JSON.parse(guardado); } catch(e) { carrito = []; } }
-        }
+    const pendiente = localStorage.getItem('carrito_pendiente');
+    if (pendiente) {
+        try { carrito = JSON.parse(pendiente); localStorage.removeItem('carrito_pendiente'); return; } catch(e) {}
+    }
+    const guardado = localStorage.getItem('tienda_carrito');
+    if (guardado) { try { carrito = JSON.parse(guardado); return; } catch(e) { carrito = []; } }
+    const token = localStorage.getItem('token');
+    const key = token ? 'carrito_' + token : 'carrito_anonimo';
+    const g = localStorage.getItem(key);
+    if (g) { try { carrito = JSON.parse(g); } catch(e) { carrito = []; } }
+}
         
         function recalcularPreciosMayoristas() {
             if (!configuracion.mayorista?.habilitado || !productos.length) {
