@@ -543,49 +543,52 @@
         }
         
         async function cargarDatos() {
-    const token = localStorage.getItem('token');
-    if (!token) { mostrarPantallaLoginRequerido(); return; }
-    try {
-        const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
-        usuarioActual = await userRes.json();
-        // Forzar que siempre pida los datos en el checkout
-        usuarioActual.nombre = '';
-        usuarioActual.apellido = '';
-        usuarioActual.dni = '';
-        usuarioActual.telefono = '';
-        
-        const res = await fetch('/tienda/listar-productos', { method: 'POST' });
-        if (!res.ok) throw new Error('Error al cargar productos');
-        const data = await res.json();
-        configuracion = data.configuracion || configuracion;
-        metodosEnvio = data.metodosEnvio || [];
-        productos = data.productos || [];
-        
-        cargarCarrito();
-        if (carrito.length === 0) { mostrarCarritoVacio(); return; }
-        recalcularPreciosMayoristas();
-        renderizarCheckout();
-        actualizarMetodosEnvio();
-    } catch(e) { 
-        console.error('Error:', e); 
-        const container = document.getElementById('checkout-container');
-        container.innerHTML = '<div class="checkout-form-section" style="grid-column:1/-1"><div class="redirect-message"><i class="fas fa-exclamation-triangle"></i><h2>Error al cargar</h2><button class="btn-action" onclick="location.reload()"><i class="fas fa-sync"></i> Reintentar</button></div></div>';
-    }
-}
+            const token = localStorage.getItem('token');
+            if (!token) { mostrarPantallaLoginRequerido(); return; }
+            try {
+                const userRes = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!userRes.ok) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); mostrarPantallaLoginRequerido(); return; }
+                usuarioActual = await userRes.json();
+                
+                // Solo forzar vaciado si el perfil no está completo
+                if (usuarioActual && usuarioActual.datosCompletos == 0) {
+                    usuarioActual.nombre = '';
+                    usuarioActual.apellido = '';
+                    usuarioActual.dni = '';
+                    usuarioActual.telefono = '';
+                }
+                
+                const res = await fetch('/tienda/listar-productos', { method: 'POST' });
+                if (!res.ok) throw new Error('Error al cargar productos');
+                const data = await res.json();
+                configuracion = data.configuracion || configuracion;
+                metodosEnvio = data.metodosEnvio || [];
+                productos = data.productos || [];
+                
+                cargarCarrito();
+                if (carrito.length === 0) { mostrarCarritoVacio(); return; }
+                recalcularPreciosMayoristas();
+                renderizarCheckout();
+                actualizarMetodosEnvio();
+            } catch(e) { 
+                console.error('Error:', e); 
+                const container = document.getElementById('checkout-container');
+                container.innerHTML = '<div class="checkout-form-section" style="grid-column:1/-1"><div class="redirect-message"><i class="fas fa-exclamation-triangle"></i><h2>Error al cargar</h2><button class="btn-action" onclick="location.reload()"><i class="fas fa-sync"></i> Reintentar</button></div></div>';
+            }
+        }
         
         function cargarCarrito() {
-    const pendiente = localStorage.getItem('carrito_pendiente');
-    if (pendiente) {
-        try { carrito = JSON.parse(pendiente); localStorage.removeItem('carrito_pendiente'); return; } catch(e) {}
-    }
-    const guardado = localStorage.getItem('tienda_carrito');
-    if (guardado) { try { carrito = JSON.parse(guardado); return; } catch(e) { carrito = []; } }
-    const token = localStorage.getItem('token');
-    const key = token ? 'carrito_' + token : 'carrito_anonimo';
-    const g = localStorage.getItem(key);
-    if (g) { try { carrito = JSON.parse(g); } catch(e) { carrito = []; } }
-}
+            const pendiente = localStorage.getItem('carrito_pendiente');
+            if (pendiente) {
+                try { carrito = JSON.parse(pendiente); localStorage.removeItem('carrito_pendiente'); return; } catch(e) {}
+            }
+            const guardado = localStorage.getItem('tienda_carrito');
+            if (guardado) { try { carrito = JSON.parse(guardado); return; } catch(e) { carrito = []; } }
+            const token = localStorage.getItem('token');
+            const key = token ? 'carrito_' + token : 'carrito_anonimo';
+            const g = localStorage.getItem(key);
+            if (g) { try { carrito = JSON.parse(g); } catch(e) { carrito = []; } }
+        }
         
         function recalcularPreciosMayoristas() {
             if (!configuracion.mayorista?.habilitado || !productos.length) {
@@ -613,21 +616,9 @@
             });
         }
 
-        // Guardar datos en el perfil
-try {
-    const token = localStorage.getItem('token');
-    await fetch('/auth/update-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-            telefono: cliente.telefono,
-            direccion: cliente.direccion || '',
-            provincia: cliente.provincia || '',
-            localidad: cliente.localidad || '',
-            cp: cliente.cp || ''
-        })
-    });
-} catch(e) {}
+        function renderizarCheckout() {
+            const container = document.getElementById('checkout-container');
+            const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
             const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
             const ahorro = carrito.reduce((s,i) => s + ((i.precioOriginal || i.precio) - i.precio) * i.cant, 0);
             
@@ -809,6 +800,26 @@ try {
                 cliente.altura = document.getElementById('cliente-altura').value.trim();
                 cliente.referencias = document.getElementById('cliente-referencias')?.value.trim() || '';
             }
+
+            // Guardar todos los datos y marcar como completo
+            try {
+                const token = localStorage.getItem('token');
+                await fetch('/auth/completar-datos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        nombre: cliente.nombre,
+                        apellido: cliente.apellido,
+                        dni: cliente.dni,
+                        telefono: cliente.telefono,
+                        direccion: cliente.direccion || '',
+                        provincia: cliente.provincia || '',
+                        localidad: cliente.localidad || '',
+                        cp: cliente.cp || ''
+                    })
+                });
+            } catch(e) {}
+
             const total = carrito.reduce((s, i) => s + i.precio * i.cant, 0);
             const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
             try {
