@@ -383,13 +383,15 @@ app.get('/auth/google/callback',
             console.log('✅ Usuario autenticado:', req.user?.email);
             if (!req.user) return res.redirect('/login?error=nouser');
             const token = jwt.sign({ id: req.user.id, email: req.user.email, nombre: req.user.nombre, rol: req.user.rol }, JWT_SECRET, { expiresIn: '7d' });
-            res.send(`
-                <!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo...</title>
-                <script>
-                    localStorage.setItem('token', '${token}');
-                    localStorage.setItem('usuario', JSON.stringify({id:'${req.user.id}',nombre:'${req.user.nombre||''}',apellido:'${req.user.apellido||''}',email:'${req.user.email}'}));
-                    window.location.href = '/tienda';
-                </script></head><body><p>Redirigiendo...</p></body></html>`);
+const datosCompletos = req.user.datosCompletos;
+const returnUrl = datosCompletos == 1 ? '/tienda' : '/completar-datos';
+res.send(`
+    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo...</title>
+    <script>
+        localStorage.setItem('token', '${token}');
+        localStorage.setItem('usuario', JSON.stringify({id:'${req.user.id}',nombre:'${req.user.nombre||''}',apellido:'${req.user.apellido||''}',email:'${req.user.email}'}));
+        window.location.href = '${returnUrl}';
+    </script></head><body><p>Redirigiendo...</p></body></html>`);
         } catch(e) { console.error('❌ Error en callback:', e); res.redirect('/login?error=server'); }
     }
 );
