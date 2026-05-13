@@ -829,6 +829,28 @@ app.post('/admin/listar-clientes', adminMiddleware(), async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/admin/eliminar-cliente', adminMiddleware(), async (req, res) => {
+    try {
+        const { userId, adminPassword } = req.body;
+        // Verificar contraseña del admin
+        const adminPerfil = (await pool.query("SELECT * FROM perfiles WHERE usuario = $1", [req.admin.usuario])).rows[0];
+        if (!(await bcrypt.compare(adminPassword, adminPerfil.password))) return res.status(401).json({ error: 'Contraseña incorrecta' });
+        
+        const cliente = (await pool.query('SELECT * FROM usuarios WHERE id = $1', [userId])).rows[0];
+        if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+        
+        // Eliminar sus pedidos
+        await pool.query('DELETE FROM pedidos WHERE "usuarioId" = $1', [userId]);
+        // Eliminar sus ventas (local)
+        await pool.query("DELETE FROM ventas WHERE cliente::text LIKE $1", [`%${userId}%`]);
+        // Eliminar el usuario
+        await pool.query('DELETE FROM usuarios WHERE id = $1', [userId]);
+        
+        await logActividad(req.admin.nombre, 'ELIMINAR_CLIENTE', `Cliente eliminado: ${cliente.nombre} ${cliente.apellido} (${cliente.email})`, req);
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/admin/historial-cliente', adminMiddleware(), async (req, res) => {
     try {
         const { userId } = req.body;
