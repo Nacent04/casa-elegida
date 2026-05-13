@@ -824,6 +824,7 @@ function abrirModalCrearPerfil(){
     if(document.getElementById('perm-logs').checked)perms.push('logs');
     if(document.getElementById('perm-web').checked)perms.push('web');
     if(document.getElementById('perm-backup').checked)perms.push('backup');
+    if(document.getElementById('perm-clientes').checked)perms.push('clientes');
     if(!ap||!n||!u||!p){mostrarToast('Completá todos',true);return;}
     const d=await safeFetch('/admin/crear-perfil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ap,usuario:u,password:p,nombre:n,permisos:perms,activo:1})});
     if(d.success){mostrarToast('✅ Creado');document.querySelector('.modal.active').remove();cargarPerfiles();}
