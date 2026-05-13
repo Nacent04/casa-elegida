@@ -424,13 +424,15 @@ function aplicarPermisos() {
 
 function tab(t) {
     if (adminActual && adminActual.rol !== 'admin') {
-        const btn = document.querySelector(`[onclick="tab('${t}')"]`);
-        if (btn) {
-            const permiso = btn.getAttribute('data-permiso');
-            if (permiso && permiso !== 'admin' && !adminActual.permisos.includes(permiso)) {
-                mostrarToast('🔒 Sin autorización para acceder a esta sección', true);
-                return;
-            }
+        const mapaPermisos = {
+            'v': 'ventas', 'r': 'listado', 'a': 'stock', 'dash': 'dashboard',
+            'c': 'config', 'retiro': 'retiro', 'p': 'pedidos', 'perfiles': 'perfiles',
+            'logs': 'logs', 'web': 'web', 'backup': 'backup', 'clientes': 'clientes'
+        };
+        const permisoNecesario = mapaPermisos[t];
+        if (permisoNecesario && !adminActual.permisos.includes(permisoNecesario)) {
+            mostrarToast('🔒 Sin autorización para acceder a esta sección', true);
+            return;
         }
     }
     const container = document.getElementById('main-container'), cartPanel = document.getElementById('v-cart');
@@ -674,6 +676,7 @@ function abrirModalEditarPerfil(id, nombre, usuario, permisosEncoded){
         {id:'logs', nombre:'Logs', icono:'fa-history', color:'#64748b'},
         {id:'web', nombre:'Edición Web', icono:'fa-paint-brush', color:'#8b5cf6'},
         {id:'backup', nombre:'Backup', icono:'fa-database', color:'#f59e0b'}
+        {id:'clientes', nombre:'Clientes', icono:'fa-users', color:'#06b6d4'},
     ];
     const m=document.createElement('div');
     m.className='modal active';
