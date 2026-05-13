@@ -573,19 +573,6 @@
         container.innerHTML = '<div class="checkout-form-section" style="grid-column:1/-1"><div class="redirect-message"><i class="fas fa-exclamation-triangle"></i><h2>Error al cargar</h2><button class="btn-action" onclick="location.reload()"><i class="fas fa-sync"></i> Reintentar</button></div></div>';
     }
 }
-                const res = await fetch('/tienda/listar-productos', { method: 'POST' });
-                if (!res.ok) throw new Error('Error al cargar productos');
-                const data = await res.json();
-                configuracion = data.configuracion || configuracion;
-                metodosEnvio = data.metodosEnvio || [];
-                productos = data.productos || [];
-                cargarCarrito();
-                if (carrito.length === 0) { mostrarCarritoVacio(); return; }
-                recalcularPreciosMayoristas();
-                renderizarCheckout();
-                actualizarMetodosEnvio();
-            } catch(e) { console.error('Error:', e); mostrarToast('Error al cargar los datos', 'error'); }
-        }
         
         function cargarCarrito() {
     const pendiente = localStorage.getItem('carrito_pendiente');
@@ -625,21 +612,19 @@
                 }
             });
         }
-        
-        function renderizarCheckout() {
-            const container = document.getElementById('checkout-container');
-            const esMayorista = carrito.some(i => i.precioOriginal && i.precio < i.precioOriginal);
-            // Guardar datos en el perfil
+
+        // Guardar datos en el perfil
 try {
     const token = localStorage.getItem('token');
     await fetch('/auth/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
-            nombre: cliente.nombre,
-            apellido: cliente.apellido,
-            dni: cliente.dni,
-            telefono: cliente.telefono
+            telefono: cliente.telefono,
+            direccion: cliente.direccion || '',
+            provincia: cliente.provincia || '',
+            localidad: cliente.localidad || '',
+            cp: cliente.cp || ''
         })
     });
 } catch(e) {}
