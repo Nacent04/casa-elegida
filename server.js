@@ -53,8 +53,6 @@ async function initDB() {
                 "fechaCreacion" TEXT DEFAULT NOW(),
                 destacado INTEGER DEFAULT 0
 );
-destacado INTEGER DEFAULT 0
-);
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
                 "productoId" BIGINT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
@@ -1116,29 +1114,13 @@ async function start() {
         await initConfig();
         await initMetodosEnvio();
         await initAdmin();
-        async function start() {
-    try {
         app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - Puerto ${PORT}\n`));
-        await initDB();
-        await initConfig();
-        await initMetodosEnvio();
-        await initAdmin();
     } catch(e) {
         console.error('Error al iniciar:', e.message);
-        if (e.code === 'EADDRINUSE') {
-            console.log('Puerto ocupado, reintentando en 5 segundos...');
-            setTimeout(start, 5000);
-        }
+        process.exit(1);
     }
 }
 start();
-    } catch(e) {
-        console.error('Error al iniciar:', e.message);
-        console.log('Reintentando en 5 segundos...');
-        setTimeout(start, 5000);
-    }
-}
-start();
-start();
+
 process.on('SIGTERM', () => { pool.end(); process.exit(0); });
 process.on('SIGINT', () => { pool.end(); process.exit(0); });
