@@ -677,31 +677,28 @@ function verDetallePedido(id) {
 // Variable externa para evitar doble clic
 let estaProcesando = false;
 
-async function confirmarPedidoWeb(id){
+async function confirmarPedidoWeb(id) {
     if(!confirm('¿Confirmar pedido?')) return;
-    
     try {
-        // 1. Enviamos la confirmación
-        const response = await safeFetch('/tienda/confirmar-pedido', {
+        const res = await safeFetch('/tienda/confirmar-pedido', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ pedidoId: id })
         });
 
-        const datos = await response.json(); // Aquí recibes el {success, ventaId, pin}
+        const data = await res.json(); // Importante para leer el success
 
-        if (datos.success) {
-            // 2. ¡ESTA ES LA CLAVE! 
-            // En lugar de F5, ejecutamos la función que ya limpia y dibuja la tabla
+        if(data.success) {
+            // ESTA ES LA FUNCIÓN QUE TE FALTA LLAMAR:
+            // Como ya existe en tu frontend, al llamarla, traerá los datos
+            // nuevos de la base de datos y redibujará la tabla sola.
             await cargarPedidosTienda(); 
             
-            mostrarToast(`✅ Confirmado. PIN: ${datos.pin || 'Generado'}`);
+            mostrarToast('✅ Pedido confirmado');
         } else {
-            throw new Error(datos.error || 'Error desconocido al confirmar');
+            mostrarToast('Error: ' + data.error, true);
         }
-
     } catch(e) {
-        console.error(e);
         mostrarToast('Error: ' + e.message, true);
     }
 }
