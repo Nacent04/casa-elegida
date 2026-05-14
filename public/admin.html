@@ -640,16 +640,16 @@ function verDetallePedido(id) {
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
     try {
+        mostrarToast('⏳ Confirmando...');
         const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
         if(res.success){
-            mostrarToast('✅ Confirmado - PIN: ' + (res.pin || 'Envío'));
-            // Actualizar localmente
             const pedido = pedidosTienda.find(p => p.id === id);
             if(pedido){
                 pedido.estado = 'confirmado';
                 pedido.pin = res.pin || null;
             }
             renderPedidosWeb();
+            mostrarToast('✅ Confirmado - PIN: ' + (res.pin || 'Envío'));
         } else {
             mostrarToast('❌ ' + (res.error || 'Error'), true);
         }
@@ -657,13 +657,37 @@ async function confirmarPedidoWeb(id){
         mostrarToast('Error de conexión', true);
     }
 }
+
 async function marcarAbonado(id){
     if(!confirm('¿Marcar como abonado?')) return;
-    await safeFetch('/tienda/marcar-abonado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
-    mostrarToast('✅ Abonado');
-    cargarPedidosTienda();
+    try {
+        mostrarToast('⏳ Procesando...');
+        await safeFetch('/tienda/marcar-abonado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        const pedido = pedidosTienda.find(p => p.id === id);
+        if(pedido){
+            pedido.estado = 'abonado';
+        }
+        renderPedidosWeb();
+        mostrarToast('✅ Abonado');
+    } catch(e) {
+        mostrarToast('Error de conexión', true);
+    }
 }
-async function marcarEnviado(id){if(!confirm('¿Marcar como enviado?'))return;await safeFetch('/tienda/marcar-enviado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});mostrarToast('✅ Enviado');cargarPedidosTienda();}
+
+async function marcarEnviado(id){
+    if(!confirm('¿Marcar como enviado?')) return;
+    try {
+        await safeFetch('/tienda/marcar-enviado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        const pedido = pedidosTienda.find(p => p.id === id);
+        if(pedido){
+            pedido.estado = 'enviado';
+        }
+        renderPedidosWeb();
+        mostrarToast('✅ Enviado');
+    } catch(e) {
+        mostrarToast('Error de conexión', true);
+    }
+}
 async function cancelarPedidoAdmin(id){if(!confirm('¿Cancelar?'))return;await safeFetch('/tienda/cancelar-pedido-admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});mostrarToast('✅ Cancelado');cargarPedidosTienda();}
 async function verificarPINRetiro(){const p=document.getElementById('pin-retiro-input').value.trim();if(p.length!==4)return;const d=await safeFetch('/tienda/verificar-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p})});if(d.success){document.getElementById('pin-retiro-resultado').innerHTML=`<div style="background:#d1fae5;padding:20px;border-radius:16px"><h4>✅ ${d.pedido.id}</h4><p>Total: ${fmt.format(d.pedido.total)}</p><button onclick="confirmarRetiro('${d.pedido.id}','${p}')" class="btn-confirm">Confirmar Retiro</button></div>`;}}
 async function confirmarRetiro(id,pin){await safeFetch('/tienda/retirar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id,pin})});mostrarToast('✅ Entregado');cargarPedidosTienda();}
