@@ -679,23 +679,30 @@ let estaProcesando = false;
 
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
+    
     try {
-        const response = await safeFetch('/tienda/confirmar-pedido',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({pedidoId:id})
+        // 1. Enviamos la confirmación
+        const response = await safeFetch('/tienda/confirmar-pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pedidoId: id })
         });
 
-        // IMPORTANTE: Validar que el servidor realmente lo procesó
-        if(!response.ok) throw new Error('No se pudo confirmar en el servidor');
-        
-        // En lugar de buscar el index y cambiar el estado a mano...
-        // ¡Llamamos a la función que ya tienes para traer todo fresco!
-        await cargarPedidosTienda(); 
-        
-        mostrarToast('✅ Pedido confirmado');
+        const datos = await response.json(); // Aquí recibes el {success, ventaId, pin}
+
+        if (datos.success) {
+            // 2. ¡ESTA ES LA CLAVE! 
+            // En lugar de F5, ejecutamos la función que ya limpia y dibuja la tabla
+            await cargarPedidosTienda(); 
+            
+            mostrarToast(`✅ Confirmado. PIN: ${datos.pin || 'Generado'}`);
+        } else {
+            throw new Error(datos.error || 'Error desconocido al confirmar');
+        }
+
     } catch(e) {
-        mostrarToast('Error: '+e.message, true);
+        console.error(e);
+        mostrarToast('Error: ' + e.message, true);
     }
 }
 async function marcarAbonado(id){
