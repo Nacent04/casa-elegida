@@ -639,41 +639,111 @@ function verDetallePedido(id) {
 
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
-    await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
-    await cargarPedidosTienda();
-    mostrarToast('✅ Confirmado');
+    
+    try {
+        // Mostrar que está procesando
+        mostrarToast('⏳ Confirmando pedido...');
+        
+        await safeFetch('/tienda/confirmar-pedido',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({pedidoId:id})
+        });
+        
+        // 🔄 ACTUALIZAR el pedido localmente SIN recargar
+        const pedido = pedidosTienda.find(p => p.id === id);
+        if (pedido) {
+            pedido.estado = 'confirmado';
+        }
+        
+        // 🔄 Renderizar la tabla de pedidos CON LOS NUEVOS BOTONES
+        renderPedidosWeb();
+        
+        mostrarToast('✅ Pedido confirmado exitosamente');
+        
+    } catch(e) {
+        mostrarToast('❌ Error al confirmar: ' + e.message, true);
+    }
 }
 async function marcarAbonado(id){
     if(!confirm('¿Marcar como abonado?')) return;
+    
     try {
-        mostrarToast('⏳ Procesando...');
-        await safeFetch('/tienda/marcar-abonado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        mostrarToast('⏳ Procesando pago...');
+        
+        await safeFetch('/tienda/marcar-abonado',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({pedidoId:id})
+        });
+        
+        // 🔄 ACTUALIZAR el pedido localmente SIN recargar
         const pedido = pedidosTienda.find(p => p.id === id);
-        if(pedido){
+        if (pedido) {
             pedido.estado = 'abonado';
         }
+        
+        // 🔄 Renderizar la tabla de pedidos CON LOS NUEVOS BOTONES
         renderPedidosWeb();
-        mostrarToast('✅ Abonado');
+        
+        mostrarToast('✅ Pedido marcado como abonado');
+        
     } catch(e) {
-        mostrarToast('Error de conexión', true);
+        mostrarToast('❌ Error: ' + e.message, true);
     }
 }
-
 async function marcarEnviado(id){
     if(!confirm('¿Marcar como enviado?')) return;
+    
     try {
-        await safeFetch('/tienda/marcar-enviado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        mostrarToast('⏳ Actualizando envío...');
+        
+        await safeFetch('/tienda/marcar-enviado',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({pedidoId:id})
+        });
+        
+        // 🔄 ACTUALIZAR el pedido localmente SIN recargar
         const pedido = pedidosTienda.find(p => p.id === id);
-        if(pedido){
+        if (pedido) {
             pedido.estado = 'enviado';
         }
+        
+        // 🔄 Renderizar la tabla de pedidos CON LOS NUEVOS BOTONES
         renderPedidosWeb();
-        mostrarToast('✅ Enviado');
+        
+        mostrarToast('✅ Pedido marcado como enviado');
+        
     } catch(e) {
-        mostrarToast('Error de conexión', true);
+        mostrarToast('❌ Error: ' + e.message, true);
     }
 }
-async function cancelarPedidoAdmin(id){if(!confirm('¿Cancelar?'))return;await safeFetch('/tienda/cancelar-pedido-admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});mostrarToast('✅ Cancelado');cargarPedidosTienda();}
+async function cancelarPedidoAdmin(id){
+    if(!confirm('¿Cancelar pedido?')) return;
+    
+    try {
+        await safeFetch('/tienda/cancelar-pedido-admin',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({pedidoId:id})
+        });
+        
+        // 🔄 ACTUALIZAR el pedido localmente
+        const pedido = pedidosTienda.find(p => p.id === id);
+        if (pedido) {
+            pedido.estado = 'cancelado';
+        }
+        
+        // 🔄 Renderizar la tabla
+        renderPedidosWeb();
+        
+        mostrarToast('✅ Pedido cancelado');
+        
+    } catch(e) {
+        mostrarToast('❌ Error: ' + e.message, true);
+    }
+}
 async function verificarPINRetiro(){const p=document.getElementById('pin-retiro-input').value.trim();if(p.length!==4)return;const d=await safeFetch('/tienda/verificar-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p})});if(d.success){document.getElementById('pin-retiro-resultado').innerHTML=`<div style="background:#d1fae5;padding:20px;border-radius:16px"><h4>✅ ${d.pedido.id}</h4><p>Total: ${fmt.format(d.pedido.total)}</p><button onclick="confirmarRetiro('${d.pedido.id}','${p}')" class="btn-confirm">Confirmar Retiro</button></div>`;}}
 async function confirmarRetiro(id,pin){await safeFetch('/tienda/retirar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id,pin})});mostrarToast('✅ Entregado');cargarPedidosTienda();}
 
