@@ -734,7 +734,7 @@ app.post('/tienda/listar-pedidos', async (req, res) => {
 app.post('/tienda/confirmar-pedido', async (req, res) => {
     try {
         const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND estado=$2', [req.body.pedidoId, 'pendiente'])).rows[0];
-        if (!p) return res.status(400).json({ error: 'No válido' });
+        if (!p) return res.status(400).json({ error: 'Pedido no encontrado o no está pendiente. Estado actual: ' + (p ? p.estado : 'no existe') });
         const esRetiroLocal = p["tipoEntrega"] === 'local';
         const pin = esRetiroLocal ? generarPIN() : null;
         const vid = 'FAC-' + Date.now();
