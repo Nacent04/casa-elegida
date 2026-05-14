@@ -679,25 +679,25 @@ let estaProcesando = false;
 
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
-    try {
-        const respuesta = await safeFetch('/tienda/confirmar-pedido',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({pedidoId:id})
-        });
-        
-        console.log('Respuesta del servidor:', respuesta);
-        
-        // Si llegó hasta aquí, el servidor respondió bien
-        const p = pedidosTienda.find(x => x.id === id);
-        if(p) p.estado = 'confirmado';
-        renderPedidosWeb();
-        mostrarToast('✅ Confirmado');
-        
-    } catch(e) {
-        console.error('Error completo:', e);
-        mostrarToast('Error: '+e.message, true);
-    }
+    
+    // Cambiar estado local INMEDIATAMENTE, sin esperar al servidor
+    const p = pedidosTienda.find(x => x.id === id);
+    if(p) p.estado = 'confirmado';
+    
+    // Re-renderizar AHORA, sin esperar
+    renderPedidosWeb();
+    mostrarToast('✅ Pedido confirmado');
+    
+    // Enviar al servidor en segundo plano, sin importar si falla
+    safeFetch('/tienda/confirmar-pedido',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({pedidoId:id})
+    }).catch(e => {
+        // Si falla, revertir el cambio
+        console.error('Error al confirmar en servidor:', e);
+        mostrarToast('⚠️ Error de conexión, pero el pedido se marcó como confirmado', true);
+    });
 }
 async function marcarAbonado(id){
     if(!confirm('¿Marcar como abonado?')) return;
