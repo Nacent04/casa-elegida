@@ -640,18 +640,18 @@ function verDetallePedido(id) {
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
     try {
-        mostrarToast('⏳ Confirmando...');
         const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        console.log('Respuesta:', res);
         if(res.success){
             const pedido = pedidosTienda.find(p => p.id === id);
+            console.log('Pedido encontrado:', pedido);
             if(pedido){
                 pedido.estado = 'confirmado';
                 pedido.pin = res.pin || null;
+                console.log('Pedido actualizado a:', pedido.estado);
             }
             renderPedidosWeb();
             mostrarToast('✅ Confirmado - PIN: ' + (res.pin || 'Envío'));
-        } else {
-            mostrarToast('❌ ' + (res.error || 'Error'), true);
         }
     } catch(e) {
         mostrarToast('Error de conexión', true);
