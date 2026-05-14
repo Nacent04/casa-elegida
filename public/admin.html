@@ -1302,10 +1302,17 @@ async function guardarOrdenProductos(){
     }
 }
 
-function toggleThemePanel(){   // <-- esta ya existe, no la toques
-function toggleThemePanel(){const p=document.getElementById('theme-panel');if(p)p.style.display=p.style.display==='block'?'none':'block';}
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');localStorage.setItem('darkMode',document.body.classList.contains('dark-mode'));}
-if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');}
+function toggleThemePanel(){
+    const p = document.getElementById('theme-panel');
+    if(p) p.style.display = p.style.display === 'block' ? 'none' : 'block';
+}
+function toggleDarkMode(){
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+}
+if(localStorage.getItem('darkMode') === 'true'){
+    document.body.classList.add('dark-mode');
+}
 </script>
 </body>
 </html>
