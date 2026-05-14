@@ -649,47 +649,36 @@ async function confirmarPedidoWeb(id){
             body:JSON.stringify({pedidoId:id})
         });
         
-        // 🔄 ACTUALIZAR el pedido localmente
+        // Actualizar el array
         const pedido = pedidosTienda.find(p => p.id === id);
-        if (pedido) {
-            pedido.estado = 'confirmado';
-        }
+        if (pedido) pedido.estado = 'confirmado';
         
-        // 🎯 FORZAR la actualización de la tabla inmediatamente
-        const tbody = document.getElementById('lista-pedidos-body');
-        if (tbody) {
-            // Buscar la fila que contiene este pedido
-            const filas = tbody.getElementsByTagName('tr');
-            for (let fila of filas) {
-                // Buscar el ID del pedido en la fila
-                const textoFila = fila.textContent || fila.innerText;
-                if (textoFila.includes(id)) {
-                    // Actualizar el badge de estado
-                    const badgeEstado = fila.querySelector('.estado-badge');
-                    if (badgeEstado) {
-                        badgeEstado.className = 'estado-badge estado-confirmado';
-                        badgeEstado.textContent = 'confirmado';
-                    }
+        // 🎯 Buscar y modificar DIRECTAMENTE el botón en el DOM
+        const todasLasFilas = document.querySelectorAll('#lista-pedidos-body tr');
+        todasLasFilas.forEach(fila => {
+            const textoFila = fila.textContent;
+            if (textoFila.includes(id)) {
+                // Encontrar la celda de estado
+                const celdas = fila.querySelectorAll('td');
+                if (celdas.length >= 5) {
+                    // Actualizar estado (celda 4, índice 4)
+                    celdas[4].innerHTML = '<span class="estado-badge estado-confirmado">confirmado</span>';
                     
-                    // Actualizar los botones de acción
-                    const celdaAcciones = fila.querySelector('td:last-child');
-                    if (celdaAcciones) {
-                        celdaAcciones.innerHTML = `
-                            <button onclick="verDetallePedido('${id}')" class="btn-print btn-info">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="marcarAbonado('${id}')" class="btn-print btn-info">
-                                Abonado
-                            </button>
-                            <button onclick="cancelarPedidoAdmin('${id}')" class="btn-print btn-danger">
-                                Cancelar
-                            </button>
-                        `;
-                    }
-                    break;
+                    // Actualizar botones (celda 5, índice 5)
+                    celdas[5].innerHTML = `
+                        <button onclick="verDetallePedido('${id}')" class="btn-print btn-info">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="marcarAbonado('${id}')" class="btn-print btn-info">
+                            Abonado
+                        </button>
+                        <button onclick="cancelarPedidoAdmin('${id}')" class="btn-print btn-danger">
+                            Cancelar
+                        </button>
+                    `;
                 }
             }
-        }
+        });
         
         mostrarToast('✅ Pedido confirmado exitosamente');
         
