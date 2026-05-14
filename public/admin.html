@@ -454,7 +454,18 @@ function tab(t) {
 }
     function renderPaginaVentas() { return `<div class="panel"><div id="estado-caja"></div><div style="display:flex;gap:12px;margin-bottom:24px"><input type="text" id="buscador" placeholder="🔍 Buscar..." onkeyup="buscarProductos()" style="flex:1"><button onclick="abrirBuscadorClientes()" class="tab-btn btn-info"><i class="fas fa-search"></i> Clientes</button></div><div id="grid-prods" class="grid"></div></div>`; }
 function renderPaginaListadoVentas() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-history"></i> Historial</span><button onclick="exportarVentasCSV()" class="tab-btn btn-excel"><i class="fas fa-file-csv"></i> Exportar</button></h3><div class="ventas-buscador"><input type="text" id="ventas-buscador" placeholder="🔍 Buscar..." onkeyup="filtrarVentas()"></div><table style="width:100%"><thead><tr><th>Fecha/ID</th><th>Cliente</th><th>Items</th><th>Total</th><th></th></tr></thead><tbody id="lista-ventas-body"></tbody></table></div>`; }
-function renderPaginaGestionStock() { return `<div class="panel"><div style="display:flex;gap:12px;margin-bottom:24px"><button onclick="nuevoProd()" class="tab-btn"><i class="fas fa-plus"></i> Nuevo</button><button onclick="cargarYRenderAdmin()" class="tab-btn"><i class="fas fa-sync-alt"></i> Recargar</button><button onclick="verStockBajo()" class="tab-btn btn-warning"><i class="fas fa-exclamation-triangle"></i> Stock Bajo</button><button onclick="abrirModalCategorias()" class="tab-btn btn-info"><i class="fas fa-folder-tree"></i> Categorías</button></div><div id="admin-lista"></div></div>`; }
+function renderPaginaGestionStock() { 
+    return `<div class="panel">
+        <div style="display:flex;gap:12px;margin-bottom:24px">
+            <button onclick="nuevoProd()" class="tab-btn"><i class="fas fa-plus"></i> Nuevo</button>
+            <button onclick="cargarYRenderAdmin()" class="tab-btn"><i class="fas fa-sync-alt"></i> Recargar</button>
+            <button onclick="verStockBajo()" class="tab-btn btn-warning"><i class="fas fa-exclamation-triangle"></i> Stock Bajo</button>
+            <button onclick="abrirModalCategorias()" class="tab-btn btn-info"><i class="fas fa-folder-tree"></i> Categorías</button>
+            <button onclick="guardarOrdenProductos()" class="tab-btn btn-success"><i class="fas fa-save"></i> Guardar orden</button>
+        </div>
+        <div id="admin-lista"></div>
+    </div>`; 
+}
 function renderPaginaDashboard() { return `<div class="panel"><h3><i class="fas fa-chart-pie"></i> Panel de Control</h3><div id="estadisticas-avanzadas"></div><div class="charts-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;margin:20px 0"><div class="config-section"><h4><i class="fas fa-chart-bar"></i> Ventas por Día</h4><canvas id="chart-ventas-dia"></canvas></div><div class="config-section"><h4><i class="fas fa-chart-pie"></i> Productos Más Vendidos</h4><canvas id="chart-productos-top"></canvas></div><div class="config-section"><h4><i class="fas fa-chart-line"></i> Métodos de Pago</h4><canvas id="chart-metodos-pago"></canvas></div><div class="config-section"><h4><i class="fas fa-chart-doughnut"></i> Ventas por Categoría</h4><canvas id="chart-categorias"></canvas></div></div><div id="estadisticas-vendedor" class="config-section" style="margin-top:24px"><h4><i class="fas fa-users"></i> Rendimiento por Vendedor</h4></div><div class="config-section" style="margin-top:24px"><h4><i class="fas fa-history"></i> Historial de Cajas <input type="date" id="cajas-desde" style="width:140px;margin-left:12px" onchange="cargarHistorialCajas()"><input type="date" id="cajas-hasta" style="width:140px;margin-left:8px" onchange="cargarHistorialCajas()"></h4><div id="historial-cajas"></div></div></div>`; }
 function renderPaginaRetiro() { return `<div class="panel"><h3><i class="fas fa-qrcode"></i> Retirar Pedido</h3><div style="max-width:400px;margin:0 auto;text-align:center"><input type="text" id="pin-retiro-input" maxlength="4" placeholder="0000" style="font-size:48px;text-align:center;letter-spacing:24px;width:200px;margin:20px auto;padding:16px"><button onclick="verificarPINRetiro()" class="btn-confirm">Verificar</button><div id="pin-retiro-resultado" style="margin-top:20px"></div></div></div>`; }
 function renderPaginaPedidosWeb() { return `<div class="panel"><h3><i class="fas fa-shopping-cart"></i> Pedidos Web</h3><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Fecha/ID</th><th>Cliente</th><th>Items</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="lista-pedidos-body"></tbody></table></div></div>`; }
@@ -544,8 +555,13 @@ function renderAdmin(){
         card.innerHTML=`<div class="producto-header"><div class="drag-handle"><i class="fas fa-grip-vertical"></i></div><div class="producto-imagen"><img src="${sanitizarUrl(p.variantes[0]?.foto)}" style="width:100px;height:100px;object-fit:cover;border-radius:20px" onerror="this.src='https://via.placeholder.com/100'"></div><div class="producto-info"><div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><input type="text" id="en-${p.id}" value="${escapeHtml(p.nombre)}" placeholder="Nombre" style="flex:1;padding:14px;border-radius:16px;border:2px solid #e2e8f0;font-size:16px;font-weight:600"><button onclick="saveEdit('${p.id}')" class="btn-confirm" style="width:auto;padding:14px 24px"><i class="fas fa-save"></i> Guardar</button><button onclick="eliminarProducto('${p.id}')" class="tab-btn btn-danger" style="padding:14px"><i class="fas fa-trash"></i></button></div><div class="form-row"><div><label>💰 Precio</label><input type="number" id="ep-${p.id}" value="${p.precio}" step="0.01"></div><div><label>🏷️ Mayorista</label><input type="number" id="epm-${p.id}" value="${p.precioMayor||0}" step="0.01"></div></div><div class="form-row"><div><label>📁 Categoría</label><select id="cat-${p.id}" style="border-radius:16px" onchange="actualizarSubcategorias('${p.id}')"><option value="">Sin categoría</option>${categorias.map(c=>`<option value="${c.id}" ${p.categoriaId==c.id?'selected':''}>${escapeHtml(c.nombre)}</option>`).join('')}</select></div><div><label>📂 Subcategoría</label><select id="subcat-${p.id}" style="border-radius:16px"><option value="">Sin subcategoría</option>${(()=>{const cat=categorias.find(c=>c.id==p.categoriaId);if(cat?.subcategorias?.length)return cat.subcategorias.map(s=>`<option value="${escapeHtml(s)}" ${p.subcategoria==s?'selected':''}>${escapeHtml(s)}</option>`).join('');return'';})()}</select></div></div><div style="margin-top:8px"><label>📝 Descripción</label><textarea id="desc-${p.id}" rows="2" style="border-radius:16px">${escapeHtml(p.descripcion||'')}</textarea></div><button onclick="toggleVariantes('${p.id}')" id="btn-toggle-${p.id}" class="btn-toggle-variantes"><i class="fas fa-layer-group"></i> Variantes (${p.variantes.length}) <i class="fas fa-chevron-down"></i></button></div></div><div id="variantes-panel-${p.id}" class="variantes-panel" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h4 style="margin:0;color:#6366f1">Variantes (${p.variantes.length})</h4><div style="display:flex;gap:8px"><button onclick="aplicarStockATodas('${p.id}')" class="tab-btn" style="padding:8px 16px;font-size:12px"><i class="fas fa-copy"></i> Mismo stock</button><button onclick="agregarVariante('${p.id}')" class="tab-btn btn-success" style="padding:8px 16px;font-size:12px"><i class="fas fa-plus"></i> Agregar</button></div></div><div id="variantes-container-${p.id}" style="display:flex;flex-direction:column;gap:12px">${p.variantes.map((v,i)=>`<div class="variante-item"><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><img src="${sanitizarUrl(v.foto)}" id="img-var-${p.id}-${i}" style="width:50px;height:50px;border-radius:12px;object-fit:cover;cursor:pointer" onerror="this.src='https://via.placeholder.com/50'" onclick="document.getElementById('input-var-foto-${p.id}-${i}').click()"><input type="file" id="input-var-foto-${p.id}-${i}" accept="image/*" style="display:none" onchange="subirFotoVariante(this,'${p.id}',${i})"></div><div style="flex:1"><input type="text" id="vn-${p.id}-${i}" value="${escapeHtml(v.nombre)}" style="padding:10px;border-radius:12px"></div><div style="width:80px"><input type="number" id="vs-${p.id}-${i}" value="${v.stock}" min="0" style="padding:10px;border-radius:12px;text-align:center"></div>${p.variantes.length>1?`<button onclick="eliminarVariante('${p.id}',${i})" style="background:#fee2e2;color:#ef4444;border:none;padding:8px 12px;border-radius:12px;cursor:pointer"><i class="fas fa-trash"></i></button>`:''}</div>`).join('')}</div></div>`;
         a.appendChild(card);
     });
-    if(window.Sortable) new Sortable(a,{handle:'.drag-handle',animation:200,onEnd:async()=>{const orden=[];document.querySelectorAll('#admin-lista .producto-card').forEach((c,i)=>{const id=c.getAttribute('data-id');const p=productos.find(x=>x.id==id);if(p){p.orden=i;orden.push({id:p.id,orden:i});}});if(orden.length) await safeFetch('/reordenar-productos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lista:orden})});}});
-}
+    if(window.Sortable) new Sortable(a,{
+    handle:'.drag-handle',
+    animation:200,
+    onEnd:function(){
+        // Solo actualiza el orden visual, no guarda
+    }
+});
 
 function toggleVariantes(id){const p=document.getElementById(`variantes-panel-${id}`);const b=document.getElementById(`btn-toggle-${id}`);if(!p||!b)return;if(p.style.display==='none'){p.style.display='block';b.innerHTML=`<i class="fas fa-layer-group"></i> Ocultar Variantes <i class="fas fa-chevron-up"></i>`;}else{p.style.display='none';const prod=productos.find(x=>x.id==id);b.innerHTML=`<i class="fas fa-layer-group"></i> Variantes (${prod?.variantes?.length||0}) <i class="fas fa-chevron-down"></i>`;}}
 function agregarVariante(pid){const p=productos.find(x=>x.id==pid);if(!p)return;if(p.variantes.length>=30){mostrarToast('Máximo 30',true);return;}p.variantes.push({nombre:`Variante ${p.variantes.length+1}`,stock:0,foto:''});const c=document.getElementById(`variantes-container-${pid}`);const b=document.getElementById(`btn-toggle-${pid}`);if(c){const i=p.variantes.length-1;c.innerHTML+=`<div class="variante-item"><div style="display:flex;align-items:center;gap:8px"><img src="https://via.placeholder.com/50" id="img-var-${pid}-${i}" style="width:50px;height:50px;border-radius:12px;cursor:pointer" onclick="document.getElementById('input-var-foto-${pid}-${i}').click()"><input type="file" id="input-var-foto-${pid}-${i}" accept="image/*" style="display:none" onchange="subirFotoVariante(this,'${pid}',${i})"></div><div style="flex:1"><input type="text" id="vn-${pid}-${i}" value="${escapeHtml(p.variantes[i].nombre)}" style="padding:10px;border-radius:12px"></div><div style="width:80px"><input type="number" id="vs-${pid}-${i}" value="0" min="0" style="padding:10px;border-radius:12px;text-align:center"></div><button onclick="eliminarVariante('${pid}',${i})" style="background:#fee2e2;color:#ef4444;border:none;padding:8px 12px;border-radius:12px"><i class="fas fa-trash"></i></button></div>`;}if(b)b.innerHTML=`<i class="fas fa-layer-group"></i> Ocultar Variantes (${p.variantes.length}) <i class="fas fa-chevron-up"></i>`;mostrarToast('✅ Agregada');}
@@ -1260,6 +1276,33 @@ function procesarArchivoRestore(i){const f=i.files[0];if(f)procesarArchivoRestor
 function procesarArchivoRestoreDirecto(f){archivoRestoreActual=f;document.getElementById('btn-restaurar').style.display='block';mostrarToast('✅ Archivo listo');}
 async function confirmarRestauracionTotal(){if(!archivoRestoreActual){mostrarToast('Seleccioná archivo',true);return;}if(!confirm('⚠️ ¿REEMPLAZAR TODO?'))return;if(!confirm('¿ÚLTIMA CONFIRMACIÓN?'))return;const p=prompt('Contraseña admin:');if(!p)return;const fd=new FormData();fd.append('backup',archivoRestoreActual);fd.append('password',p);try{await safeFetch('/admin/backup/restaurar-desde-archivo',{method:'POST',body:fd});mostrarToast('✅ Restaurado');alert('Recargando...');location.reload();}catch(e){mostrarToast('Error: '+e.message,true);}}
 
+async function guardarOrdenProductos(){
+    const orden = [];
+    document.querySelectorAll('#admin-lista .producto-card').forEach((c, i) => {
+        const id = c.getAttribute('data-id');
+        if(id) {
+            orden.push({id: id, orden: i});
+        }
+    });
+    
+    if(!orden.length) {
+        mostrarToast('No hay productos para guardar', true);
+        return;
+    }
+    
+    try {
+        await safeFetch('/reordenar-productos', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({lista: orden})
+        });
+        mostrarToast('✅ Orden guardado correctamente');
+    } catch(e) {
+        mostrarToast('❌ Error al guardar el orden', true);
+    }
+}
+
+function toggleThemePanel(){   // <-- esta ya existe, no la toques
 function toggleThemePanel(){const p=document.getElementById('theme-panel');if(p)p.style.display=p.style.display==='block'?'none':'block';}
 function toggleDarkMode(){document.body.classList.toggle('dark-mode');localStorage.setItem('darkMode',document.body.classList.contains('dark-mode'));}
 if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark-mode');}
