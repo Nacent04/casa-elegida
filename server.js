@@ -593,9 +593,8 @@ app.post('/reordenar-productos', async (req, res) => {
     try {
         const { lista } = req.body;
         if (lista && lista.length) {
-            for (const item of lista) {
-                await pool.query('UPDATE productos SET orden = $1 WHERE id = $2', [item.orden, item.id]);
-            }
+            // Guardar el orden en la tabla configuracion
+            await setConfig('orden_productos', lista);
         }
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
