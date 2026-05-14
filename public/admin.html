@@ -677,29 +677,26 @@ function verDetallePedido(id) {
 // Variable externa para evitar doble clic
 let estaProcesando = false;
 
-async function confirmarPedidoWeb(id) {
+async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
     try {
-        const res = await safeFetch('/tienda/confirmar-pedido', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ pedidoId: id })
+        const respuesta = await safeFetch('/tienda/confirmar-pedido',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({pedidoId:id})
         });
-
-        const data = await res.json(); // Importante para leer el success
-
-        if(data.success) {
-            // ESTA ES LA FUNCIÓN QUE TE FALTA LLAMAR:
-            // Como ya existe en tu frontend, al llamarla, traerá los datos
-            // nuevos de la base de datos y redibujará la tabla sola.
-            await cargarPedidosTienda(); 
-            
-            mostrarToast('✅ Pedido confirmado');
-        } else {
-            mostrarToast('Error: ' + data.error, true);
-        }
+        
+        console.log('Respuesta del servidor:', respuesta);
+        
+        // Si llegó hasta aquí, el servidor respondió bien
+        const p = pedidosTienda.find(x => x.id === id);
+        if(p) p.estado = 'confirmado';
+        renderPedidosWeb();
+        mostrarToast('✅ Confirmado');
+        
     } catch(e) {
-        mostrarToast('Error: ' + e.message, true);
+        console.error('Error completo:', e);
+        mostrarToast('Error: '+e.message, true);
     }
 }
 async function marcarAbonado(id){
