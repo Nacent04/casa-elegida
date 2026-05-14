@@ -643,21 +643,22 @@ async function confirmarPedidoWeb(id){
     try {
         mostrarToast('⏳ Confirmando pedido...');
         
-        // 1. Llamar al servidor para confirmar
+        // Confirmar en el servidor
         await safeFetch('/tienda/confirmar-pedido',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({pedidoId:id})
         });
         
-        // 2. Actualizar el estado LOCALMENTE (igual que marcarAbonado)
+        // Forzar actualización local
         const pedido = pedidosTienda.find(p => p.id === id);
-        if (pedido) {
-            pedido.estado = 'confirmado';
-        }
+        if (pedido) pedido.estado = 'confirmado';
         
-        // 3. Renderizar con los datos locales (NO usar cargarPedidosTienda)
-        renderPedidosWeb();
+        // Pequeña pausa para asegurar que el servidor procesó
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Ahora sí recargar del servidor (ya debería estar actualizado)
+        await cargarPedidosTienda();
         
         mostrarToast('✅ Pedido confirmado exitosamente');
         
