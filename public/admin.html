@@ -643,42 +643,21 @@ async function confirmarPedidoWeb(id){
     try {
         mostrarToast('⏳ Confirmando pedido...');
         
+        // 1. Llamar al servidor para confirmar
         await safeFetch('/tienda/confirmar-pedido',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({pedidoId:id})
         });
         
-        // Actualizar el array
+        // 2. Actualizar el estado LOCALMENTE (igual que marcarAbonado)
         const pedido = pedidosTienda.find(p => p.id === id);
-        if (pedido) pedido.estado = 'confirmado';
+        if (pedido) {
+            pedido.estado = 'confirmado';
+        }
         
-        // 🎯 Buscar y modificar DIRECTAMENTE el botón en el DOM
-        const todasLasFilas = document.querySelectorAll('#lista-pedidos-body tr');
-        todasLasFilas.forEach(fila => {
-            const textoFila = fila.textContent;
-            if (textoFila.includes(id)) {
-                // Encontrar la celda de estado
-                const celdas = fila.querySelectorAll('td');
-                if (celdas.length >= 5) {
-                    // Actualizar estado (celda 4, índice 4)
-                    celdas[4].innerHTML = '<span class="estado-badge estado-confirmado">confirmado</span>';
-                    
-                    // Actualizar botones (celda 5, índice 5)
-                    celdas[5].innerHTML = `
-                        <button onclick="verDetallePedido('${id}')" class="btn-print btn-info">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button onclick="marcarAbonado('${id}')" class="btn-print btn-info">
-                            Abonado
-                        </button>
-                        <button onclick="cancelarPedidoAdmin('${id}')" class="btn-print btn-danger">
-                            Cancelar
-                        </button>
-                    `;
-                }
-            }
-        });
+        // 3. Renderizar con los datos locales (NO usar cargarPedidosTienda)
+        renderPedidosWeb();
         
         mostrarToast('✅ Pedido confirmado exitosamente');
         
