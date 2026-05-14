@@ -51,7 +51,8 @@ async function initDB() {
                 "categoriaId" INTEGER,
                 subcategoria TEXT DEFAULT '',
                 "fechaCreacion" TEXT DEFAULT NOW(),
-                destacado INTEGER DEFAULT 0
+                destacado INTEGER DEFAULT 0,
+                orden INTEGER DEFAULT 0
 );
             CREATE TABLE IF NOT EXISTS variantes (
                 id SERIAL PRIMARY KEY,
