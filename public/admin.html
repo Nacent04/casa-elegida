@@ -639,16 +639,9 @@ function verDetallePedido(id) {
 
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
-    try {
-        const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
-        if(res.success){
-            mostrarToast('✅ Confirmado');
-            await cargarPedidosTienda();
-            renderPedidosWeb();
-        }
-    } catch(e) {
-        mostrarToast('Error al confirmar', true);
-    }
+    await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+    await cargarPedidosTienda();
+    mostrarToast('✅ Confirmado');
 }
 async function marcarAbonado(id){
     if(!confirm('¿Marcar como abonado?')) return;
