@@ -639,18 +639,22 @@ function verDetallePedido(id) {
 
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
-    const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
-    if(res.success){
-        mostrarToast('✅ Confirmado - PIN: ' + (res.pin || 'Envío'));
-        // Actualizar directamente el pedido en el array local
-        const pedido = pedidosTienda.find(p => p.id === id);
-        if(pedido){
-            pedido.estado = 'confirmado';
-            pedido.pin = res.pin || null;
+    try {
+        const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        if(res.success){
+            mostrarToast('✅ Confirmado - PIN: ' + (res.pin || 'Envío'));
+            // Actualizar localmente
+            const pedido = pedidosTienda.find(p => p.id === id);
+            if(pedido){
+                pedido.estado = 'confirmado';
+                pedido.pin = res.pin || null;
+            }
+            renderPedidosWeb();
+        } else {
+            mostrarToast('❌ ' + (res.error || 'Error'), true);
         }
-        renderPedidosWeb();
-    } else {
-        mostrarToast('Error al confirmar', true);
+    } catch(e) {
+        mostrarToast('Error de conexión', true);
     }
 }
 async function marcarAbonado(id){
