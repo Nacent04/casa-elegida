@@ -733,22 +733,27 @@ app.post('/tienda/listar-pedidos', async (req, res) => {
 
 app.post('/tienda/confirmar-pedido', async (req, res) => {
     try {
-        const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1 AND estado=$2', [req.body.pedidoId, 'pendiente'])).rows[0];
-        if (!p) return res.status(400).json({ error: 'Pedido no encontrado o no está pendiente. Estado actual: ' + (p ? p.estado : 'no existe') });
+        const p = (await pool.query('SELECT * FROM pedidos WHERE id=$1', [req.body.pedidoId])).rows[0];
+        if (!p) return res.status(400).json({ error: 'Pedido no encontrado' });
+        if (p.estado !== 'pendiente') return res.status(400).json({ error: 'El pedido ya está ' + p.estado });
+        
         const esRetiroLocal = p["tipoEntrega"] === 'local';
         const pin = esRetiroLocal ? generarPIN() : null;
         const vid = 'FAC-' + Date.now();
         await pool.query("INSERT INTO ventas (id,fecha,\"fechaTimestamp\",items,total,\"metodoPago\",logistica,cliente,estado,origen,\"pedidoId\") VALUES ($1,TO_CHAR(NOW(),'DD/MM/YYYY HH24:MI:SS'),$2,$3,$4,'pedido_online',$5,$6,'completada','tienda',$7)",
             [vid, Date.now(), p.items, p.total, p["tipoEntrega"]==='envio'?'envio':'local', p.cliente, p.id]);
         await pool.query('UPDATE pedidos SET estado=$1,pin=$2,"ventaId"=$3 WHERE id=$4', ['confirmado', pin || null, vid, p.id]);
-        await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id}`, req);
+        await logActividad('Admin', 'CONFIRMAR_PEDIDO', `Pedido ${p.id} confirmado`, req);
         const cliente = JSON.parse(p.cliente||'{}');
         if (cliente.email) {
-    const mensajePin = esRetiroLocal ? `<p>Tu PIN de retiro: <strong>${pin}</strong></p>` : '';
-    await enviarEmail(cliente.email, `Pedido #${p.id} confirmado`, `<h1>Casa Elegida</h1><h2>¡Pedido confirmado!</h2>${mensajePin}<p>Total: ${fmt.format(p.total)}</p>`);
-}
-        res.json({ success: true, ventaId: vid, pin });
-    } catch(e) { res.status(500).json({ error: e.message }); }
+            const mensajePin = esRetiroLocal ? `<p>Tu PIN de retiro: <strong>${pin}</strong></p>` : '';
+            await enviarEmail(cliente.email, `Pedido #${p.id} confirmado`, `<h1>Casa Elegida</h1><h2>¡Pedido confirmado!</h2>${mensajePin}<p>Total: ${fmt.format(p.total)}</p>`);
+        }
+        res.json({ success: true, ventaId: vid, pin: pin || undefined });
+    } catch(e) { 
+        console.error('Error confirmar-pedido:', e);
+        res.status(500).json({ error: e.message }); 
+    }
 });
 
 app.post('/tienda/cancelar-pedido', authMiddleware, async (req, res) => {
