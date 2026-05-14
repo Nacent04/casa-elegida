@@ -290,7 +290,7 @@ function agregarDesdeModal(){if(!productoModalActual)return;const v=productoModa
 function cerrarModal(){document.getElementById('product-modal').classList.remove('active');productoModalActual=null}
 function toggleCarrito(){document.getElementById('cart-sidebar').classList.toggle('active');document.getElementById('cart-overlay').classList.toggle('active')}
 function actualizarWhatsAppPago(){const wsp=configuracion.redes?.whatsapp||'';const el=document.getElementById('whatsapp-pago');if(el&&wsp){el.style.display='flex';el.href=`https://wa.me/${wsp.replace(/\D/g,'')}?text=Hola%20Casa%20Elegida%20adjunto%20comprobante%20de%20pago`}}
-function irACheckout(){if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}const token=localStorage.getItem('token');if(configuracion.registroObligatorio&&!token){guardarCarritoLocal();localStorage.setItem('carrito_pendiente',JSON.stringify(carrito));mostrarToast('🔐 Iniciá sesión para finalizar','error');setTimeout(()=>window.location.href='/login',1500);return}guardarCarritoLocal();localStorage.setItem('tienda_carrito',JSON.stringify(carrito));window.location.href='/checkout'}
+function irACheckout(){if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}const token=localStorage.getItem('token');if(configuracion.registroObligatorio&&!token){guardarCarritoLocal();localStorage.setItem('carrito_pendiente',JSON.stringify(carrito));mostrarToast('🔐 Iniciá sesión para finalizar','error');setTimeout(()=>window.location.href='/registro?return=/checkout',1500);return}guardarCarritoLocal();localStorage.setItem('tienda_carrito',JSON.stringify(carrito));window.location.href='/checkout'}
 
 function actualizarProgresoMayorista(){
     const container=document.getElementById('progreso-mayorista-container');
