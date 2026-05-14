@@ -443,7 +443,7 @@ function tab(t) {
     else if (t==='dash') { container.className='layout'; container.innerHTML=renderPaginaDashboard(); cartPanel.classList.add('hidden'); setTimeout(cargarDashboard,100); }
     else if (t==='c') { container.className='layout'; container.innerHTML=renderPaginaConfiguracion(); cartPanel.classList.add('hidden'); cargarConfiguracion(); setTimeout(()=>{cargarMetodosEnvio();},200); }
     else if (t==='retiro') { container.className='layout'; container.innerHTML=renderPaginaRetiro(); cartPanel.classList.add('hidden'); }
-    else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); cargarPedidosTienda(); }
+    else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); pedidosTienda = []; cargarPedidosTienda(); }
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
     else if (t==='logs') { container.className='layout'; container.innerHTML=renderPaginaLogs(); cartPanel.classList.add('hidden'); cargarLogs(); }
     else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
@@ -623,13 +623,7 @@ async function agregarCategoria(){const n=document.getElementById('nueva-cat-nom
 async function guardarCat(id){const n=document.getElementById(`cat-nombre-${id}`).value.trim();if(!n)return;await safeFetch('/guardar-categoria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,nombre:n})});mostrarToast('✅ Guardado');}
 async function eliminarCat(id){if(!confirm('¿Eliminar?'))return;await safeFetch('/eliminar-categoria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});document.querySelector('.modal.active').remove();cargarCategorias();}
 
-async function cargarPedidosTienda(){
-    try{
-        const d = await safeFetch('/tienda/listar-pedidos',{method:'POST'});
-        pedidosTienda = d.lista || [];
-        renderPedidosWeb();
-    } catch(e) {}
-}
+async function cargarPedidosTienda(){try{const d=await safeFetch('/tienda/listar-pedidos',{method:'POST'});pedidosTienda=d.lista||[];renderPedidosWeb();return pedidosTienda;}catch(e){return[];}}
 function renderPedidosWeb(){const b=document.getElementById('lista-pedidos-body');if(!b)return;b.innerHTML=pedidosTienda.map(p=>`<tr><td><small>${p.fecha}</small><br><strong>${p.id}</strong>${p.pin?`<br>PIN: ${p.pin}`:''}</td><td>${p.cliente?.nombre||''}</td><td>${p.items.length}</td><td>${fmt.format(p.total)}</td><td><span class="estado-badge estado-${p.estado}">${p.estado}</span></td><td><button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info"><i class="fas fa-eye"></i></button>${p.estado==='pendiente'?`<button onclick="confirmarPedidoWeb('${p.id}')" class="btn-print btn-success">Confirmar</button>`:''}${p.estado==='confirmado'?`<button onclick="marcarAbonado('${p.id}')" class="btn-print btn-info">Abonado</button>`:''}${p.estado==='abonado' && p.tipoEntrega==='envio' ? `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white"><i class="fas fa-truck"></i> Enviado</button>` : ''}${p.estado!=='entregado'&&p.estado!=='cancelado'?`<button onclick="cancelarPedidoAdmin('${p.id}')" class="btn-print btn-danger">Cancelar</button>`:''}</td></tr>`).join('');}
 
 function verDetallePedido(id) { 
