@@ -638,13 +638,18 @@ function verDetallePedido(id) {
 }
 
 async function confirmarPedidoWeb(id){
-    if(!confirm('¿Confirmar pedido y asignar PIN de retiro?')) return;
-    try {
-        await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
-        mostrarToast('✅ Confirmado - Se generó PIN de retiro');
-        // Pequeña pausa para asegurar que el backend procesó
-        setTimeout(() => cargarPedidosTienda(), 500);
-    } catch(e) {
+    if(!confirm('¿Confirmar pedido?')) return;
+    const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+    if(res.success){
+        mostrarToast('✅ Confirmado - PIN: ' + (res.pin || 'Envío'));
+        // Actualizar directamente el pedido en el array local
+        const pedido = pedidosTienda.find(p => p.id === id);
+        if(pedido){
+            pedido.estado = 'confirmado';
+            pedido.pin = res.pin || null;
+        }
+        renderPedidosWeb();
+    } else {
         mostrarToast('Error al confirmar', true);
     }
 }
