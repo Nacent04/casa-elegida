@@ -624,7 +624,7 @@ async function guardarCat(id){const n=document.getElementById(`cat-nombre-${id}`
 async function eliminarCat(id){if(!confirm('¿Eliminar?'))return;await safeFetch('/eliminar-categoria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});document.querySelector('.modal.active').remove();cargarCategorias();}
 
 async function cargarPedidosTienda(){try{const d=await safeFetch('/tienda/listar-pedidos',{method:'POST'});pedidosTienda=d.lista||[];renderPedidosWeb();}catch(e){}}
-function renderPedidosWeb(){const b=document.getElementById('lista-pedidos-body');if(!b)return;b.innerHTML=pedidosTienda.map(p=>`<tr><td><small>${p.fecha}</small><br><strong>${p.id}</strong>${p.pin?`<br>PIN: ${p.pin}`:''}</td><td>${p.cliente?.nombre||''}</td><td>${p.items.length}</td><td>${fmt.format(p.total)}</td><td><span class="estado-badge estado-${p.estado}">${p.estado}</span></td><td><button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info"><i class="fas fa-eye"></i></button>${p.estado==='pendiente'?`<button onclick="confirmarPedidoWeb('${p.id}')" class="btn-print btn-success">Confirmar</button>`:''}${p.estado==='confirmado'?`<button onclick="marcarAbonado('${p.id}')" class="btn-print btn-info">Abonado</button>`:''}${p.estado==='abonado' && p.tipoEntrega==='envio' ? `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white"><i class="fas fa-truck"></i> Enviado</button>` : ''}${p.estado==='abonado' && p.tipoEntrega==='envio' ? `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white"><i class="fas fa-truck"></i> Enviado</button>` : ''}${p.estado!=='entregado'&&p.estado!=='cancelado'?`<button onclick="cancelarPedidoAdmin('${p.id}')" class="btn-print btn-danger">Cancelar</button>`:''}</td></tr>`).join('');}
+function renderPedidosWeb(){const b=document.getElementById('lista-pedidos-body');if(!b)return;b.innerHTML=pedidosTienda.map(p=>`<tr><td><small>${p.fecha}</small><br><strong>${p.id}</strong>${p.pin?`<br>PIN: ${p.pin}`:''}</td><td>${p.cliente?.nombre||''}</td><td>${p.items.length}</td><td>${fmt.format(p.total)}</td><td><span class="estado-badge estado-${p.estado}">${p.estado}</span></td><td><button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info"><i class="fas fa-eye"></i></button>${p.estado==='pendiente'?`<button onclick="confirmarPedidoWeb('${p.id}')" class="btn-print btn-success">Confirmar</button>`:''}${p.estado==='confirmado'?`<button onclick="marcarAbonado('${p.id}')" class="btn-print btn-info">Abonado</button>`:''}${p.estado==='abonado' && p.tipoEntrega==='envio' ? `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white"><i class="fas fa-truck"></i> Enviado</button>` : ''}${p.estado!=='entregado'&&p.estado!=='cancelado'?`<button onclick="cancelarPedidoAdmin('${p.id}')" class="btn-print btn-danger">Cancelar</button>`:''}</td></tr>`).join('');}
 
 function verDetallePedido(id) { 
     const p = pedidosTienda.find(x => x.id === id); 
@@ -639,9 +639,14 @@ function verDetallePedido(id) {
 
 async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido y asignar PIN de retiro?')) return;
-    await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
-    mostrarToast('✅ Confirmado - Se generó PIN de retiro');
-    cargarPedidosTienda();
+    try {
+        await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
+        mostrarToast('✅ Confirmado - Se generó PIN de retiro');
+        // Pequeña pausa para asegurar que el backend procesó
+        setTimeout(() => cargarPedidosTienda(), 500);
+    } catch(e) {
+        mostrarToast('Error al confirmar', true);
+    }
 }
 async function marcarAbonado(id){
     if(!confirm('¿Marcar como abonado?')) return;
