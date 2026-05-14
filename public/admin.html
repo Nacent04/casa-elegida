@@ -674,24 +674,42 @@ function verDetallePedido(id) {
     document.body.appendChild(modal); 
 }
 
-async function confirmarPedidoWeb(id){
-    if(!confirm('¿Confirmar pedido?')) return;
+// Variable externa para evitar doble clic
+let estaProcesando = false;
+
+async function confirmarPedidoWeb(id) {
+    if (estaProcesando) return;
+    if (!confirm('¿Confirmar pedido?')) return;
+
     try {
-        await safeFetch('/tienda/confirmar-pedido',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({pedidoId:id})
+        estaProcesando = true;
+        
+        const response = await safeFetch('/tienda/confirmar-pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pedidoId: id })
         });
-        
-        // Actualizar estado localmente
+
+        // Validar si la respuesta del servidor fue realmente exitosa
+        if (!response.ok) {
+            throw new Error('El servidor rechazó la confirmación');
+        }
+
+        // Actualizar estado de forma inmutable (mejor para frameworks)
         const index = pedidosTienda.findIndex(p => p.id === id);
-        if(index !== -1) pedidosTienda[index].estado = 'confirmado';
-        
-        // Re-renderizar
+        if (index !== -1) {
+            // Creamos un nuevo objeto para mantener la integridad
+            pedidosTienda[index] = { ...pedidosTienda[index], estado: 'confirmado' };
+        }
+
         renderPedidosWeb();
         mostrarToast('✅ Pedido confirmado');
-    } catch(e) {
-        mostrarToast('Error: '+e.message, true);
+
+    } catch (e) {
+        console.error("Error al confirmar:", e);
+        mostrarToast('Error: ' + e.message, true);
+    } finally {
+        estaProcesando = false; // Liberar el bloqueo siempre
     }
 }
 async function marcarAbonado(id){
