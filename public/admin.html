@@ -641,7 +641,6 @@ async function confirmarPedidoWeb(id){
     if(!confirm('¿Confirmar pedido?')) return;
     
     try {
-        // Mostrar que está procesando
         mostrarToast('⏳ Confirmando pedido...');
         
         await safeFetch('/tienda/confirmar-pedido',{
@@ -650,14 +649,47 @@ async function confirmarPedidoWeb(id){
             body:JSON.stringify({pedidoId:id})
         });
         
-        // 🔄 ACTUALIZAR el pedido localmente SIN recargar
+        // 🔄 ACTUALIZAR el pedido localmente
         const pedido = pedidosTienda.find(p => p.id === id);
         if (pedido) {
             pedido.estado = 'confirmado';
         }
         
-        // 🔄 Renderizar la tabla de pedidos CON LOS NUEVOS BOTONES
-        renderPedidosWeb();
+        // 🎯 FORZAR la actualización de la tabla inmediatamente
+        const tbody = document.getElementById('lista-pedidos-body');
+        if (tbody) {
+            // Buscar la fila que contiene este pedido
+            const filas = tbody.getElementsByTagName('tr');
+            for (let fila of filas) {
+                // Buscar el ID del pedido en la fila
+                const textoFila = fila.textContent || fila.innerText;
+                if (textoFila.includes(id)) {
+                    // Actualizar el badge de estado
+                    const badgeEstado = fila.querySelector('.estado-badge');
+                    if (badgeEstado) {
+                        badgeEstado.className = 'estado-badge estado-confirmado';
+                        badgeEstado.textContent = 'confirmado';
+                    }
+                    
+                    // Actualizar los botones de acción
+                    const celdaAcciones = fila.querySelector('td:last-child');
+                    if (celdaAcciones) {
+                        celdaAcciones.innerHTML = `
+                            <button onclick="verDetallePedido('${id}')" class="btn-print btn-info">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="marcarAbonado('${id}')" class="btn-print btn-info">
+                                Abonado
+                            </button>
+                            <button onclick="cancelarPedidoAdmin('${id}')" class="btn-print btn-danger">
+                                Cancelar
+                            </button>
+                        `;
+                    }
+                    break;
+                }
+            }
+        }
         
         mostrarToast('✅ Pedido confirmado exitosamente');
         
