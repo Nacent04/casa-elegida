@@ -623,7 +623,13 @@ async function agregarCategoria(){const n=document.getElementById('nueva-cat-nom
 async function guardarCat(id){const n=document.getElementById(`cat-nombre-${id}`).value.trim();if(!n)return;await safeFetch('/guardar-categoria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,nombre:n})});mostrarToast('✅ Guardado');}
 async function eliminarCat(id){if(!confirm('¿Eliminar?'))return;await safeFetch('/eliminar-categoria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});document.querySelector('.modal.active').remove();cargarCategorias();}
 
-async function cargarPedidosTienda(){try{const d=await safeFetch('/tienda/listar-pedidos',{method:'POST'});pedidosTienda=d.lista||[];renderPedidosWeb();}catch(e){}}
+async function cargarPedidosTienda(){
+    try{
+        const d = await safeFetch('/tienda/listar-pedidos',{method:'POST'});
+        pedidosTienda = d.lista || [];
+        renderPedidosWeb();
+    } catch(e) {}
+}
 function renderPedidosWeb(){const b=document.getElementById('lista-pedidos-body');if(!b)return;b.innerHTML=pedidosTienda.map(p=>`<tr><td><small>${p.fecha}</small><br><strong>${p.id}</strong>${p.pin?`<br>PIN: ${p.pin}`:''}</td><td>${p.cliente?.nombre||''}</td><td>${p.items.length}</td><td>${fmt.format(p.total)}</td><td><span class="estado-badge estado-${p.estado}">${p.estado}</span></td><td><button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info"><i class="fas fa-eye"></i></button>${p.estado==='pendiente'?`<button onclick="confirmarPedidoWeb('${p.id}')" class="btn-print btn-success">Confirmar</button>`:''}${p.estado==='confirmado'?`<button onclick="marcarAbonado('${p.id}')" class="btn-print btn-info">Abonado</button>`:''}${p.estado==='abonado' && p.tipoEntrega==='envio' ? `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white"><i class="fas fa-truck"></i> Enviado</button>` : ''}${p.estado!=='entregado'&&p.estado!=='cancelado'?`<button onclick="cancelarPedidoAdmin('${p.id}')" class="btn-print btn-danger">Cancelar</button>`:''}</td></tr>`).join('');}
 
 function verDetallePedido(id) { 
@@ -642,18 +648,12 @@ async function confirmarPedidoWeb(id){
     try {
         const res = await safeFetch('/tienda/confirmar-pedido',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pedidoId:id})});
         if(res.success){
-            const pedido = pedidosTienda.find(p => p.id === id);
-            if(pedido){
-                pedido.estado = 'confirmado';
-                pedido.pin = res.pin || null;
-            }
+            mostrarToast('✅ Confirmado');
+            await cargarPedidosTienda();
             renderPedidosWeb();
-            mostrarToast('✅ Confirmado' + (res.pin ? ' - PIN: ' + res.pin : ''));
-        } else {
-            mostrarToast('❌ ' + (res.error || 'Error'), true);
         }
     } catch(e) {
-        mostrarToast('Error', true);
+        mostrarToast('Error al confirmar', true);
     }
 }
 async function marcarAbonado(id){
