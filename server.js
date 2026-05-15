@@ -553,7 +553,7 @@ app.post('/auth/completar-datos', authMiddleware, async (req, res) => {
 });
 
 app.post('/listar', async (req, res) => {
-    const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
+    const prods = (await pool.query('SELECT * FROM productos ORDER BY orden ASC, id DESC')).rows;
     for (const p of prods) {
         p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
     }
