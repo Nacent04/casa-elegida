@@ -593,11 +593,15 @@ app.post('/reordenar-productos', async (req, res) => {
     try {
         const { lista } = req.body;
         if (lista && lista.length) {
-            // Guardar el orden en la tabla configuracion
-            await setConfig('orden_productos', lista);
+            for (const item of lista) {
+                await pool.query('UPDATE productos SET orden = $1 WHERE id = $2', [item.orden, item.id]);
+            }
         }
         res.json({ success: true });
-    } catch(e) { res.status(500).json({ error: e.message }); }
+    } catch(e) { 
+        console.error('Error:', e.message);
+        res.status(500).json({ error: e.message }); 
+    }
 });
 app.post('/verificar-stock', async (req, res) => {
     const v = (await pool.query('SELECT stock FROM variantes WHERE "productoId"=$1 AND nombre=$2', [req.body.productoId, req.body.varianteNombre])).rows[0];
