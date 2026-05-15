@@ -1167,6 +1167,15 @@ async function start() {
         await initConfig();
         await initMetodosEnvio();
         await initAdmin();
+        
+        // Agrega la columna si no existe
+        try {
+            await pool.query('ALTER TABLE productos ADD COLUMN IF NOT EXISTS orden INTEGER DEFAULT 0');
+            console.log('✅ Columna orden verificada');
+        } catch(e) {
+            console.log('⚠️ Error al agregar columna:', e.message);
+        }
+        
         app.listen(PORT, () => console.log(`\n🏪 CASA ELEGIDA - Puerto ${PORT}\n`));
     } catch(e) {
         console.error('Error al iniciar:', e.message);
