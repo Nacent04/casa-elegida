@@ -463,7 +463,32 @@ function renderPaginaVentas() {
         <div id="grid-prods" class="grid"></div>
     </div>`; 
 }
-function renderPaginaListadoVentas() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-history"></i> Historial</span><button onclick="exportarVentasCSV()" class="tab-btn btn-excel"><i class="fas fa-file-csv"></i> Exportar</button></h3><div class="ventas-buscador"><input type="text" id="ventas-buscador" placeholder="🔍 Buscar..." onkeyup="filtrarVentas()"></div><table style="width:100%"><thead><tr><th>Fecha/ID</th><th>Cliente</th><th>Items</th><th>Total</th><th></th></tr></thead><tbody id="lista-ventas-body"></tbody></table></div>`; }
+function renderPaginaListadoVentas() { 
+    return `<div class="panel">
+        <h3 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <span><i class="fas fa-history"></i> Historial de Ventas</span>
+            <button onclick="exportarVentasCSV()" class="tab-btn btn-excel"><i class="fas fa-file-csv"></i> Exportar</button>
+        </h3>
+        <div class="ventas-buscador" style="margin-bottom:20px">
+            <input type="text" id="ventas-buscador" placeholder="🔍 Buscar por fecha, ID o cliente..." onkeyup="filtrarVentas()">
+        </div>
+        <div style="overflow-x:auto">
+            <table style="width:100%; border-collapse: separate; border-spacing: 0;">
+                <thead>
+                    <tr style="background: #f8fafc;">
+                        <th style="padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0;">FECHA / ID</th>
+                        <th style="padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0;">CLIENTE</th>
+                        <th style="padding: 14px 16px; text-align: center; font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0;">PRODUCTOS</th>
+                        <th style="padding: 14px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0;">TOTAL</th>
+                        <th style="padding: 14px 16px; text-align: right; font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0;">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-ventas-body"></tbody>
+            </table>
+        </div>
+    </div>`; 
+}
+    
 function renderPaginaGestionStock() { 
     return `<div class="panel">
         <div style="display:flex;gap:12px;margin-bottom:24px">
@@ -604,7 +629,41 @@ async function eliminarProducto(id){if(!confirm('¿Eliminar?'))return;await safe
 function nuevoProd(){let id=Date.now().toString();productos.unshift({id,nombre:"Nuevo",precio:0,precioMayor:0,variantes:[{nombre:"Unica",stock:0,foto:""}],descripcion:""});renderAdmin();}
 async function verStockBajo(){let d=await safeFetch('/stock-bajo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minimo:5})});if(!d.stockBajo?.length)mostrarToast('✅ Stock OK');else mostrarToast(`⚠️ ${d.stockBajo.length} bajas`,true);}
 
-function renderVentas(){ const b=document.getElementById('lista-ventas-body'); if(!b)return; b.innerHTML=ventasHistorial.map(v=>`<tr><td><small>${v.fecha}</small><br><strong>${v.id}</strong></td><td>${v.cliente?.nombre||'Mostrador'}</td><td>${v.items.length}</td><td><strong>${fmt.format(v.pago.total)}</strong></td><td><button onclick="verDetalleVenta('${v.id}')" class="btn-print btn-info"><i class="fas fa-eye"></i></button> <button onclick="imprimirTicket('${v.id}','termico')" class="btn-print"><i class="fas fa-receipt"></i> Ticket</button> <button onclick="imprimirTicket('${v.id}','a4')" class="btn-print btn-excel"><i class="fas fa-file-pdf"></i> A4</button></td></tr>`).join(''); }
+function renderVentas(){ 
+    const b = document.getElementById('lista-ventas-body'); 
+    if(!b) return; 
+    b.innerHTML = ventasHistorial.map(v => `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 14px 16px; white-space: nowrap;">
+                <span style="font-size: 13px; color: #64748b;">${v.fecha.substring(0, 10)}</span><br>
+                <strong style="font-size: 15px;">${v.id}</strong>
+            </td>
+            <td style="padding: 14px 16px;">
+                <span style="font-size: 13px;">${v.cliente?.nombre || 'Mostrador'}</span>
+            </td>
+            <td style="padding: 14px 16px; text-align: center;">
+                <span style="background: #eef2ff; color: #6366f1; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 13px;">
+                    ${v.items.length} items
+                </span>
+            </td>
+            <td style="padding: 14px 16px; text-align: right;">
+                <strong style="font-size: 16px; color: #059669;">${fmt.format(v.pago.total)}</strong>
+            </td>
+            <td style="padding: 14px 16px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="verDetalleVenta('${v.id}')" class="btn-print btn-info" style="padding: 8px 14px; font-size: 12px;">
+                    <i class="fas fa-eye"></i> Ver
+                </button>
+                <button onclick="imprimirTicket('${v.id}','termico')" class="btn-print" style="padding: 8px 14px; font-size: 12px;">
+                    <i class="fas fa-receipt"></i> Ticket
+                </button>
+                <button onclick="imprimirTicket('${v.id}','a4')" class="btn-print btn-excel" style="padding: 8px 14px; font-size: 12px;">
+                    <i class="fas fa-file-pdf"></i> A4
+                </button>
+            </td>
+        </tr>
+    `).join(''); 
+}
+    
 function filtrarVentas(){const t=document.getElementById('ventas-buscador').value.toLowerCase();document.querySelectorAll('#lista-ventas-body tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(t)?'':'none');}
 
 function verDetalleVenta(id){ 
