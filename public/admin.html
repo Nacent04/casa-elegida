@@ -508,8 +508,222 @@ function renderPaginaPerfiles() { return `<div class="panel"><h3 style="display:
 function renderPaginaLogs() { return `<div class="panel"><h3><i class="fas fa-history"></i> Registro de Actividad</h3><div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"><input type="text" id="logs-filtro" placeholder="🔍 Buscar..." style="flex:1;min-width:200px" onkeyup="cargarLogs()"><input type="date" id="logs-desde" style="width:150px" onchange="cargarLogs()"><input type="date" id="logs-hasta" style="width:150px" onchange="cargarLogs()"><button onclick="document.getElementById('logs-filtro').value='';document.getElementById('logs-desde').value='';document.getElementById('logs-hasta').value='';cargarLogs();" class="tab-btn">Limpiar</button></div><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Fecha</th><th>Admin</th><th>Acción</th><th>Detalles</th></tr></thead><tbody id="logs-body"></tbody></table></div></div>`; }
 function renderPaginaClientes() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-users"></i> Clientes Registrados</span><div style="display:flex;gap:8px"><input type="text" id="clientes-buscador" placeholder="🔍 Buscar cliente..." onkeyup="filtrarClientes()" style="padding:10px 16px;border-radius:20px;border:1px solid #e2e8f0;width:250px"></div></h3><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Cliente</th><th>Email</th><th>Teléfono</th><th>DNI</th><th>Ubicación</th><th>Acciones</th></tr></thead><tbody id="lista-clientes-body"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="loader"></div><p>Cargando clientes...</p></td></tr></tbody></table></div></div>`; }
 function renderPaginaEdicionWeb() { return `<div class="panel"><h3><i class="fas fa-paint-brush"></i> Edición Web</h3><div class="config-section"><h4><i class="fas fa-swatchbook"></i> Plantillas de Tienda</h4><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"><div class="plantilla-card" style="border:2px solid #6366f1;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('moderna')"><div style="background:linear-gradient(135deg,#1a1a1a,#333);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Moderna</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('clasica')"><div style="background:linear-gradient(135deg,#8B5E3C,#D4A574);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Clásica</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('minimalista')"><div style="background:linear-gradient(135deg,#fafafa,#e2e8f0);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Minimalista</strong></div></div></div><div class="config-section"><h4><i class="fas fa-icons"></i> Íconos de la Tienda</h4><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="tab-btn" onclick="cambiarIcono('store')"><i class="fas fa-store"></i> Tienda</button><button class="tab-btn" onclick="cambiarIcono('home')"><i class="fas fa-home"></i> Hogar</button><button class="tab-btn" onclick="cambiarIcono('star')"><i class="fas fa-star"></i> Premium</button><button class="tab-btn" onclick="cambiarIcono('gem')"><i class="fas fa-gem"></i> Lujo</button></div></div></div>`; }
-function renderPaginaConfiguracion() { return `<div class="panel"><h3><i class="fas fa-sliders-h"></i> Configuración</h3><div class="config-section" style="border-color:#10b981"><h3 style="color:#10b981"><i class="fas fa-tags"></i> Ventas Mayoristas <button id="btnMayoristaToggle" class="tab-btn" style="margin-left:auto;background:#10b981;color:white" onclick="toggleMayorista()"><i class="fas fa-toggle-on"></i> Activado</button></h3><div id="mayoristaPanel"><div style="margin-bottom:20px"><label>Modo:</label><div style="display:flex;gap:12px;margin-top:12px"><div class="modo-option active" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')"><i class="fas fa-boxes"></i><br><strong>Cantidad</strong></div><div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')"><i class="fas fa-money-bill-wave"></i><br><strong>Monto</strong></div><div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')"><i class="fas fa-chart-line"></i><br><strong>Ambas</strong></div></div></div><div style="display:flex;gap:20px"><div id="configCantidad"><label>Cantidad mínima</label><input type="number" id="mayoristaCantidad" value="3"></div><div id="configMonto" style="display:none"><label>Monto mínimo</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b">$</span><input type="text" id="mayoristaMonto" value="80000" style="padding-left:28px"></div></div></div><button onclick="guardarMayorista()" class="btn-confirm" style="margin-top:16px"><i class="fas fa-save"></i> Guardar Mayorista</button></div></div><div class="config-section"><h3><i class="fas fa-image"></i> Logo</h3><div class="logo-preview"><img id="logo-preview-img" style="display:none;max-width:200px;max-height:80px"><div id="logo-placeholder"><i class="fas fa-store" style="font-size:48px;color:#cbd5e1"></i></div><div class="logo-actions"><label class="tab-btn" style="background:#6366f1;color:white"><i class="fas fa-upload"></i> Subir <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)"></label><button onclick="eliminarLogo()" class="tab-btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button></div></div></div><div class="config-section"><h3><i class="fas fa-building"></i> Empresa</h3><input type="text" id="empresa-nombre" placeholder="Nombre"><div class="form-row"><input type="text" id="empresa-telefono" placeholder="Teléfono"><input type="email" id="empresa-email" placeholder="Email"></div><input type="text" id="empresa-direccion" placeholder="Dirección"><h4 style="margin-top:20px"><i class="fas fa-clock"></i> Horarios</h4><div class="form-row"><input type="text" id="horario-lv" placeholder="L a V"><input type="text" id="horario-sab" placeholder="Sábados"></div><input type="text" id="horario-dom" placeholder="Domingos"><h4 style="margin-top:20px"><i class="fas fa-hashtag"></i> Redes Sociales</h4><div class="form-row"><input type="text" id="red-instagram" placeholder="Instagram"><input type="text" id="red-facebook" placeholder="Facebook"></div><div class="form-row"><input type="text" id="red-tiktok" placeholder="TikTok"><input type="text" id="red-whatsapp" placeholder="WhatsApp"></div><h4 style="margin-top:20px"><i class="fas fa-credit-card"></i> Datos de Pago</h4><div class="form-row"><input type="text" id="pago-alias" placeholder="Alias"><input type="text" id="pago-cbu" placeholder="CBU"></div><div class="form-row"><input type="text" id="pago-banco" placeholder="Banco"><input type="text" id="pago-titular" placeholder="Titular"></div><button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Empresa</button></div><div class="config-section"><h3><i class="fas fa-palette"></i> Diseño Tienda</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px"><div><label>Color Principal</label><input type="color" id="tienda-color-primary" value="#1a1a1a"></div><div><label>Color Secundario</label><input type="color" id="tienda-color-secondary" value="#c9a96e"></div><div><label>Color Fondo</label><input type="color" id="tienda-color-bg" value="#fafafa"></div><div><label>Color Texto</label><input type="color" id="tienda-color-text" value="#1a1a1a"></div></div><button onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top:16px">Aplicar Colores</button></div><div class="config-section"><h3><i class="fas fa-store"></i> Tienda Online</h3><div style="margin-bottom:16px"><label>Habilitar</label><div class="pago-tabs"><button id="tienda-on" class="pago-btn active" onclick="setTiendaHabilitada(true)">Activada</button><button id="tienda-off" class="pago-btn" onclick="setTiendaHabilitada(false)">Desactivada</button></div></div><input type="text" id="tienda-titulo" placeholder="Título"><textarea id="tienda-mensaje" rows="2" placeholder="Mensaje"></textarea><button onclick="guardarConfiguracionTienda()" class="btn-confirm">Guardar Tienda</button></div><div class="config-section"><h3><i class="fas fa-truck"></i> Métodos de Envío</h3><p style="color:#64748b;margin-bottom:12px">Un método por línea</p><textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani"></textarea><button onclick="guardarMetodosEnvio()" class="btn-confirm">Guardar Métodos</button></div></div>`; }
+function renderPaginaConfiguracion() { 
+    return `<div class="panel">
+        <h3 style="margin-bottom:20px"><i class="fas fa-sliders-h"></i> Configuración</h3>
+        
+        <!-- Pestañas de navegación -->
+        <div class="nav-tabs" style="margin-bottom:20px; gap:6px;" id="config-tabs">
+            <button class="tab-btn active" onclick="tabConfig('empresa')"><i class="fas fa-building"></i> Empresa</button>
+            <button class="tab-btn" onclick="tabConfig('tienda')"><i class="fas fa-store"></i> Tienda</button>
+            <button class="tab-btn" onclick="tabConfig('mayorista')"><i class="fas fa-tags"></i> Mayorista</button>
+            <button class="tab-btn" onclick="tabConfig('diseno')"><i class="fas fa-palette"></i> Diseño</button>
+            <button class="tab-btn" onclick="tabConfig('envios')"><i class="fas fa-truck"></i> Envíos</button>
+            <button class="tab-btn" onclick="tabConfig('logo')"><i class="fas fa-image"></i> Logo</button>
+        </div>
+        
+        <!-- Contenido de pestañas -->
+        <div id="config-contenido">
+            ${renderConfigEmpresa()}
+        </div>
+    </div>`; 
+}
 
+function renderConfigEmpresa() {
+    return `<div id="config-empresa">
+        <div class="config-section">
+            <h3><i class="fas fa-building"></i> Datos de la Empresa</h3>
+            <input type="text" id="empresa-nombre" placeholder="Nombre del negocio">
+            <div class="form-row">
+                <input type="text" id="empresa-telefono" placeholder="Teléfono">
+                <input type="email" id="empresa-email" placeholder="Email">
+            </div>
+            <input type="text" id="empresa-direccion" placeholder="Dirección">
+            <button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Empresa</button>
+        </div>
+        
+        <div class="config-section">
+            <h3><i class="fas fa-clock"></i> Horarios</h3>
+            <div class="form-row">
+                <input type="text" id="horario-lv" placeholder="Lunes a Viernes">
+                <input type="text" id="horario-sab" placeholder="Sábados">
+            </div>
+            <input type="text" id="horario-dom" placeholder="Domingos">
+            <button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Horarios</button>
+        </div>
+        
+        <div class="config-section">
+            <h3><i class="fas fa-hashtag"></i> Redes Sociales</h3>
+            <div class="form-row">
+                <input type="text" id="red-instagram" placeholder="Instagram (@usuario)">
+                <input type="text" id="red-facebook" placeholder="Facebook">
+            </div>
+            <div class="form-row">
+                <input type="text" id="red-tiktok" placeholder="TikTok">
+                <input type="text" id="red-whatsapp" placeholder="WhatsApp (sin 15)">
+            </div>
+            <button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Redes</button>
+        </div>
+        
+        <div class="config-section">
+            <h3><i class="fas fa-credit-card"></i> Datos de Pago</h3>
+            <div class="form-row">
+                <input type="text" id="pago-alias" placeholder="Alias">
+                <input type="text" id="pago-cbu" placeholder="CBU">
+            </div>
+            <div class="form-row">
+                <input type="text" id="pago-banco" placeholder="Banco">
+                <input type="text" id="pago-titular" placeholder="Titular">
+            </div>
+            <button onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top:20px">Guardar Pagos</button>
+        </div>
+    </div>`;
+}
+
+function renderConfigTienda() {
+    return `<div id="config-tienda">
+        <div class="config-section">
+            <h3><i class="fas fa-store"></i> Tienda Online</h3>
+            <div style="margin-bottom:16px">
+                <label style="font-weight:600;display:block;margin-bottom:8px">Estado</label>
+                <div class="pago-tabs">
+                    <button id="tienda-on" class="pago-btn active" onclick="setTiendaHabilitada(true)">🟢 Activada</button>
+                    <button id="tienda-off" class="pago-btn" onclick="setTiendaHabilitada(false)">🔴 Desactivada</button>
+                </div>
+            </div>
+            <input type="text" id="tienda-titulo" placeholder="Título de la tienda">
+            <textarea id="tienda-mensaje" rows="2" placeholder="Mensaje de bienvenida"></textarea>
+            <button onclick="guardarConfiguracionTienda()" class="btn-confirm" style="margin-top:20px">Guardar Tienda</button>
+        </div>
+    </div>`;
+}
+
+function renderConfigMayorista() {
+    return `<div id="config-mayorista">
+        <div class="config-section" style="border-color:#10b981">
+            <h3 style="color:#10b981"><i class="fas fa-tags"></i> Ventas Mayoristas 
+                <button id="btnMayoristaToggle" class="tab-btn" style="margin-left:auto;background:#10b981;color:white" onclick="toggleMayorista()">
+                    <i class="fas fa-toggle-on"></i> Activado
+                </button>
+            </h3>
+            <div id="mayoristaPanel">
+                <div style="margin-bottom:20px">
+                    <label style="font-weight:600;display:block;margin-bottom:8px">Modo de cálculo:</label>
+                    <div style="display:flex;gap:12px;margin-top:12px">
+                        <div class="modo-option active" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')">
+                            <i class="fas fa-boxes"></i><br><strong>Cantidad</strong>
+                        </div>
+                        <div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')">
+                            <i class="fas fa-money-bill-wave"></i><br><strong>Monto</strong>
+                        </div>
+                        <div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')">
+                            <i class="fas fa-chart-line"></i><br><strong>Ambas</strong>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:20px">
+                    <div id="configCantidad">
+                        <label style="font-weight:600;display:block;margin-bottom:8px">Cantidad mínima</label>
+                        <input type="number" id="mayoristaCantidad" value="3">
+                    </div>
+                    <div id="configMonto" style="display:none">
+                        <label style="font-weight:600;display:block;margin-bottom:8px">Monto mínimo</label>
+                        <div style="position:relative">
+                            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b">$</span>
+                            <input type="text" id="mayoristaMonto" value="80000" style="padding-left:28px">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="guardarMayorista()" class="btn-confirm" style="margin-top:16px">
+                    <i class="fas fa-save"></i> Guardar Mayorista
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderConfigDiseno() {
+    return `<div id="config-diseno">
+        <div class="config-section">
+            <h3><i class="fas fa-palette"></i> Colores de la Tienda</h3>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+                <div>
+                    <label style="font-weight:600;display:block;margin-bottom:8px">Color Principal</label>
+                    <input type="color" id="tienda-color-primary" value="#1a1a1a">
+                </div>
+                <div>
+                    <label style="font-weight:600;display:block;margin-bottom:8px">Color Secundario</label>
+                    <input type="color" id="tienda-color-secondary" value="#c9a96e">
+                </div>
+                <div>
+                    <label style="font-weight:600;display:block;margin-bottom:8px">Color Fondo</label>
+                    <input type="color" id="tienda-color-bg" value="#fafafa">
+                </div>
+                <div>
+                    <label style="font-weight:600;display:block;margin-bottom:8px">Color Texto</label>
+                    <input type="color" id="tienda-color-text" value="#1a1a1a">
+                </div>
+            </div>
+            <button onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top:16px">Aplicar Colores</button>
+        </div>
+    </div>`;
+}
+
+function renderConfigEnvios() {
+    return `<div id="config-envios">
+        <div class="config-section">
+            <h3><i class="fas fa-truck"></i> Métodos de Envío</h3>
+            <p style="color:#64748b;margin-bottom:12px">Un método por línea</p>
+            <textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani&#10;Moto Mensajería"></textarea>
+            <button onclick="guardarMetodosEnvio()" class="btn-confirm" style="margin-top:20px">Guardar Métodos</button>
+        </div>
+    </div>`;
+}
+
+function renderConfigLogo() {
+    return `<div id="config-logo">
+        <div class="config-section">
+            <h3><i class="fas fa-image"></i> Logo del Negocio</h3>
+            <div class="logo-preview">
+                <img id="logo-preview-img" style="display:none;max-width:200px;max-height:80px">
+                <div id="logo-placeholder">
+                    <i class="fas fa-store" style="font-size:48px;color:#cbd5e1"></i>
+                </div>
+                <div class="logo-actions">
+                    <label class="tab-btn" style="background:#6366f1;color:white">
+                        <i class="fas fa-upload"></i> Subir Logo
+                        <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
+                    </label>
+                    <button onclick="eliminarLogo()" class="tab-btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function tabConfig(tab) {
+    const contenido = document.getElementById('config-contenido');
+    if (!contenido) return;
+    
+    switch(tab) {
+        case 'empresa': contenido.innerHTML = renderConfigEmpresa(); break;
+        case 'tienda': contenido.innerHTML = renderConfigTienda(); break;
+        case 'mayorista': contenido.innerHTML = renderConfigMayorista(); break;
+        case 'diseno': contenido.innerHTML = renderConfigDiseno(); break;
+        case 'envios': contenido.innerHTML = renderConfigEnvios(); break;
+        case 'logo': contenido.innerHTML = renderConfigLogo(); break;
+    }
+    
+    // Actualizar pestañas activas
+    document.querySelectorAll('#config-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Recargar datos según la pestaña
+    if (tab === 'envios') cargarMetodosEnvio();
+    if (tab !== 'envios' && tab !== 'diseno' && tab !== 'logo') cargarConfiguracion();
+}
 function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero"><div class="backup-hero-icon">💾</div><h2>Sistema de Backup Total</h2><p>Protegé absolutamente todos tus datos.</p><button onclick="iniciarBackupTotal()" class="btn-backup-master" id="btn-backup-total"><i class="fas fa-shield-alt"></i> Crear Backup Completo</button></div><div class="backup-cards"><div class="backup-card-item" onclick="iniciarBackupTotal()"><div class="backup-card-icon" style="background:#eef2ff;color:#6366f1"><i class="fas fa-database"></i></div><h4>Backup Completo</h4><p>Incluye absolutamente todo.</p></div><div class="backup-card-item" onclick="document.getElementById('restore-section').scrollIntoView({behavior:'smooth'})"><div class="backup-card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-undo-alt"></i></div><h4>Restaurar Sistema</h4><p>Restaurá todo desde un archivo.</p></div></div><div class="config-section"><h3><i class="fas fa-history"></i> Historial <button onclick="cargarHistorialBackups()" class="tab-btn" style="float:right"><i class="fas fa-sync-alt"></i></button></h3><table class="history-table"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody id="backup-history-body"><tr><td colspan="3" style="text-align:center">Cargando...</td></tr></tbody></table></div><div class="config-section" style="border:2px solid #f59e0b" id="restore-section"><h3 style="color:#f59e0b"><i class="fas fa-upload"></i> Restaurar</h3><div class="restore-zone" onclick="document.getElementById('restore-file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="manejarDropRestore(event)"><i class="fas fa-cloud-upload-alt" style="font-size:48px;color:#f59e0b"></i><h4>Arrastrá el backup aquí</h4></div><input type="file" id="restore-file-input" accept=".backup,.zip" style="display:none" onchange="procesarArchivoRestore(this)"><button onclick="confirmarRestauracionTotal()" class="btn-backup-master" style="width:100%;background:#f59e0b;margin-top:16px;display:none" id="btn-restaurar"><i class="fas fa-exclamation-triangle"></i> Restaurar</button></div></div>`; }
 
 async function cargar() { 
