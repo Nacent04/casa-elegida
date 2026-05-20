@@ -708,13 +708,18 @@ function tabConfig(tab) {
     if (!contenido) return;
     
     switch(tab) {
-        case 'empresa': contenido.innerHTML = renderConfigEmpresa(); break;
-        case 'tienda': contenido.innerHTML = renderConfigTienda(); break;
-        case 'mayorista': contenido.innerHTML = renderConfigMayorista(); break;
-        case 'diseno': contenido.innerHTML = renderConfigDiseno(); break;
-        case 'envios': contenido.innerHTML = renderConfigEnvios(); break;
-        case 'logo': contenido.innerHTML = renderConfigLogo(); break;
+        case 'empresa': contenido.innerHTML = renderConfigEmpresa(); cargarConfiguracion(); break;
+        case 'tienda': contenido.innerHTML = renderConfigTienda(); cargarConfiguracion(); break;
+        case 'mayorista': contenido.innerHTML = renderConfigMayorista(); cargarConfiguracion(); break;
+        case 'diseno': contenido.innerHTML = renderConfigDiseno(); cargarConfiguracion(); break;
+        case 'envios': contenido.innerHTML = renderConfigEnvios(); cargarMetodosEnvio(); break;
+        case 'logo': contenido.innerHTML = renderConfigLogo(); cargarConfiguracion(); break;
     }
+    
+    // Actualizar pestañas activas
+    document.querySelectorAll('#config-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
     
     // Actualizar pestañas activas
     document.querySelectorAll('#config-tabs .tab-btn').forEach(b => b.classList.remove('active'));
