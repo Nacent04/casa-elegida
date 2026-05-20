@@ -658,7 +658,14 @@ app.post('/guardar-metodos-envio', async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/get-config', adminMiddleware(), async (req, res) => res.json(await getConfig()));
+app.post('/get-config', async (req, res) => {
+    try {
+        const config = await getConfig();
+        res.json(config);
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 app.post('/save-config', adminMiddleware('config'), async (req, res) => {
     ['empresa','horarios','redes','pagos'].forEach(async k => { if(req.body[k]) await setConfig(k, req.body[k]); });
     await logActividad('Admin', 'GUARDAR_CONFIG', 'Configuración actualizada', req);
