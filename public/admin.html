@@ -1313,13 +1313,16 @@ async function guardarOrdenProductos(){
     }
 }
 
-    let productoManualIdCounter = 0;
+  let variantesManuales = [];
 
 function agregarProductoManual() {
+    variantesManuales = [];
+    
     const modal = document.createElement('div');
     modal.className = 'modal active';
+    modal.id = 'modal-producto-manual';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width:500px">
+        <div class="modal-content" style="max-width:600px">
             <div class="modal-header">
                 <h3><i class="fas fa-hand-paper"></i> Producto Manual</h3>
                 <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
@@ -1333,20 +1336,23 @@ function agregarProductoManual() {
                     <label style="font-weight:600;display:block;margin-bottom:6px">💰 Precio unitario</label>
                     <input type="number" id="manual-precio" value="0" step="0.01" style="font-size:16px">
                 </div>
-                <div style="margin-bottom:16px">
-                    <label style="font-weight:600;display:block;margin-bottom:6px">📦 Cantidad</label>
-                    <div class="cantidad-selector" style="justify-content:flex-start">
-                        <button class="cantidad-btn" onclick="cambiarCantidadManual(-1)">−</button>
-                        <input type="number" id="manual-cantidad" value="1" min="1" class="cantidad-input">
-                        <button class="cantidad-btn" onclick="cambiarCantidadManual(1)">+</button>
+                
+                <div style="background:#f8fafc;border-radius:16px;padding:16px;margin-bottom:16px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                        <h4 style="margin:0"><i class="fas fa-layer-group"></i> Variantes</h4>
+                        <button onclick="agregarVarianteManual()" class="tab-btn btn-success" style="padding:8px 14px;font-size:12px">
+                            <i class="fas fa-plus"></i> Agregar variante
+                        </button>
+                    </div>
+                    <div id="variantes-manual-lista" style="display:flex;flex-direction:column;gap:8px">
+                        <div style="text-align:center;color:#94a3b8;padding:12px;font-size:13px">
+                            <i class="fas fa-info-circle"></i> Agregá al menos una variante
+                        </div>
                     </div>
                 </div>
-                <div style="margin-bottom:16px">
-                    <label style="font-weight:600;display:block;margin-bottom:6px">🎨 Variante (opcional)</label>
-                    <input type="text" id="manual-variante" placeholder="Ej: Color azul, Talle M" style="font-size:14px">
-                </div>
-                <div style="background:#f8fafc;border-radius:12px;padding:12px;font-size:13px;color:#64748b">
-                    <i class="fas fa-info-circle"></i> El producto manual se agrega directamente al carrito sin control de stock.
+                
+                <div style="background:#fef3c7;border-radius:12px;padding:12px;font-size:13px;color:#92400e">
+                    <i class="fas fa-info-circle"></i> Los productos manuales se agregan directamente al carrito sin control de stock.
                 </div>
             </div>
             <div class="modal-footer">
@@ -1358,21 +1364,90 @@ function agregarProductoManual() {
         </div>
     `;
     document.body.appendChild(modal);
+    
+    // Agregar primera variante por defecto
+    agregarVarianteManual();
 }
 
-function cambiarCantidadManual(delta) {
-    const input = document.getElementById('manual-cantidad');
-    if (!input) return;
-    let val = parseInt(input.value) || 1;
-    val = Math.max(1, val + delta);
-    input.value = val;
+function agregarVarianteManual() {
+    const index = variantesManuales.length;
+    variantesManuales.push({ nombre: '', cantidad: 1 });
+    
+    const lista = document.getElementById('variantes-manual-lista');
+    if (!lista) return;
+    
+    // Quitar mensaje de vacío
+    if (variantesManuales.length === 1) {
+        lista.innerHTML = '';
+    }
+    
+    const varianteDiv = document.createElement('div');
+    varianteDiv.className = 'variante-item';
+    varianteDiv.id = `variante-manual-${index}`;
+    varianteDiv.style.cssText = 'background:white;border-radius:12px;padding:12px;border:1px solid #e2e8f0;display:flex;gap:8px;align-items:center';
+    varianteDiv.innerHTML = `
+        <div style="flex:1">
+            <input type="text" id="vm-nombre-${index}" placeholder="Nombre de variante (ej: Azul, Talle M)" 
+                   style="font-size:13px;padding:10px" onchange="actualizarVarianteManual(${index})">
+        </div>
+        <div style="width:100px">
+            <input type="number" id="vm-cant-${index}" value="1" min="1" 
+                   style="font-size:13px;padding:10px;text-align:center" onchange="actualizarVarianteManual(${index})">
+        </div>
+        ${variantesManuales.length > 1 ? `
+            <button onclick="eliminarVarianteManual(${index})" style="background:#fee2e2;color:#ef4444;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">
+                <i class="fas fa-trash"></i>
+            </button>
+        ` : ''}
+    `;
+    lista.appendChild(varianteDiv);
+}
+
+function actualizarVarianteManual(index) {
+    const nombre = document.getElementById(`vm-nombre-${index}`)?.value || '';
+    const cantidad = parseInt(document.getElementById(`vm-cant-${index}`)?.value) || 1;
+    variantesManuales[index] = { nombre, cantidad };
+}
+
+function eliminarVarianteManual(index) {
+    variantesManuales.splice(index, 1);
+    // Reconstruir la lista
+    const lista = document.getElementById('variantes-manual-lista');
+    if (!lista) return;
+    
+    lista.innerHTML = '';
+    if (variantesManuales.length === 0) {
+        lista.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:12px;font-size:13px"><i class="fas fa-info-circle"></i> Agregá al menos una variante</div>';
+        return;
+    }
+    
+    variantesManuales.forEach((v, i) => {
+        const varianteDiv = document.createElement('div');
+        varianteDiv.className = 'variante-item';
+        varianteDiv.id = `variante-manual-${i}`;
+        varianteDiv.style.cssText = 'background:white;border-radius:12px;padding:12px;border:1px solid #e2e8f0;display:flex;gap:8px;align-items:center';
+        varianteDiv.innerHTML = `
+            <div style="flex:1">
+                <input type="text" id="vm-nombre-${i}" value="${v.nombre}" 
+                       style="font-size:13px;padding:10px" onchange="actualizarVarianteManual(${i})">
+            </div>
+            <div style="width:100px">
+                <input type="number" id="vm-cant-${i}" value="${v.cantidad}" min="1" 
+                       style="font-size:13px;padding:10px;text-align:center" onchange="actualizarVarianteManual(${i})">
+            </div>
+            ${variantesManuales.length > 1 ? `
+                <button onclick="eliminarVarianteManual(${i})" style="background:#fee2e2;color:#ef4444;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">
+                    <i class="fas fa-trash"></i>
+                </button>
+            ` : ''}
+        `;
+        lista.appendChild(varianteDiv);
+    });
 }
 
 function confirmarProductoManual() {
     const nombre = document.getElementById('manual-nombre').value.trim();
     const precio = parseFloat(document.getElementById('manual-precio').value);
-    const cantidad = parseInt(document.getElementById('manual-cantidad').value);
-    const variante = document.getElementById('manual-variante').value.trim();
     
     if (!nombre) {
         mostrarToast('❌ Ingresá el nombre del artículo', true);
@@ -1382,22 +1457,33 @@ function confirmarProductoManual() {
         mostrarToast('❌ Ingresá un precio válido', true);
         return;
     }
-    if (!cantidad || cantidad < 1) {
-        mostrarToast('❌ Ingresá una cantidad válida', true);
+    
+    // Actualizar todas las variantes antes de confirmar
+    variantesManuales.forEach((v, i) => {
+        v.nombre = document.getElementById(`vm-nombre-${i}`)?.value || '';
+        v.cantidad = parseInt(document.getElementById(`vm-cant-${i}`)?.value) || 1;
+    });
+    
+    const variantesValidas = variantesManuales.filter(v => v.nombre.trim() && v.cantidad > 0);
+    
+    if (variantesValidas.length === 0) {
+        mostrarToast('❌ Agregá al menos una variante con nombre y cantidad', true);
         return;
     }
     
-    const idManual = 'MAN-' + Date.now() + '-' + (++productoManualIdCounter);
-    
-    carrito.push({
-        pId: idManual,
-        pNom: nombre,
-        vNom: variante || 'Único',
-        vFoto: '',
-        precio: precio,
-        precioMayor: 0,
-        cant: cantidad,
-        esManual: true
+    // Agregar todas las variantes al carrito
+    variantesValidas.forEach(v => {
+        const idManual = 'MAN-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        carrito.push({
+            pId: idManual,
+            pNom: nombre,
+            vNom: v.nombre.trim(),
+            vFoto: '',
+            precio: precio,
+            precioMayor: 0,
+            cant: v.cantidad,
+            esManual: true
+        });
     });
     
     calcularPreciosMayoristaEnVivo();
@@ -1405,7 +1491,7 @@ function confirmarProductoManual() {
     localStorage.setItem('pos_carrito', JSON.stringify(carrito));
     
     document.querySelector('.modal.active')?.remove();
-    mostrarToast('✅ Producto manual agregado');
+    mostrarToast(`✅ ${variantesValidas.length} variante(s) agregada(s)`);
 }
 function toggleThemePanel(){
     const p = document.getElementById('theme-panel');
