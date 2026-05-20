@@ -441,7 +441,12 @@ function tab(t) {
     else if (t==='r') { container.className='layout'; container.innerHTML=renderPaginaListadoVentas(); cartPanel.classList.add('hidden'); cargarVentas(); }
     else if (t==='a') { container.className='layout'; container.innerHTML=renderPaginaGestionStock(); cartPanel.classList.add('hidden'); cargarCategorias(); setTimeout(cargarYRenderAdmin,100); }
     else if (t==='dash') { container.className='layout'; container.innerHTML=renderPaginaDashboard(); cartPanel.classList.add('hidden'); setTimeout(cargarDashboard,100); }
-    else if (t==='c') { container.className='layout'; container.innerHTML=renderPaginaConfiguracion(); cartPanel.classList.add('hidden'); cargarConfiguracion(); setTimeout(()=>{cargarMetodosEnvio();},200); }
+    else if (t==='c') { 
+    container.className='layout'; 
+    container.innerHTML=renderPaginaConfiguracion(); 
+    cartPanel.classList.add('hidden'); 
+    tabConfig('empresa'); 
+}
     else if (t==='retiro') { container.className='layout'; container.innerHTML=renderPaginaRetiro(); cartPanel.classList.add('hidden'); }
     else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); pedidosTienda = []; cargarPedidosTienda(); }
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
