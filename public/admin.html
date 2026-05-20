@@ -708,12 +708,30 @@ function tabConfig(tab) {
     if (!contenido) return;
     
     switch(tab) {
-        case 'empresa': contenido.innerHTML = renderConfigEmpresa(); cargarConfiguracion(); break;
-        case 'tienda': contenido.innerHTML = renderConfigTienda(); cargarConfiguracion(); break;
-        case 'mayorista': contenido.innerHTML = renderConfigMayorista(); cargarConfiguracion(); break;
-        case 'diseno': contenido.innerHTML = renderConfigDiseno(); cargarConfiguracion(); break;
-        case 'envios': contenido.innerHTML = renderConfigEnvios(); cargarMetodosEnvio(); break;
-        case 'logo': contenido.innerHTML = renderConfigLogo(); cargarConfiguracion(); break;
+        case 'empresa': 
+            contenido.innerHTML = renderConfigEmpresa(); 
+            setTimeout(() => cargarConfiguracion(), 200); 
+            break;
+        case 'tienda': 
+            contenido.innerHTML = renderConfigTienda(); 
+            setTimeout(() => cargarConfiguracion(), 200); 
+            break;
+        case 'mayorista': 
+            contenido.innerHTML = renderConfigMayorista(); 
+            setTimeout(() => cargarConfiguracion(), 200); 
+            break;
+        case 'diseno': 
+            contenido.innerHTML = renderConfigDiseno(); 
+            setTimeout(() => cargarConfiguracion(), 200); 
+            break;
+        case 'envios': 
+            contenido.innerHTML = renderConfigEnvios(); 
+            setTimeout(() => cargarMetodosEnvio(), 200); 
+            break;
+        case 'logo': 
+            contenido.innerHTML = renderConfigLogo(); 
+            setTimeout(() => cargarConfiguracion(), 200); 
+            break;
     }
     
     // Actualizar pestañas activas
