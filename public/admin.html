@@ -710,31 +710,42 @@ function tabConfig(tab) {
     switch(tab) {
         case 'empresa': 
             contenido.innerHTML = renderConfigEmpresa(); 
-            setTimeout(() => cargarConfiguracion(), 200); 
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => cargarConfiguracion());
+            });
             break;
         case 'tienda': 
             contenido.innerHTML = renderConfigTienda(); 
-            setTimeout(() => cargarConfiguracion(), 200); 
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => cargarConfiguracion());
+            });
             break;
         case 'mayorista': 
             contenido.innerHTML = renderConfigMayorista(); 
-            setTimeout(() => cargarConfiguracion(), 200); 
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => cargarConfiguracion());
+            });
             break;
         case 'diseno': 
             contenido.innerHTML = renderConfigDiseno(); 
-            setTimeout(() => cargarConfiguracion(), 200); 
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => cargarConfiguracion());
+            });
             break;
         case 'envios': 
             contenido.innerHTML = renderConfigEnvios(); 
-            setTimeout(() => cargarMetodosEnvio(), 200); 
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => cargarMetodosEnvio());
+            });
             break;
         case 'logo': 
             contenido.innerHTML = renderConfigLogo(); 
-            setTimeout(() => cargarConfiguracion(), 200); 
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => cargarConfiguracion());
+            });
             break;
     }
     
-    // Actualizar pestañas activas
     document.querySelectorAll('#config-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
 }
