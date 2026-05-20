@@ -452,7 +452,17 @@ function tab(t) {
     document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`t-${t}`)?.classList.add('active');
 }
-    function renderPaginaVentas() { return `<div class="panel"><div id="estado-caja"></div><div style="display:flex;gap:12px;margin-bottom:24px"><input type="text" id="buscador" placeholder="🔍 Buscar..." onkeyup="buscarProductos()" style="flex:1"><button onclick="abrirBuscadorClientes()" class="tab-btn btn-info"><i class="fas fa-search"></i> Clientes</button></div><div id="grid-prods" class="grid"></div></div>`; }
+function renderPaginaVentas() { 
+    return `<div class="panel">
+        <div id="estado-caja"></div>
+        <div style="display:flex;gap:12px;margin-bottom:24px">
+            <input type="text" id="buscador" placeholder="🔍 Buscar..." onkeyup="buscarProductos()" style="flex:1">
+            <button onclick="abrirBuscadorClientes()" class="tab-btn btn-info"><i class="fas fa-search"></i> Clientes</button>
+            <button onclick="agregarProductoManual()" class="tab-btn btn-warning"><i class="fas fa-plus-circle"></i> Manual</button>
+        </div>
+        <div id="grid-prods" class="grid"></div>
+    </div>`; 
+}
 function renderPaginaListadoVentas() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-history"></i> Historial</span><button onclick="exportarVentasCSV()" class="tab-btn btn-excel"><i class="fas fa-file-csv"></i> Exportar</button></h3><div class="ventas-buscador"><input type="text" id="ventas-buscador" placeholder="🔍 Buscar..." onkeyup="filtrarVentas()"></div><table style="width:100%"><thead><tr><th>Fecha/ID</th><th>Cliente</th><th>Items</th><th>Total</th><th></th></tr></thead><tbody id="lista-ventas-body"></tbody></table></div>`; }
 function renderPaginaGestionStock() { 
     return `<div class="panel">
@@ -1303,6 +1313,100 @@ async function guardarOrdenProductos(){
     }
 }
 
+    let productoManualIdCounter = 0;
+
+function agregarProductoManual() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px">
+            <div class="modal-header">
+                <h3><i class="fas fa-hand-paper"></i> Producto Manual</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:600;display:block;margin-bottom:6px">📝 Nombre del artículo</label>
+                    <input type="text" id="manual-nombre" placeholder="Ej: Almohadón personalizado" style="font-size:16px">
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:600;display:block;margin-bottom:6px">💰 Precio unitario</label>
+                    <input type="number" id="manual-precio" value="0" step="0.01" style="font-size:16px">
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:600;display:block;margin-bottom:6px">📦 Cantidad</label>
+                    <div class="cantidad-selector" style="justify-content:flex-start">
+                        <button class="cantidad-btn" onclick="cambiarCantidadManual(-1)">−</button>
+                        <input type="number" id="manual-cantidad" value="1" min="1" class="cantidad-input">
+                        <button class="cantidad-btn" onclick="cambiarCantidadManual(1)">+</button>
+                    </div>
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:600;display:block;margin-bottom:6px">🎨 Variante (opcional)</label>
+                    <input type="text" id="manual-variante" placeholder="Ej: Color azul, Talle M" style="font-size:14px">
+                </div>
+                <div style="background:#f8fafc;border-radius:12px;padding:12px;font-size:13px;color:#64748b">
+                    <i class="fas fa-info-circle"></i> El producto manual se agrega directamente al carrito sin control de stock.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="this.closest('.modal').remove()" class="tab-btn">Cancelar</button>
+                <button onclick="confirmarProductoManual()" class="btn-confirm" style="width:auto;padding:12px 32px">
+                    <i class="fas fa-cart-plus"></i> Agregar al Pedido
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function cambiarCantidadManual(delta) {
+    const input = document.getElementById('manual-cantidad');
+    if (!input) return;
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, val + delta);
+    input.value = val;
+}
+
+function confirmarProductoManual() {
+    const nombre = document.getElementById('manual-nombre').value.trim();
+    const precio = parseFloat(document.getElementById('manual-precio').value);
+    const cantidad = parseInt(document.getElementById('manual-cantidad').value);
+    const variante = document.getElementById('manual-variante').value.trim();
+    
+    if (!nombre) {
+        mostrarToast('❌ Ingresá el nombre del artículo', true);
+        return;
+    }
+    if (!precio || precio <= 0) {
+        mostrarToast('❌ Ingresá un precio válido', true);
+        return;
+    }
+    if (!cantidad || cantidad < 1) {
+        mostrarToast('❌ Ingresá una cantidad válida', true);
+        return;
+    }
+    
+    const idManual = 'MAN-' + Date.now() + '-' + (++productoManualIdCounter);
+    
+    carrito.push({
+        pId: idManual,
+        pNom: nombre,
+        vNom: variante || 'Único',
+        vFoto: '',
+        precio: precio,
+        precioMayor: 0,
+        cant: cantidad,
+        esManual: true
+    });
+    
+    calcularPreciosMayoristaEnVivo();
+    renderCart();
+    localStorage.setItem('pos_carrito', JSON.stringify(carrito));
+    
+    document.querySelector('.modal.active')?.remove();
+    mostrarToast('✅ Producto manual agregado');
+}
 function toggleThemePanel(){
     const p = document.getElementById('theme-panel');
     if(p) p.style.display = p.style.display === 'block' ? 'none' : 'block';
