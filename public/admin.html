@@ -632,8 +632,10 @@ async function verStockBajo(){let d=await safeFetch('/stock-bajo',{method:'POST'
 function renderVentas(){ 
     const b = document.getElementById('lista-ventas-body'); 
     if(!b) return; 
-    b.innerHTML = ventasHistorial.map(v => `
-        <tr style="border-bottom: 1px solid #e2e8f0;">
+    b.innerHTML = ventasHistorial.map((v, i) => `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${i % 2 === 0 ? '#ffffff' : '#f1f5f9'}; transition: background 0.2s;" 
+            onmouseover="this.style.background='#eef2ff'" 
+            onmouseout="this.style.background='${i % 2 === 0 ? '#ffffff' : '#f1f5f9'}'">
             <td style="padding: 14px 16px; white-space: nowrap;">
                 <span style="font-size: 13px; color: #64748b;">${v.fecha.substring(0, 10)}</span><br>
                 <strong style="font-size: 15px;">${v.id}</strong>
