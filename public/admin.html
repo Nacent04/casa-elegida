@@ -442,11 +442,11 @@ function tab(t) {
     else if (t==='a') { container.className='layout'; container.innerHTML=renderPaginaGestionStock(); cartPanel.classList.add('hidden'); cargarCategorias(); setTimeout(cargarYRenderAdmin,100); }
     else if (t==='dash') { container.className='layout'; container.innerHTML=renderPaginaDashboard(); cartPanel.classList.add('hidden'); setTimeout(cargarDashboard,100); }
     else if (t==='c') { 
-    container.className='layout'; 
-    container.innerHTML=renderPaginaConfiguracion(); 
-    cartPanel.classList.add('hidden'); 
-    tabConfig('empresa'); 
-}
+        container.className='layout'; 
+        container.innerHTML=renderPaginaConfiguracion(); 
+        cartPanel.classList.add('hidden'); 
+        setTimeout(() => tabConfig('empresa'), 200); 
+    }
     else if (t==='retiro') { container.className='layout'; container.innerHTML=renderPaginaRetiro(); cartPanel.classList.add('hidden'); }
     else if (t==='p') { container.className='layout'; container.innerHTML=renderPaginaPedidosWeb(); cartPanel.classList.add('hidden'); pedidosTienda = []; cargarPedidosTienda(); }
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
@@ -457,6 +457,7 @@ function tab(t) {
     document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`t-${t}`)?.classList.add('active');
 }
+    
 function renderPaginaVentas() { 
     return `<div class="panel">
         <div id="estado-caja"></div>
