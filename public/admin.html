@@ -452,7 +452,12 @@ function tab(t) {
     else if (t==='perfiles') { container.className='layout'; container.innerHTML=renderPaginaPerfiles(); cartPanel.classList.add('hidden'); cargarPerfiles(); }
     else if (t==='logs') { container.className='layout'; container.innerHTML=renderPaginaLogs(); cartPanel.classList.add('hidden'); cargarLogs(); }
     else if (t==='clientes') { container.className='layout'; container.innerHTML=renderPaginaClientes(); cartPanel.classList.add('hidden'); cargarClientes(); }
-    else if (t==='web') { container.className='layout'; container.innerHTML=renderPaginaEdicionWeb(); cartPanel.classList.add('hidden'); }
+    else if (t==='web') { 
+    container.className='layout'; 
+    container.innerHTML=renderPaginaEdicionWeb(); 
+    cartPanel.classList.add('hidden'); 
+    setTimeout(() => tabEditor('colores'), 200); 
+}
     else if (t==='backup') { container.className='layout'; container.innerHTML=renderPaginaBackup(); cartPanel.classList.add('hidden'); setTimeout(cargarHistorialBackups,100); }
     document.querySelectorAll('.nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`t-${t}`)?.classList.add('active');
@@ -513,25 +518,30 @@ function renderPaginaPedidosWeb() { return `<div class="panel"><h3><i class="fas
 function renderPaginaPerfiles() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-users-cog"></i> Gestión de Perfiles</span><button onclick="abrirModalCrearPerfil()" class="tab-btn btn-success"><i class="fas fa-user-plus"></i> Nuevo Perfil</button></h3><div id="lista-perfiles"></div></div>`; }
 function renderPaginaLogs() { return `<div class="panel"><h3><i class="fas fa-history"></i> Registro de Actividad</h3><div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"><input type="text" id="logs-filtro" placeholder="🔍 Buscar..." style="flex:1;min-width:200px" onkeyup="cargarLogs()"><input type="date" id="logs-desde" style="width:150px" onchange="cargarLogs()"><input type="date" id="logs-hasta" style="width:150px" onchange="cargarLogs()"><button onclick="document.getElementById('logs-filtro').value='';document.getElementById('logs-desde').value='';document.getElementById('logs-hasta').value='';cargarLogs();" class="tab-btn">Limpiar</button></div><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Fecha</th><th>Admin</th><th>Acción</th><th>Detalles</th></tr></thead><tbody id="logs-body"></tbody></table></div></div>`; }
 function renderPaginaClientes() { return `<div class="panel"><h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-users"></i> Clientes Registrados</span><div style="display:flex;gap:8px"><input type="text" id="clientes-buscador" placeholder="🔍 Buscar cliente..." onkeyup="filtrarClientes()" style="padding:10px 16px;border-radius:20px;border:1px solid #e2e8f0;width:250px"></div></h3><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Cliente</th><th>Email</th><th>Teléfono</th><th>DNI</th><th>Ubicación</th><th>Acciones</th></tr></thead><tbody id="lista-clientes-body"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="loader"></div><p>Cargando clientes...</p></td></tr></tbody></table></div></div>`; }
-function renderPaginaEdicionWeb() { return `<div class="panel"><h3><i class="fas fa-paint-brush"></i> Edición Web</h3><div class="config-section"><h4><i class="fas fa-swatchbook"></i> Plantillas de Tienda</h4><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"><div class="plantilla-card" style="border:2px solid #6366f1;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('moderna')"><div style="background:linear-gradient(135deg,#1a1a1a,#333);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Moderna</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('clasica')"><div style="background:linear-gradient(135deg,#8B5E3C,#D4A574);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Clásica</strong></div><div class="plantilla-card" style="border:2px solid #e2e8f0;border-radius:16px;padding:16px;text-align:center;cursor:pointer" onclick="seleccionarPlantilla('minimalista')"><div style="background:linear-gradient(135deg,#fafafa,#e2e8f0);height:100px;border-radius:12px;margin-bottom:8px"></div><strong>Minimalista</strong></div></div></div><div class="config-section"><h4><i class="fas fa-icons"></i> Íconos de la Tienda</h4><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="tab-btn" onclick="cambiarIcono('store')"><i class="fas fa-store"></i> Tienda</button><button class="tab-btn" onclick="cambiarIcono('home')"><i class="fas fa-home"></i> Hogar</button><button class="tab-btn" onclick="cambiarIcono('star')"><i class="fas fa-star"></i> Premium</button><button class="tab-btn" onclick="cambiarIcono('gem')"><i class="fas fa-gem"></i> Lujo</button></div></div></div>`; }
+function renderPaginaEdicionWeb() { 
+    return `<div class="panel">
+        <h3 style="margin-bottom:20px"><i class="fas fa-paint-brush"></i> Edición Web</h3>
+        <div class="nav-tabs" style="margin-bottom:20px; gap:6px;" id="editor-tabs">
+            <button class="tab-btn active" onclick="tabEditor('colores')"><i class="fas fa-palette"></i> Colores</button>
+            <button class="tab-btn" onclick="tabEditor('tipografia')"><i class="fas fa-font"></i> Tipografía</button>
+            <button class="tab-btn" onclick="tabEditor('plantillas')"><i class="fas fa-swatchbook"></i> Plantillas</button>
+            <button class="tab-btn" onclick="tabEditor('iconos')"><i class="fas fa-icons"></i> Íconos</button>
+        </div>
+        <div id="editor-contenido"></div>
+    </div>`; 
+}
+    
 function renderPaginaConfiguracion() { 
     return `<div class="panel">
         <h3 style="margin-bottom:20px"><i class="fas fa-sliders-h"></i> Configuración</h3>
-        
-        <!-- Pestañas de navegación -->
         <div class="nav-tabs" style="margin-bottom:20px; gap:6px;" id="config-tabs">
             <button class="tab-btn active" onclick="tabConfig('empresa')"><i class="fas fa-building"></i> Empresa</button>
             <button class="tab-btn" onclick="tabConfig('tienda')"><i class="fas fa-store"></i> Tienda</button>
             <button class="tab-btn" onclick="tabConfig('mayorista')"><i class="fas fa-tags"></i> Mayorista</button>
-            <button class="tab-btn" onclick="tabConfig('diseno')"><i class="fas fa-palette"></i> Diseño</button>
             <button class="tab-btn" onclick="tabConfig('envios')"><i class="fas fa-truck"></i> Envíos</button>
             <button class="tab-btn" onclick="tabConfig('logo')"><i class="fas fa-image"></i> Logo</button>
         </div>
-        
-        <!-- Contenido de pestañas -->
-        <div id="config-contenido">
-            ${renderConfigEmpresa()}
-        </div>
+        <div id="config-contenido"></div>
     </div>`; 
 }
 
@@ -791,7 +801,6 @@ function setVal(id, val) {
         case 'empresa': contenido.innerHTML = renderConfigEmpresa(); break;
         case 'tienda': contenido.innerHTML = renderConfigTienda(); break;
         case 'mayorista': contenido.innerHTML = renderConfigMayorista(); break;
-        case 'diseno': contenido.innerHTML = renderConfigDiseno(); break;
         case 'envios': contenido.innerHTML = renderConfigEnvios(); break;
         case 'logo': contenido.innerHTML = renderConfigLogo(); break;
     }
@@ -799,7 +808,6 @@ function setVal(id, val) {
     document.querySelectorAll('#config-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
     
-    // Cargar datos con delay para asegurar DOM
     setTimeout(async () => {
         if (tab === 'envios') {
             cargarMetodosEnvio();
@@ -835,12 +843,6 @@ function setVal(id, val) {
         setVal('tienda-titulo', d.tienda?.titulo);
         setVal('tienda-mensaje', d.tienda?.mensajeBienvenida);
         if (d.tienda) setTiendaHabilitada(d.tienda.habilitada !== false);
-        if (d.diseno) {
-            setVal('tienda-color-primary', d.diseno.colorPrimario);
-            setVal('tienda-color-secondary', d.diseno.colorSecundario);
-            setVal('tienda-color-bg', d.diseno.colorFondo);
-            setVal('tienda-color-text', d.diseno.colorTexto);
-        }
         if (d.logo) {
             const img = document.getElementById('logo-preview-img');
             const ph = document.getElementById('logo-placeholder');
@@ -848,23 +850,19 @@ function setVal(id, val) {
             if (ph) ph.style.display = 'none';
         }
         
-        // MAYORISTA - Código que SÍ funciona
+        // MAYORISTA
         if (d.mayorista) {
             mayoristaHabilitado = d.mayorista.habilitado;
             mayoristaModo = d.mayorista.modo || 'cantidad';
-            
             document.querySelectorAll('.modo-option').forEach(o => {
                 o.classList.toggle('active', o.dataset.modo === mayoristaModo);
             });
-            
             const cantDiv = document.getElementById('configCantidad');
             const montoDiv = document.getElementById('configMonto');
             if (cantDiv) cantDiv.style.display = mayoristaModo === 'monto' ? 'none' : 'block';
             if (montoDiv) montoDiv.style.display = mayoristaModo === 'cantidad' ? 'none' : 'block';
-            
             setVal('mayoristaCantidad', d.mayorista.valorCantidad || 3);
             setVal('mayoristaMonto', formatearNumero(d.mayorista.valorMonto || 80000));
-            
             const panel = document.getElementById('mayoristaPanel');
             const btn = document.getElementById('btnMayoristaToggle');
             if (mayoristaHabilitado) {
@@ -876,6 +874,21 @@ function setVal(id, val) {
             }
         }
     }, 300);
+}
+
+    function tabEditor(tab) {
+    const contenido = document.getElementById('editor-contenido');
+    if (!contenido) return;
+    
+    switch(tab) {
+        case 'colores': contenido.innerHTML = renderEditorColores(); break;
+        case 'tipografia': contenido.innerHTML = renderEditorTipografia(); break;
+        case 'plantillas': contenido.innerHTML = renderEditorPlantillas(); break;
+        case 'iconos': contenido.innerHTML = renderEditorIconos(); break;
+    }
+    
+    document.querySelectorAll('#editor-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
 }
     
 function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero"><div class="backup-hero-icon">💾</div><h2>Sistema de Backup Total</h2><p>Protegé absolutamente todos tus datos.</p><button onclick="iniciarBackupTotal()" class="btn-backup-master" id="btn-backup-total"><i class="fas fa-shield-alt"></i> Crear Backup Completo</button></div><div class="backup-cards"><div class="backup-card-item" onclick="iniciarBackupTotal()"><div class="backup-card-icon" style="background:#eef2ff;color:#6366f1"><i class="fas fa-database"></i></div><h4>Backup Completo</h4><p>Incluye absolutamente todo.</p></div><div class="backup-card-item" onclick="document.getElementById('restore-section').scrollIntoView({behavior:'smooth'})"><div class="backup-card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-undo-alt"></i></div><h4>Restaurar Sistema</h4><p>Restaurá todo desde un archivo.</p></div></div><div class="config-section"><h3><i class="fas fa-history"></i> Historial <button onclick="cargarHistorialBackups()" class="tab-btn" style="float:right"><i class="fas fa-sync-alt"></i></button></h3><table class="history-table"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody id="backup-history-body"><tr><td colspan="3" style="text-align:center">Cargando...</td></tr></tbody></table></div><div class="config-section" style="border:2px solid #f59e0b" id="restore-section"><h3 style="color:#f59e0b"><i class="fas fa-upload"></i> Restaurar</h3><div class="restore-zone" onclick="document.getElementById('restore-file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="manejarDropRestore(event)"><i class="fas fa-cloud-upload-alt" style="font-size:48px;color:#f59e0b"></i><h4>Arrastrá el backup aquí</h4></div><input type="file" id="restore-file-input" accept=".backup,.zip" style="display:none" onchange="procesarArchivoRestore(this)"><button onclick="confirmarRestauracionTotal()" class="btn-backup-master" style="width:100%;background:#f59e0b;margin-top:16px;display:none" id="btn-restaurar"><i class="fas fa-exclamation-triangle"></i> Restaurar</button></div></div>`; }
@@ -1987,6 +2000,24 @@ function confirmarProductoManual() {
     document.querySelector('.modal.active')?.remove();
     mostrarToast(`✅ ${variantesValidas.length} variante(s) agregada(s)`);
 }
+    async function guardarTipografia() {
+    const fuentePrincipal = document.getElementById('tipografia-principal').value;
+    const tamanoBase = document.getElementById('tipografia-tamano').value;
+    
+    const disenoActual = configuracion?.diseno || {};
+    disenoActual.fuentePrincipal = fuentePrincipal;
+    disenoActual.tamanoBase = tamanoBase;
+    
+    await safeFetch('/save-diseno-config', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({diseno: disenoActual})
+    });
+    
+    configuracion.diseno = disenoActual;
+    mostrarToast('✅ Tipografía guardada');
+}
+    
 function toggleThemePanel(){
     const p = document.getElementById('theme-panel');
     if(p) p.style.display = p.style.display === 'block' ? 'none' : 'block';
