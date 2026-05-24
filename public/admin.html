@@ -715,6 +715,7 @@ function renderConfigLogo() {
         if (!d) return;
         configuracion = d;
         
+        // Todo lo demás igual...
         const emp = d.empresa || {};
         setVal('empresa-nombre', emp.nombre);
         setVal('empresa-telefono', emp.telefono);
@@ -741,12 +742,6 @@ function renderConfigLogo() {
         setVal('tienda-mensaje', d.tienda?.mensajeBienvenida);
         if (d.tienda) setTiendaHabilitada(d.tienda.habilitada !== false);
         
-        mayoristaHabilitado = d.mayorista?.habilitado || false;
-        mayoristaModo = d.mayorista?.modo || 'cantidad';
-        setVal('mayoristaCantidad', d.mayorista?.valorCantidad || 3);
-        setVal('mayoristaMonto', formatearNumero(d.mayorista?.valorMonto || 80000));
-        selectMayoristaModo(mayoristaModo);
-        
         if (d.diseno) {
             setVal('tienda-color-primary', d.diseno.colorPrimario);
             setVal('tienda-color-secondary', d.diseno.colorSecundario);
@@ -759,9 +754,31 @@ function renderConfigLogo() {
             if (img) { img.src = d.logo; img.style.display = 'block'; }
             if (ph) ph.style.display = 'none';
         }
+        
+        // MAYORISTA - Con delay para que el DOM esté listo
+        if (d.mayorista) {
+            mayoristaHabilitado = d.mayorista.habilitado;
+            mayoristaModo = d.mayorista.modo || 'cantidad';
+            
+            // Esperar 200ms y luego aplicar
+            setTimeout(() => {
+                selectMayoristaModo(mayoristaModo);
+                setVal('mayoristaCantidad', d.mayorista.valorCantidad || 3);
+                setVal('mayoristaMonto', formatearNumero(d.mayorista.valorMonto || 80000));
+                
+                const panel = document.getElementById('mayoristaPanel');
+                const btn = document.getElementById('btnMayoristaToggle');
+                if (mayoristaHabilitado) {
+                    if (panel) panel.style.display = 'block';
+                    if (btn) { btn.innerHTML = '<i class="fas fa-toggle-on"></i> Activado'; btn.style.background = '#10b981'; }
+                } else {
+                    if (panel) panel.style.display = 'none';
+                    if (btn) { btn.innerHTML = '<i class="fas fa-toggle-off"></i> Desactivado'; btn.style.background = '#64748b'; }
+                }
+            }, 200);
+        }
     } catch(e) {}
 }
-
 function setVal(id, val) {
     const el = document.getElementById(id);
     if (el && val !== undefined && val !== null) el.value = val;
