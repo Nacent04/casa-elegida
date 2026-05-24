@@ -248,42 +248,122 @@ function logout(){localStorage.removeItem('token');localStorage.removeItem('usua
 function verMisPedidos(){window.location.href='/mis-pedidos'}
 document.addEventListener('click',(e)=>{const menu=document.getElementById('user-menu');const btn=document.getElementById('user-btn');if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target))menu.style.display='none'})
 
-async function cargarDatos(){try{const data=await safeFetch('/tienda/listar-productos',{method:'POST'});productos=data.productos||[];categorias=data.categorias||[];configuracion=data.configuracion||configuracion;
-                                 // Aplicar colores desde configuración
-if(configuracion.diseno){
-    const d = configuracion.diseno;
-    const root = document.documentElement.style;
-    if(d.colorPrimario) root.setProperty('--primary', d.colorPrimario);
-    if(d.colorSecundario) root.setProperty('--secondary', d.colorSecundario);
-    if(d.colorFondo) root.setProperty('--bg-light', d.colorFondo);
-    if(d.colorTexto) root.setProperty('--text-dark', d.colorTexto);
+async function cargarDatos(){
+    try{
+        const data = await safeFetch('/tienda/listar-productos',{method:'POST'});
+        productos = data.productos || [];
+        categorias = data.categorias || [];
+        configuracion = data.configuracion || configuracion;
+        
+        // Aplicar colores desde configuración
+        if(configuracion.diseno){
+            const d = configuracion.diseno;
+            const root = document.documentElement.style;
+            if(d.colorPrimario) root.setProperty('--primary', d.colorPrimario);
+            if(d.colorSecundario) root.setProperty('--secondary', d.colorSecundario);
+            if(d.colorFondo) root.setProperty('--bg-light', d.colorFondo);
+            if(d.colorTexto) root.setProperty('--text-dark', d.colorTexto);
+        }
+        
+        // Aplicar tipografía
+        if(configuracion.diseno?.fuentePrincipal){
+            const link = document.createElement('link');
+            link.href = `https://fonts.googleapis.com/css2?family=${configuracion.diseno.fuentePrincipal.replace(/ /g,'+')}:wght@400;600;700;800&display=swap`;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+            document.body.style.fontFamily = `'${configuracion.diseno.fuentePrincipal}', system-ui, sans-serif`;
+        }
+        
+        // Tamaño base
+        if(configuracion.diseno?.tamanoBase){
+            document.documentElement.style.fontSize = configuracion.diseno.tamanoBase;
+        }
+        
+        // Banners
+        const bannersContainer = document.getElementById('banners-container');
+        if(bannersContainer && configuracion.banners?.length){
+            let bannerHTML = configuracion.banners.map(b => `
+                <div style="background:linear-gradient(135deg,var(--primary),var(--secondary));padding:20px;border-radius:16px;display:flex;align-items:center;gap:20px">
+                    ${b.imagen ? `<img src="${b.imagen}" style="width:120px;height:80px;object-fit:cover;border-radius:8px">` : ''}
+                    <div>
+                        <h3 style="color:white;margin:0 0 4px 0">${b.titulo || ''}</h3>
+                        <p style="color:rgba(255,255,255,0.8);margin:0 0 8px 0">${b.subtitulo || ''}</p>
+                        ${b.boton ? `<a href="${b.enlace || '#'}" style="display:inline-block;background:white;color:var(--primary);padding:8px 20px;border-radius:20px;text-decoration:none;font-weight:600">${b.boton}</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            bannersContainer.innerHTML = bannerHTML;
+        }
+        
+        // Anuncios - eliminar anteriores antes de crear nuevos
+        document.querySelectorAll('.anuncio-flotante').forEach(el => el.remove());
+        if(configuracion.anuncios?.length){
+            configuracion.anuncios.filter(a => a.activo !== false).forEach(a => {
+                const el = document.createElement('div');
+                el.className = 'anuncio-flotante';
+                el.style.cssText = `background:${a.color};color:white;text-align:center;padding:10px;font-weight:600;font-size:14px`;
+                el.textContent = a.texto;
+                if(a.posicion === 'top'){
+                    document.body.insertBefore(el, document.body.firstChild);
+                } else {
+                    document.body.appendChild(el);
+                }
+            });
+        }
+        
+        // Datos de la tienda
+        document.getElementById('tienda-nombre').textContent = configuracion.tienda?.titulo || 'Casa Elegida';
+        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || 'Casa Elegida';
+        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
+        
+        if(configuracion.logo){
+            document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`;
+            document.getElementById('hero-logo').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
+        }
+        if(configuracion.redes?.whatsapp){
+            document.getElementById('whatsapp-float').href = `https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`;
+        }
+        if(configuracion.empresa?.telefono){
+            document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
+        }
+        if(configuracion.horarios){
+            document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
+        }
+        
+        // Footer
+        document.getElementById('footer-nombre').textContent = configuracion.empresa?.nombre || 'Casa Elegida';
+        if(configuracion.empresa?.direccion){
+            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
+        }
+        if(configuracion.empresa?.telefono){
+            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
+        }
+        if(configuracion.redes?.whatsapp){
+            document.getElementById('footer-whatsapp').innerHTML = `<i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}`;
+        }
+        if(configuracion.horarios){
+            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes}`;
+            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados}`;
+        }
+        if(configuracion.redes?.instagram){
+            document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${configuracion.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${configuracion.redes.instagram.replace('@','')}</a>`;
+        }
+        if(configuracion.redes?.facebook){
+            document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${configuracion.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${configuracion.redes.facebook}</a>`;
+        }
+        
+        renderizarCategorias();
+        renderizarSubcategorias();
+        renderizarProductos();
+        cargarCarritoLocal();
+        checkLogin();
+        mostrarProductoDestacado();
+        actualizarWhatsAppPago();
+    } catch(e) {
+        console.error(e);
+    }
 }
-// Aplicar tipografía
-if(configuracion.diseno?.fuentePrincipal){
-    const link = document.createElement('link');
-    link.href = `https://fonts.googleapis.com/css2?family=${configuracion.diseno.fuentePrincipal.replace(/ /g,'+')}:wght@400;600;700;800&display=swap`;
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-    document.body.style.fontFamily = `'${configuracion.diseno.fuentePrincipal}', system-ui, sans-serif`;
-}
-// Tamaño base
-if(configuracion.diseno?.tamanoBase){
-    document.documentElement.style.fontSize = configuracion.diseno.tamanoBase;
-}
-document.getElementById('tienda-nombre').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-titulo').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-mensaje').textContent=configuracion.tienda?.mensajeBienvenida||'';
-if(configuracion.logo){document.getElementById('logo-container').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`;document.getElementById('hero-logo').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`}
-if(configuracion.redes?.whatsapp){document.getElementById('whatsapp-float').href=`https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`}
-if(configuracion.empresa?.telefono)document.getElementById('header-phone').textContent=configuracion.empresa.telefono;
-if(configuracion.horarios)document.getElementById('header-hours-text').textContent=`L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
-document.getElementById('footer-nombre').textContent=configuracion.empresa?.nombre||'Casa Elegida';
-if(configuracion.empresa?.direccion)document.getElementById('footer-direccion').innerHTML=`<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
-if(configuracion.empresa?.telefono)document.getElementById('footer-telefono').innerHTML=`<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
-if(configuracion.redes?.whatsapp)document.getElementById('footer-whatsapp').innerHTML=`<i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}`;
-if(configuracion.horarios){document.getElementById('footer-horario-lv').innerHTML=`<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes}`;document.getElementById('footer-horario-sab').innerHTML=`<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados}`}
-if(configuracion.redes?.instagram)document.getElementById('footer-instagram').innerHTML=`<a href="https://instagram.com/${configuracion.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${configuracion.redes.instagram.replace('@','')}</a>`;
-if(configuracion.redes?.facebook)document.getElementById('footer-facebook').innerHTML=`<a href="https://facebook.com/${configuracion.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${configuracion.redes.facebook}</a>`;
-renderizarCategorias();renderizarSubcategorias();renderizarProductos();cargarCarritoLocal();checkLogin();mostrarProductoDestacado();actualizarWhatsAppPago()}catch(e){console.error(e)}}
-
+    
 function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='https://via.placeholder.com/140'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
 
 function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i> ${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
