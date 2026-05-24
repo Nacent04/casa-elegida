@@ -616,10 +616,10 @@ function renderConfigMayorista() {
                 <div style="margin-bottom:20px">
                     <label style="font-weight:600;display:block;margin-bottom:8px">Modo de cálculo:</label>
                     <div style="display:flex;gap:12px;margin-top:12px">
-                        <div class="modo-option active" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')">
+                        <div class="modo-option" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')">
                             <i class="fas fa-boxes"></i><br><strong>Cantidad</strong>
                         </div>
-                        <div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')">
+                        <div class="modo-option active" data-modo="monto" onclick="selectMayoristaModo('monto')">
                             <i class="fas fa-money-bill-wave"></i><br><strong>Monto</strong>
                         </div>
                         <div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')">
@@ -628,11 +628,11 @@ function renderConfigMayorista() {
                     </div>
                 </div>
                 <div style="display:flex;gap:20px">
-                    <div id="configCantidad">
+                    <div id="configCantidad" style="display:none">
                         <label style="font-weight:600;display:block;margin-bottom:8px">Cantidad mínima</label>
                         <input type="number" id="mayoristaCantidad" value="3">
                     </div>
-                    <div id="configMonto" style="display:none">
+                    <div id="configMonto" style="display:block">
                         <label style="font-weight:600;display:block;margin-bottom:8px">Monto mínimo</label>
                         <div style="position:relative">
                             <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b">$</span>
