@@ -799,7 +799,7 @@ function setVal(id, val) {
     document.querySelectorAll('#config-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
     
-    // FORZAR ABSOLUTO
+    // Cargar datos con delay para asegurar DOM
     setTimeout(async () => {
         if (tab === 'envios') {
             cargarMetodosEnvio();
@@ -810,7 +810,6 @@ function setVal(id, val) {
         if (!d) return;
         configuracion = d;
         
-        // Cargar TODO en cada pestaña
         const emp = d.empresa || {};
         setVal('empresa-nombre', emp.nombre);
         setVal('empresa-telefono', emp.telefono);
@@ -836,7 +835,6 @@ function setVal(id, val) {
         setVal('tienda-titulo', d.tienda?.titulo);
         setVal('tienda-mensaje', d.tienda?.mensajeBienvenida);
         if (d.tienda) setTiendaHabilitada(d.tienda.habilitada !== false);
-        
         if (d.diseno) {
             setVal('tienda-color-primary', d.diseno.colorPrimario);
             setVal('tienda-color-secondary', d.diseno.colorSecundario);
@@ -850,18 +848,19 @@ function setVal(id, val) {
             if (ph) ph.style.display = 'none';
         }
         
-        // MAYORISTA - DIRECTO Y FORZADO
+        // MAYORISTA - Código que SÍ funciona
         if (d.mayorista) {
             mayoristaHabilitado = d.mayorista.habilitado;
             mayoristaModo = d.mayorista.modo || 'cantidad';
             
-            // Aplicar inmediatamente con verificación
-            const modoActual = mayoristaModo;
             document.querySelectorAll('.modo-option').forEach(o => {
-                o.classList.toggle('active', o.dataset.modo === modoActual);
+                o.classList.toggle('active', o.dataset.modo === mayoristaModo);
             });
-            document.getElementById('configCantidad').style.display = modoActual === 'monto' ? 'none' : 'block';
-            document.getElementById('configMonto').style.display = modoActual === 'cantidad' ? 'none' : 'block';
+            
+            const cantDiv = document.getElementById('configCantidad');
+            const montoDiv = document.getElementById('configMonto');
+            if (cantDiv) cantDiv.style.display = mayoristaModo === 'monto' ? 'none' : 'block';
+            if (montoDiv) montoDiv.style.display = mayoristaModo === 'cantidad' ? 'none' : 'block';
             
             setVal('mayoristaCantidad', d.mayorista.valorCantidad || 3);
             setVal('mayoristaMonto', formatearNumero(d.mayorista.valorMonto || 80000));
