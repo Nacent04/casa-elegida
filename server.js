@@ -667,7 +667,9 @@ app.post('/get-config', async (req, res) => {
     }
 });
 app.post('/save-config', adminMiddleware('config'), async (req, res) => {
-    ['empresa','horarios','redes','pagos'].forEach(async k => { if(req.body[k]) await setConfig(k, req.body[k]); });
+    ['empresa','horarios','redes','pagos','banners','anuncios'].forEach(async k => { 
+        if(req.body[k]) await setConfig(k, req.body[k]); 
+    });
     await logActividad('Admin', 'GUARDAR_CONFIG', 'Configuración actualizada', req);
     res.json({ success: true });
 });
