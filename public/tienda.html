@@ -249,6 +249,27 @@ function verMisPedidos(){window.location.href='/mis-pedidos'}
 document.addEventListener('click',(e)=>{const menu=document.getElementById('user-menu');const btn=document.getElementById('user-btn');if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target))menu.style.display='none'})
 
 async function cargarDatos(){try{const data=await safeFetch('/tienda/listar-productos',{method:'POST'});productos=data.productos||[];categorias=data.categorias||[];configuracion=data.configuracion||configuracion;
+                                 // Aplicar colores desde configuración
+if(configuracion.diseno){
+    const d = configuracion.diseno;
+    const root = document.documentElement.style;
+    if(d.colorPrimario) root.setProperty('--primary', d.colorPrimario);
+    if(d.colorSecundario) root.setProperty('--secondary', d.colorSecundario);
+    if(d.colorFondo) root.setProperty('--bg-light', d.colorFondo);
+    if(d.colorTexto) root.setProperty('--text-dark', d.colorTexto);
+}
+// Aplicar tipografía
+if(configuracion.diseno?.fuentePrincipal){
+    const link = document.createElement('link');
+    link.href = `https://fonts.googleapis.com/css2?family=${configuracion.diseno.fuentePrincipal.replace(/ /g,'+')}:wght@400;600;700;800&display=swap`;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    document.body.style.fontFamily = `'${configuracion.diseno.fuentePrincipal}', system-ui, sans-serif`;
+}
+// Tamaño base
+if(configuracion.diseno?.tamanoBase){
+    document.documentElement.style.fontSize = configuracion.diseno.tamanoBase;
+}
 document.getElementById('tienda-nombre').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-titulo').textContent=configuracion.tienda?.titulo||'Casa Elegida';document.getElementById('hero-mensaje').textContent=configuracion.tienda?.mensajeBienvenida||'';
 if(configuracion.logo){document.getElementById('logo-container').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`;document.getElementById('hero-logo').innerHTML=`<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`}
 if(configuracion.redes?.whatsapp){document.getElementById('whatsapp-float').href=`https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`}
