@@ -525,6 +525,8 @@ function renderPaginaEdicionWeb() {
             <button class="tab-btn active" onclick="tabEditor('colores')"><i class="fas fa-palette"></i> Colores</button>
             <button class="tab-btn" onclick="tabEditor('tipografia')"><i class="fas fa-font"></i> Tipografía</button>
             <button class="tab-btn" onclick="tabEditor('plantillas')"><i class="fas fa-swatchbook"></i> Plantillas</button>
+            <button class="tab-btn" onclick="tabEditor('banners')"><i class="fas fa-images"></i> Banners</button>
+            <button class="tab-btn" onclick="tabEditor('anuncios')"><i class="fas fa-bullhorn"></i> Anuncios</button>
             <button class="tab-btn" onclick="tabEditor('iconos')"><i class="fas fa-icons"></i> Íconos</button>
         </div>
         <div id="editor-contenido"></div>
@@ -884,24 +886,30 @@ function setVal(id, val) {
         case 'colores': contenido.innerHTML = renderEditorColores(); break;
         case 'tipografia': contenido.innerHTML = renderEditorTipografia(); break;
         case 'plantillas': contenido.innerHTML = renderEditorPlantillas(); break;
+        case 'banners': contenido.innerHTML = renderEditorBanners(); break;
+        case 'anuncios': contenido.innerHTML = renderEditorAnuncios(); break;
         case 'iconos': contenido.innerHTML = renderEditorIconos(); break;
     }
     
     document.querySelectorAll('#editor-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
     
-    // Cargar datos desde configuracion global
     setTimeout(async () => {
         if (!configuracion || Object.keys(configuracion).length === 0) {
             const d = await safeFetch('/get-config', {method: 'POST'});
             if (d) configuracion = d;
         }
-        
         if (tab === 'colores') {
             setVal('tienda-color-primary', configuracion?.diseno?.colorPrimario || '#1a1a1a');
             setVal('tienda-color-secondary', configuracion?.diseno?.colorSecundario || '#c9a96e');
             setVal('tienda-color-bg', configuracion?.diseno?.colorFondo || '#fafafa');
             setVal('tienda-color-text', configuracion?.diseno?.colorTexto || '#1a1a1a');
+        }
+        if (tab === 'banners' && configuracion?.banners) {
+            cargarListaBanners();
+        }
+        if (tab === 'anuncios' && configuracion?.anuncios) {
+            cargarListaAnuncios();
         }
     }, 200);
 }
@@ -992,6 +1000,154 @@ function renderEditorIconos() {
             </div>
         </div>
     </div>`;
+}
+
+    function renderEditorBanners() {
+    return `<div id="editor-banners">
+        <div class="config-section">
+            <h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-images"></i> Banners</span>
+                <button onclick="agregarBanner()" class="tab-btn btn-success"><i class="fas fa-plus"></i> Nuevo Banner</button>
+            </h3>
+            <div id="lista-banners" style="display:flex;flex-direction:column;gap:12px">
+                <p style="color:#94a3b8;text-align:center">Cargando...</p>
+            </div>
+        </div>
+    </div>`;
+}
+
+function cargarListaBanners() {
+    const container = document.getElementById('lista-banners');
+    if (!container) return;
+    const banners = configuracion?.banners || [];
+    if (!banners.length) {
+        container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">No hay banners. Crea uno nuevo.</p>';
+        return;
+    }
+    container.innerHTML = banners.map((b, i) => `
+        <div style="background:white;border:2px solid #e2e8f0;border-radius:16px;padding:16px;display:flex;gap:16px;align-items:center">
+            <img src="${b.imagen || 'https://via.placeholder.com/150'}" style="width:150px;height:80px;object-fit:cover;border-radius:8px">
+            <div style="flex:1">
+                <input type="text" value="${escapeHtml(b.titulo || '')}" placeholder="Título del banner" style="margin-bottom:6px" onchange="actualizarBanner(${i},'titulo',this.value)">
+                <input type="text" value="${escapeHtml(b.subtitulo || '')}" placeholder="Subtítulo" style="margin-bottom:6px" onchange="actualizarBanner(${i},'subtitulo',this.value)">
+                <input type="text" value="${escapeHtml(b.boton || '')}" placeholder="Texto del botón" style="margin-bottom:6px" onchange="actualizarBanner(${i},'boton',this.value)">
+                <input type="text" value="${escapeHtml(b.enlace || '')}" placeholder="Enlace del botón" onchange="actualizarBanner(${i},'enlace',this.value)">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+                <label class="tab-btn" style="background:#6366f1;color:white;padding:8px 12px;font-size:11px;cursor:pointer">
+                    📷 <input type="file" accept="image/*" style="display:none" onchange="subirImagenBanner(this,${i})">
+                </label>
+                <button onclick="eliminarBanner(${i})" class="tab-btn btn-danger" style="padding:8px 12px;font-size:11px"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+    container.innerHTML += `<button onclick="guardarBanners()" class="btn-confirm" style="margin-top:12px"><i class="fas fa-save"></i> Guardar Banners</button>`;
+}
+
+function agregarBanner() {
+    if (!configuracion.banners) configuracion.banners = [];
+    configuracion.banners.push({ imagen: '', titulo: 'Nuevo Banner', subtitulo: '', boton: 'Ver más', enlace: '#' });
+    cargarListaBanners();
+}
+
+function actualizarBanner(index, campo, valor) {
+    if (!configuracion.banners) return;
+    configuracion.banners[index][campo] = valor;
+}
+
+async function subirImagenBanner(input, index) {
+    if (!input.files?.[0]) return;
+    const fd = new FormData();
+    fd.append('foto', input.files[0]);
+    try {
+        const d = await safeFetch('/subir-imagen', { method: 'POST', body: fd });
+        if (d.url) {
+            configuracion.banners[index].imagen = d.url;
+            cargarListaBanners();
+            mostrarToast('✅ Imagen subida');
+        }
+    } catch(e) {}
+}
+
+function eliminarBanner(index) {
+    configuracion.banners.splice(index, 1);
+    cargarListaBanners();
+}
+
+async function guardarBanners() {
+    await safeFetch('/save-config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ banners: configuracion.banners || [] })
+    });
+    mostrarToast('✅ Banners guardados');
+}
+
+function renderEditorAnuncios() {
+    return `<div id="editor-anuncios">
+        <div class="config-section">
+            <h3 style="display:flex;justify-content:space-between"><span><i class="fas fa-bullhorn"></i> Anuncios</span>
+                <button onclick="agregarAnuncio()" class="tab-btn btn-success"><i class="fas fa-plus"></i> Nuevo Anuncio</button>
+            </h3>
+            <div id="lista-anuncios" style="display:flex;flex-direction:column;gap:12px">
+                <p style="color:#94a3b8;text-align:center">Cargando...</p>
+            </div>
+        </div>
+    </div>`;
+}
+
+function cargarListaAnuncios() {
+    const container = document.getElementById('lista-anuncios');
+    if (!container) return;
+    const anuncios = configuracion?.anuncios || [];
+    if (!anuncios.length) {
+        container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">No hay anuncios. Crea uno nuevo.</p>';
+        return;
+    }
+    container.innerHTML = anuncios.map((a, i) => `
+        <div style="background:white;border:2px solid #e2e8f0;border-radius:16px;padding:16px">
+            <div style="display:flex;gap:12px;margin-bottom:8px">
+                <input type="text" value="${escapeHtml(a.texto || '')}" placeholder="Texto del anuncio" style="flex:1" onchange="actualizarAnuncio(${i},'texto',this.value)">
+                <select onchange="actualizarAnuncio(${i},'color',this.value)" style="width:150px">
+                    <option value="#6366f1" ${a.color==='#6366f1'?'selected':''}>🔵 Azul</option>
+                    <option value="#ef4444" ${a.color==='#ef4444'?'selected':''}>🔴 Rojo</option>
+                    <option value="#10b981" ${a.color==='#10b981'?'selected':''}>🟢 Verde</option>
+                    <option value="#f59e0b" ${a.color==='#f59e0b'?'selected':''}>🟡 Amarillo</option>
+                </select>
+                <select onchange="actualizarAnuncio(${i},'posicion',this.value)" style="width:120px">
+                    <option value="top" ${a.posicion==='top'?'selected':''}>Arriba</option>
+                    <option value="bottom" ${a.posicion==='bottom'?'selected':''}>Abajo</option>
+                </select>
+                <label><input type="checkbox" ${a.activo!==false?'checked':''} onchange="actualizarAnuncio(${i},'activo',this.checked)"> Activo</label>
+                <button onclick="eliminarAnuncio(${i})" class="tab-btn btn-danger" style="padding:6px 10px"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+    container.innerHTML += `<button onclick="guardarAnuncios()" class="btn-confirm" style="margin-top:12px"><i class="fas fa-save"></i> Guardar Anuncios</button>`;
+}
+
+function agregarAnuncio() {
+    if (!configuracion.anuncios) configuracion.anuncios = [];
+    configuracion.anuncios.push({ texto: '🔥 Oferta especial', color: '#ef4444', posicion: 'top', activo: true });
+    cargarListaAnuncios();
+}
+
+function actualizarAnuncio(index, campo, valor) {
+    if (!configuracion.anuncios) return;
+    configuracion.anuncios[index][campo] = valor;
+}
+
+function eliminarAnuncio(index) {
+    configuracion.anuncios.splice(index, 1);
+    cargarListaAnuncios();
+}
+
+async function guardarAnuncios() {
+    await safeFetch('/save-config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ anuncios: configuracion.anuncios || [] })
+    });
+    mostrarToast('✅ Anuncios guardados');
 }
     
 function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero"><div class="backup-hero-icon">💾</div><h2>Sistema de Backup Total</h2><p>Protegé absolutamente todos tus datos.</p><button onclick="iniciarBackupTotal()" class="btn-backup-master" id="btn-backup-total"><i class="fas fa-shield-alt"></i> Crear Backup Completo</button></div><div class="backup-cards"><div class="backup-card-item" onclick="iniciarBackupTotal()"><div class="backup-card-icon" style="background:#eef2ff;color:#6366f1"><i class="fas fa-database"></i></div><h4>Backup Completo</h4><p>Incluye absolutamente todo.</p></div><div class="backup-card-item" onclick="document.getElementById('restore-section').scrollIntoView({behavior:'smooth'})"><div class="backup-card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-undo-alt"></i></div><h4>Restaurar Sistema</h4><p>Restaurá todo desde un archivo.</p></div></div><div class="config-section"><h3><i class="fas fa-history"></i> Historial <button onclick="cargarHistorialBackups()" class="tab-btn" style="float:right"><i class="fas fa-sync-alt"></i></button></h3><table class="history-table"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody id="backup-history-body"><tr><td colspan="3" style="text-align:center">Cargando...</td></tr></tbody></table></div><div class="config-section" style="border:2px solid #f59e0b" id="restore-section"><h3 style="color:#f59e0b"><i class="fas fa-upload"></i> Restaurar</h3><div class="restore-zone" onclick="document.getElementById('restore-file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="manejarDropRestore(event)"><i class="fas fa-cloud-upload-alt" style="font-size:48px;color:#f59e0b"></i><h4>Arrastrá el backup aquí</h4></div><input type="file" id="restore-file-input" accept=".backup,.zip" style="display:none" onchange="procesarArchivoRestore(this)"><button onclick="confirmarRestauracionTotal()" class="btn-backup-master" style="width:100%;background:#f59e0b;margin-top:16px;display:none" id="btn-restaurar"><i class="fas fa-exclamation-triangle"></i> Restaurar</button></div></div>`; }
