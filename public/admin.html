@@ -1262,44 +1262,42 @@ async function eliminarCat(id){if(!confirm('¿Eliminar?'))return;await safeFetch
 
 async function cargarPedidosTienda(){try{const d=await safeFetch('/tienda/listar-pedidos',{method:'POST'});pedidosTienda=d.lista||[];renderPedidosWeb();return pedidosTienda;}catch(e){return[];}}
 function renderPedidosWeb(){
-    const b=document.getElementById('lista-pedidos-body');
-    if(!b)return;
-    b.innerHTML=pedidosTienda.map(p=>{
+    const b = document.getElementById('lista-pedidos-body');
+    if(!b) return;
+    b.innerHTML = pedidosTienda.map((p, i) => {
         let botonesAccion = '';
-        
-        // Botón Ver (siempre visible)
-        botonesAccion += `<button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info"><i class="fas fa-eye"></i></button>`;
-        
-        // Botón Confirmar (solo pendiente)
+        botonesAccion += `<button onclick="verDetallePedido('${p.id}')" class="btn-print btn-info" style="padding:8px 12px;font-size:11px"><i class="fas fa-eye"></i> Ver</button>`;
         if(p.estado === 'pendiente'){
-            botonesAccion += `<button onclick="confirmarPedidoWeb('${p.id}')" class="btn-print btn-success">Confirmar</button>`;
+            botonesAccion += `<button onclick="confirmarPedidoWeb('${p.id}')" class="btn-print btn-success" style="padding:8px 12px;font-size:11px"><i class="fas fa-check"></i> Confirmar</button>`;
         }
-        
-        // Botón Abonado (solo confirmado)
         if(p.estado === 'confirmado'){
-            botonesAccion += `<button onclick="marcarAbonado('${p.id}')" class="btn-print btn-info">Abonado</button>`;
+            botonesAccion += `<button onclick="marcarAbonado('${p.id}')" class="btn-print btn-info" style="padding:8px 12px;font-size:11px"><i class="fas fa-money-bill"></i> Abonado</button>`;
         }
-        
-        // Botón Enviado (solo abonado + envío)
         if(p.estado === 'abonado' && p.tipoEntrega === 'envio'){
-            botonesAccion += `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white"><i class="fas fa-truck"></i> Enviado</button>`;
+            botonesAccion += `<button onclick="marcarEnviado('${p.id}')" class="btn-print" style="background:#8b5cf6;color:white;padding:8px 12px;font-size:11px"><i class="fas fa-truck"></i> Enviado</button>`;
         }
-        
-        // Botón Cancelar (todos menos entregado y cancelado)
         if(p.estado !== 'entregado' && p.estado !== 'cancelado'){
-            botonesAccion += `<button onclick="cancelarPedidoAdmin('${p.id}')" class="btn-print btn-danger">Cancelar</button>`;
+            botonesAccion += `<button onclick="cancelarPedidoAdmin('${p.id}')" class="btn-print btn-danger" style="padding:8px 12px;font-size:11px"><i class="fas fa-times"></i> Cancelar</button>`;
         }
         
-        return `<tr>
-            <td><small>${p.fecha}</small><br><strong>${p.id}</strong>${p.pin?`<br>PIN: ${p.pin}`:''}</td>
-            <td>${p.cliente?.nombre||''}</td>
-            <td>${p.items.length}</td>
-            <td>${fmt.format(p.total)}</td>
-            <td><span class="estado-badge estado-${p.estado}">${p.estado}</span></td>
-            <td>${botonesAccion}</td>
+        return `<tr style="border-bottom:1px solid #e2e8f0;background:${i%2===0?'#ffffff':'#f1f5f9'};transition:background 0.2s" 
+            onmouseover="this.style.background='#eef2ff'" 
+            onmouseout="this.style.background='${i%2===0?'#ffffff':'#f1f5f9'}'">
+            <td style="padding:14px 16px;white-space:nowrap">
+                <span style="font-size:12px;color:#64748b">${p.fecha?.substring(0,10)}</span><br>
+                <strong style="font-size:14px">${p.id}</strong>${p.pin?`<br><span style="font-size:10px;color:#6366f1">🔐 PIN: ${p.pin}</span>`:''}
+            </td>
+            <td style="padding:14px 16px"><span style="font-size:13px">${p.cliente?.nombre||''}</span></td>
+            <td style="padding:14px 16px;text-align:center">
+                <span style="background:#eef2ff;color:#6366f1;padding:5px 10px;border-radius:20px;font-weight:600;font-size:12px">${p.items.length} items</span>
+            </td>
+            <td style="padding:14px 16px;text-align:right"><strong style="font-size:15px;color:#059669">${fmt.format(p.total)}</strong></td>
+            <td style="padding:14px 16px;text-align:center"><span class="estado-badge estado-${p.estado}" style="font-size:11px">${p.estado}</span></td>
+            <td style="padding:14px 16px;display:flex;gap:8px;justify-content:flex-end">${botonesAccion}</td>
         </tr>`;
     }).join('');
 }
+    
 function verDetallePedido(id) { 
     const p = pedidosTienda.find(x => x.id === id); 
     if (!p) return; 
@@ -1787,7 +1785,26 @@ function toggleNotificaciones(){const p=document.getElementById('notif-panel');p
 function renderNotificaciones(){document.getElementById('notif-list').innerHTML=notificaciones.map(n=>`<div class="notif-item ${n.leida?'':'no-leida'}" onclick="leerNotif('${n.id}')"><div class="notif-icon ${n.tipo}"><i class="fas fa-${n.tipo==='pedido'?'shopping-cart':'exclamation-triangle'}"></i></div><div class="notif-content"><div class="notif-title">${n.titulo}</div><div class="notif-desc">${n.descripcion}</div></div></div>`).join('');}
 async function leerNotif(id){await safeFetch('/notificaciones/leer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});cargarNotificaciones();}
 async function marcarTodasLeidas(){await safeFetch('/notificaciones/leer-todas',{method:'POST'});cargarNotificaciones();}
-async function cargarLogs(){const filtro=document.getElementById('logs-filtro')?.value||'';try{const d=await safeFetch('/logs/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filtro})});const t=document.getElementById('logs-body');if(t&&d.lista)t.innerHTML=d.lista.map(l=>`<tr><td>${l.fechaLocal||l.fecha}</td><td>${l.admin||'Sistema'}</td><td>${l.accion}</td><td>${l.detalles||''}</td></tr>`).join('');}catch(e){}}
+async function cargarLogs(){
+    const filtro = document.getElementById('logs-filtro')?.value || '';
+    try {
+        const d = await safeFetch('/logs/admin', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({filtro})
+        });
+        const t = document.getElementById('logs-body');
+        if(t && d.lista) t.innerHTML = d.lista.map((l, i) => `
+            <tr style="border-bottom:1px solid #e2e8f0;background:${i%2===0?'#ffffff':'#f1f5f9'};transition:background 0.2s" 
+                onmouseover="this.style.background='#eef2ff'" 
+                onmouseout="this.style.background='${i%2===0?'#ffffff':'#f1f5f9'}'">
+                <td style="padding:12px 14px;font-size:12px;white-space:nowrap">${l.fechaLocal || l.fecha}</td>
+                <td style="padding:12px 14px;font-size:13px;font-weight:600">${l.admin || 'Sistema'}</td>
+                <td style="padding:12px 14px;font-size:13px">${l.accion}</td>
+                <td style="padding:12px 14px;font-size:12px;color:#64748b">${l.detalles || ''}</td>
+            </tr>`).join('');
+    } catch(e) {}
+}
 let todosClientes = [];
 async function cargarClientes() {
     try {
@@ -1815,20 +1832,23 @@ function renderizarTablaClientes(lista) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No se encontraron clientes</td></tr>';
         return;
     }
-    tbody.innerHTML = lista.map(c => `
-        <tr>
-            <td><strong>${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}</strong></td>
-            <td>${escapeHtml(c.email || '-')}</td>
-            <td>${escapeHtml(c.telefono || '-')}</td>
-            <td>${escapeHtml(c.dni || '-')}</td>
-            <td><small>${[c.localidad, c.provincia].filter(Boolean).join(', ') || '-'}</small></td>
-            <td style="display:flex;gap:6px">
-    <button onclick="verHistorialClienteCompleto('${c.id}','${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}')" class="btn-print btn-info"><i class="fas fa-history"></i> Historial</button>
-    <button onclick="eliminarCliente('${c.id}','${escapeHtml(c.nombre || '')} ${escapeHtml(c.apellido || '')}')" class="btn-print" style="background:#ef4444"><i class="fas fa-trash"></i> Eliminar</button>
-</td>
+    tbody.innerHTML = lista.map((c, i) => `
+        <tr style="border-bottom:1px solid #e2e8f0;background:${i%2===0?'#ffffff':'#f1f5f9'};transition:background 0.2s" 
+            onmouseover="this.style.background='#eef2ff'" 
+            onmouseout="this.style.background='${i%2===0?'#ffffff':'#f1f5f9'}'">
+            <td style="padding:14px 16px"><strong style="font-size:14px">${escapeHtml(c.nombre||'')} ${escapeHtml(c.apellido||'')}</strong></td>
+            <td style="padding:14px 16px;font-size:13px">${escapeHtml(c.email||'-')}</td>
+            <td style="padding:14px 16px;font-size:13px">${escapeHtml(c.telefono||'-')}</td>
+            <td style="padding:14px 16px;font-size:13px">${escapeHtml(c.dni||'-')}</td>
+            <td style="padding:14px 16px;font-size:12px;color:#64748b">${[c.localidad, c.provincia].filter(Boolean).join(', ')||'-'}</td>
+            <td style="padding:14px 16px;display:flex;gap:8px">
+                <button onclick="verHistorialClienteCompleto('${c.id}','${escapeHtml(c.nombre||'')} ${escapeHtml(c.apellido||'')}')" class="btn-print btn-info" style="padding:8px 12px;font-size:11px"><i class="fas fa-history"></i> Historial</button>
+                <button onclick="eliminarCliente('${c.id}','${escapeHtml(c.nombre||'')} ${escapeHtml(c.apellido||'')}')" class="btn-print" style="background:#ef4444;padding:8px 12px;font-size:11px"><i class="fas fa-trash"></i> Eliminar</button>
+            </td>
         </tr>
     `).join('');
 }
+    
 async function verHistorialClienteCompleto(userId, nombreCliente) {
     const m = document.createElement('div');
     m.className = 'modal active';
