@@ -655,19 +655,19 @@ function renderConfigDiseno() {
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
                 <div>
                     <label style="font-weight:600;display:block;margin-bottom:8px">Color Principal</label>
-                    <input type="color" id="tienda-color-primary" value="#1a1a1a">
+                    <input type="color" id="tienda-color-primary" value="${configuracion?.diseno?.colorPrimario || '#1a1a1a'}">
                 </div>
                 <div>
                     <label style="font-weight:600;display:block;margin-bottom:8px">Color Secundario</label>
-                    <input type="color" id="tienda-color-secondary" value="#c9a96e">
+                    <input type="color" id="tienda-color-secondary" value="${configuracion?.diseno?.colorSecundario || '#c9a96e'}">
                 </div>
                 <div>
                     <label style="font-weight:600;display:block;margin-bottom:8px">Color Fondo</label>
-                    <input type="color" id="tienda-color-bg" value="#fafafa">
+                    <input type="color" id="tienda-color-bg" value="${configuracion?.diseno?.colorFondo || '#fafafa'}">
                 </div>
                 <div>
                     <label style="font-weight:600;display:block;margin-bottom:8px">Color Texto</label>
-                    <input type="color" id="tienda-color-text" value="#1a1a1a">
+                    <input type="color" id="tienda-color-text" value="${configuracion?.diseno?.colorTexto || '#1a1a1a'}">
                 </div>
             </div>
             <button onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top:16px">Aplicar Colores</button>
