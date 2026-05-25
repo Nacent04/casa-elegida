@@ -1139,6 +1139,7 @@ function actualizarAnuncio(index, campo, valor) {
 function eliminarAnuncio(index) {
     configuracion.anuncios.splice(index, 1);
     cargarListaAnuncios();
+    guardarAnuncios(); // ← Agregar esta línea para guardar automáticamente
 }
 
 async function guardarAnuncios() {
