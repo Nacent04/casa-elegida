@@ -1044,6 +1044,12 @@ async function guardarBanners() {
     mostrarToast('✅ Banners guardados');
 }
 
+    async function eliminarBanner(index) {
+    configuracion.banners.splice(index, 1);
+    cargarListaBanners();
+    await guardarBanners();
+}
+    
 function cargarListaBanners() {
     const container = document.getElementById('lista-banners');
     if (!container) return;
