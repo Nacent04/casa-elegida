@@ -1030,11 +1030,18 @@ async function subirImagenBanner(input, index) {
 }
 
 function eliminarBanner(index) {
+    if (!configuracion.banners) return;
     configuracion.banners.splice(index, 1);
     cargarListaBanners();
-    guardarBanners();
+    
+    // Guardar directo sin depender de otra función
+    safeFetch('/save-config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ banners: configuracion.banners })
+    }).then(() => mostrarToast('✅ Banner eliminado'));
 }
-
+    
 async function guardarBanners() {
     await safeFetch('/save-config', {
         method: 'POST',
