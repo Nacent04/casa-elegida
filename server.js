@@ -241,6 +241,11 @@ async function getConfig() {
     result.rows.forEach(r => {
         try { config[r.clave] = JSON.parse(r.valor); } catch(e) { config[r.clave] = r.valor; }
     });
+    if (!config.banners) config.banners = [];
+    if (!config.anuncios) config.anuncios = [];
+    return config;
+}
+
     return config;
 }
 
