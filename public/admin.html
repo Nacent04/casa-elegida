@@ -899,6 +899,8 @@ function setVal(id, val) {
             const d = await safeFetch('/get-config', {method: 'POST'});
             if (d) configuracion = d;
         }
+        if (!configuracion.banners) configuracion.banners = [];
+if (!configuracion.anuncios) configuracion.anuncios = [];
         if (tab === 'colores') {
             setVal('tienda-color-primary', configuracion?.diseno?.colorPrimario || '#1a1a1a');
             setVal('tienda-color-secondary', configuracion?.diseno?.colorSecundario || '#c9a96e');
