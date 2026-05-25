@@ -711,6 +711,8 @@ app.post('/corte-caja', async (req, res) => {
 
 app.post('/tienda/listar-productos', async (req, res) => {
     const c = await getConfig();
+    c.banners = c.banners || [];
+    c.anuncios = c.anuncios || [];
     const prods = (await pool.query('SELECT * FROM productos ORDER BY id DESC')).rows;
     for (const p of prods) p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
     const cats = (await pool.query('SELECT * FROM categorias')).rows;
