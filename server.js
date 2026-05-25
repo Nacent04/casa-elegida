@@ -246,9 +246,6 @@ async function getConfig() {
     return config;
 }
 
-    return config;
-}
-
 async function setConfig(k, v) {
     const val = typeof v === 'string' ? v : JSON.stringify(v);
     await pool.query('INSERT INTO configuracion (clave, valor) VALUES ($1, $2) ON CONFLICT (clave) DO UPDATE SET valor = $2', [k, val]);
