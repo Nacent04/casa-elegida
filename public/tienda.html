@@ -296,7 +296,9 @@ async function cargarDatos(){
         }
         
         // Anuncios - eliminar anteriores antes de crear nuevos
-        document.querySelectorAll('.anuncio-flotante').forEach(el => el.remove());
+        while(document.querySelector('.anuncio-flotante')) {
+    document.querySelector('.anuncio-flotante').remove();
+}
         if(configuracion.anuncios?.length){
             configuracion.anuncios.filter(a => a.activo !== false).forEach(a => {
                 const el = document.createElement('div');
