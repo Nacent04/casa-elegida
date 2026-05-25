@@ -1004,6 +1004,74 @@ function renderEditorIconos() {
     </div>`;
 }
 
+function agregarBanner() {
+    if (!configuracion.banners) configuracion.banners = [];
+    configuracion.banners.push({ imagen: '', titulo: 'Nuevo Banner', subtitulo: '', boton: 'Ver más', enlace: '#' });
+    cargarListaBanners();
+}
+
+function actualizarBanner(index, campo, valor) {
+    if (!configuracion.banners) return;
+    configuracion.banners[index][campo] = valor;
+}
+
+async function subirImagenBanner(input, index) {
+    if (!input.files?.[0]) return;
+    const fd = new FormData();
+    fd.append('foto', input.files[0]);
+    try {
+        const d = await safeFetch('/subir-imagen', { method: 'POST', body: fd });
+        if (d.url) {
+            configuracion.banners[index].imagen = d.url;
+            cargarListaBanners();
+            mostrarToast('✅ Imagen subida');
+        }
+    } catch(e) {}
+}
+
+function eliminarBanner(index) {
+    configuracion.banners.splice(index, 1);
+    cargarListaBanners();
+    guardarBanners();
+}
+
+async function guardarBanners() {
+    await safeFetch('/save-config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ banners: configuracion.banners || [] })
+    });
+    mostrarToast('✅ Banners guardados');
+}
+
+function cargarListaBanners() {
+    const container = document.getElementById('lista-banners');
+    if (!container) return;
+    const banners = configuracion?.banners || [];
+    if (!banners.length) {
+        container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">No hay banners. Crea uno nuevo.</p>';
+        return;
+    }
+    container.innerHTML = banners.map((b, i) => `
+        <div style="background:white;border:2px solid #e2e8f0;border-radius:16px;padding:16px;display:flex;gap:16px;align-items:center">
+            <img src="${b.imagen || 'https://via.placeholder.com/150'}" style="width:150px;height:80px;object-fit:cover;border-radius:8px">
+            <div style="flex:1">
+                <input type="text" value="${escapeHtml(b.titulo || '')}" placeholder="Título del banner" style="margin-bottom:6px" onchange="actualizarBanner(${i},'titulo',this.value)">
+                <input type="text" value="${escapeHtml(b.subtitulo || '')}" placeholder="Subtítulo" style="margin-bottom:6px" onchange="actualizarBanner(${i},'subtitulo',this.value)">
+                <input type="text" value="${escapeHtml(b.boton || '')}" placeholder="Texto del botón" style="margin-bottom:6px" onchange="actualizarBanner(${i},'boton',this.value)">
+                <input type="text" value="${escapeHtml(b.enlace || '')}" placeholder="Enlace del botón" onchange="actualizarBanner(${i},'enlace',this.value)">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+                <label class="tab-btn" style="background:#6366f1;color:white;padding:8px 12px;font-size:11px;cursor:pointer">
+                    📷 <input type="file" accept="image/*" style="display:none" onchange="subirImagenBanner(this,${i})">
+                </label>
+                <button onclick="eliminarBanner(${i})" class="tab-btn btn-danger" style="padding:8px 12px;font-size:11px"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+    container.innerHTML += `<button onclick="guardarBanners()" class="btn-confirm" style="margin-top:12px"><i class="fas fa-save"></i> Guardar Banners</button>`;
+}
+    
     function renderEditorBanners() {
     return `<div id="editor-banners">
         <div class="config-section">
