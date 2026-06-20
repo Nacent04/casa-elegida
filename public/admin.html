@@ -606,6 +606,7 @@ async function cargarConfiguracion() {
         if (d.empresa) {
             let emp = typeof d.empresa === 'string' ? JSON.parse(d.empresa) : d.empresa;
             if (document.getElementById('empresa-nombre')) document.getElementById('empresa-nombre').value = emp.nombre || '';
+            if (document.getElementById('empresa-slogan')) document.getElementById('empresa-slogan').value = emp.slogan || '';
             if (document.getElementById('empresa-telefono')) document.getElementById('empresa-telefono').value = emp.telefono || '';
             if (document.getElementById('empresa-email')) document.getElementById('empresa-email').value = emp.email || '';
             if (document.getElementById('empresa-direccion')) document.getElementById('empresa-direccion').value = emp.direccion || '';
@@ -872,216 +873,59 @@ function renderPaginaEdicionWeb() { return `<div class="panel"><h3><i class="fas
 
 function renderPaginaConfiguracion() {
     const html = `
-        <div class="panel" style="border: 2px solid #E0A899; box-shadow: 0 15px 35px rgba(224, 168, 153, 0.15); background: rgba(255, 255, 255, 0.96);">
-            <div style="text-align: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px dashed #E0A899;">
-                <h3 style="color: #4A3728; font-size: 26px; font-family: 'Playfair Display', serif; font-weight: 800; letter-spacing: 0.5px;">
-                    <i class="fas fa-heart" style="color: #E0A899; margin-right: 8px;"></i> Configuración de CASA ELEGIDA
+        <div class="panel" style="border: 1px solid #E6E1DA; background: #ffffff;">
+            <div style="text-align: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px dashed #C5A880;">
+                <h3 style="color: #3D312A; font-size: 26px; font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: 0.5px;">
+                    <i class="fas fa-crown" style="color: #C5A880; margin-right: 8px;"></i> Configuración de CASA ELEGIDA
                 </h3>
-                <p style="font-size: 12px; color: #8B7355; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 4px;">Panel de Control</p>
+                <p style="font-size: 11px; color: #8C7E74; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 4px;">Atelier y Gestión de Marca</p>
             </div>
             
-            <div class="config-section" style="border: 1px solid #FAEDCD; border-radius: 24px; padding: 20px; background: #fff; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Logo de la Marca
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #FDFBF7; margin-bottom: 24px;">
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-image" style="font-size: 14px; color: #C5A880;"></i> Imagen de Identidad (Logo)
                 </h4>
-                <div class="logo-preview" style="background: linear-gradient(135deg, #FEFAE0 0%, #FAEDCD 100%); border: 2px dashed #E0A899; border-radius: 20px; padding: 24px; min-height: 120px; display: flex; align-items: center; justify-content: center;">
-                    <img id="logo-preview-img" src="" style="display:none; max-width:240px; max-height:90px; object-fit:contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.05));">
-                    <span id="logo-placeholder" style="text-align: center; color: #8B7355;"><i class="fas fa-crown" style="font-size:40px; color:#E0A899; margin-bottom: 8px;"></i><br><small style="font-weight:600;">Sin Imagen Cargada</small></span>
+                <div class="logo-preview" style="background: #ffffff; border: 1px dashed #C5A880; border-radius: 24px; padding: 24px; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                    <img id="logo-preview-img" src="" style="display:none; max-width:240px; max-height:90px; object-fit:contain;">
+                    <span id="logo-placeholder" style="text-align: center; color: #8C7E74;"><i class="fas fa-feather-alt" style="font-size:32px; color:#C5A880; margin-bottom: 8px;"></i><br><small style="font-weight:500; text-transform:uppercase; font-size:10px; letter-spacing:1px;">Línea Gráfica Comercial</small></span>
                 </div>
                 <div class="logo-actions" style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
                     <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="subirLogo(this)">
-                    <button type="button" onclick="document.getElementById('logo-input').click()" class="tab-btn" style="background: linear-gradient(135deg, #D4A373, #E0A899); color: white; border-radius: 50px; font-weight: 700; padding: 10px 24px;"><i class="fas fa-cloud-upload-alt"></i> Cambiar Logo</button>
-                    <button type="button" onclick="eliminarLogo()" class="tab-btn btn-danger" style="border-radius: 50px; padding: 10px 24px;"><i class="fas fa-trash-alt"></i> Quitar</button>
+                    <button type="button" onclick="document.getElementById('logo-input').click()" class="tab-btn" style="background: #3D312A; color: white; border-radius: 9999px; font-weight: 600; padding: 12px 28px; border: none;">Cambiar Logo</button>
+                    <button type="button" onclick="eliminarLogo()" class="tab-btn btn-danger" style="border-radius: 9999px; padding: 12px 28px;">Quitar</button>
                 </div>
             </div>
 
-            <div class="config-section" style="border: 1px solid #FAEDCD; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Datos de la Empresa
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-signature" style="font-size: 14px; color: #C5A880;"></i> Ficha de la Empresa
                 </h4>
                 <div class="form-row">
                     <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Nombre Comercial</label>
-                        <input type="text" id="empresa-nombre" placeholder="Ej: CASA ELEGIDA" style="border-radius: 16px; background: #FEFAE0;">
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Nombre Comercial</label>
+                        <input type="text" id="empresa-nombre" placeholder="Ej: CASA ELEGIDA" style="border-radius: 20px; background: #FDFBF7;">
                     </div>
                     <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">WhatsApp / Teléfono Comercial</label>
-                        <input type="text" id="empresa-telefono" placeholder="Ej: 381xxxxxxx" style="border-radius: 16px; background: #FEFAE0;">
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Slogan Comercial (A la par del Nombre)</label>
+                        <input type="text" id="empresa-slogan" placeholder="Ej: TU ESENCIA NO TIENE TALLE" style="border-radius: 20px; background: #FDFBF7;">
                     </div>
                 </div>
-                <div class="form-row" style="margin-bottom: 20px;">
+                <div class="form-row" style="margin-top: 12px;">
                     <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Email de Contacto</label>
-                        <input type="email" id="empresa-email" placeholder="Ej: info@tu-tienda.com" style="border-radius: 16px; background: #FEFAE0;">
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">WhatsApp / Teléfono Comercial</label>
+                        <input type="text" id="empresa-telefono" placeholder="Ej: 381xxxxxxx" style="border-radius: 20px; background: #FDFBF7;">
                     </div>
                     <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Dirección Física</label>
-                        <input type="text" id="empresa-direccion" placeholder="Ej: Av. Alem, Tucumán" style="border-radius: 16px; background: #FEFAE0;">
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Email de Contacto</label>
+                        <input type="email" id="empresa-email" placeholder="Ej: info@tu-tienda.com" style="border-radius: 20px; background: #FDFBF7;">
                     </div>
                 </div>
-                
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; margin-top: 28px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Horarios de Atención
-                </h4>
-                <div class="form-row">
+                <div class="form-row" style="margin-bottom: 20px; margin-top: 12px; grid-template-columns: 1fr;">
                     <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Lunes a Viernes</label>
-                        <input type="text" id="horario-lv" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Sábados</label>
-                        <input type="text" id="horario-sab" style="border-radius: 16px; background: #FEFAE0;">
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Dirección Física / Showroom</label>
+                        <input type="text" id="empresa-direccion" placeholder="Ej: Av. Alem, Tucumán" style="border-radius: 20px; background: #FDFBF7;">
                     </div>
                 </div>
-                <div class="form-row" style="margin-bottom: 20px;">
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Domingos</label>
-                        <input type="text" id="horario-dom" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                </div>
-
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; margin-top: 28px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Redes Sociales
-                </h4>
-                <div class="form-row">
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Instagram (sin @)</label>
-                        <input type="text" id="red-instagram" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Facebook</label>
-                        <input type="text" id="red-facebook" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                </div>
-                <div class="form-row" style="margin-bottom: 20px;">
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">TikTok</label>
-                        <input type="text" id="red-tiktok" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">WhatsApp Enlace (Formato limpio)</label>
-                        <input type="text" id="red-whatsapp" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                </div>
-
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; margin-top: 28px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Datos de Cobro / Transferencias
-                </h4>
-                <div class="form-row">
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Alias de Cuenta</label>
-                        <input type="text" id="pago-alias" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">CBU / CVU</label>
-                        <input type="text" id="pago-cbu" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                </div>
-                <div class="form-row" style="margin-bottom: 20px;">
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Banco</label>
-                        <input type="text" id="pago-banco" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Titular de la Cuenta</label>
-                        <input type="text" id="pago-titular" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                </div>
-                
-                <button type="button" onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px; background: #4A3728; font-weight:700;"><i class="fas fa-save"></i> Guardar Configuración General</button>
-            </div>
-
-            <div class="config-section" style="border: 1px solid #FAEDCD; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Salón Virtual Web
-                </h4>
-                <label class="form-label" style="font-weight:600; color:#4A3728;">Estado de la Tienda Web</label>
-                <div class="entrega-tabs" style="margin-bottom: 20px; max-width: 320px; background: #FEFAE0; padding: 4px; border-radius: 40px; border: 1px solid #FAEDCD;">
-                    <button type="button" id="tienda-on" class="entrega-btn" style="border-radius: 40px;" onclick="setTiendaHabilitada(true)"><i class="fas fa-sparkles"></i> Online</button>
-                    <button type="button" id="tienda-off" class="entrega-btn" style="border-radius: 40px;" onclick="setTiendaHabilitada(false)"><i class="fas fa-pause"></i> Pausada</button>
-                </div>
-                <div class="form-row">
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Título Principal (Home)</label>
-                        <input type="text" id="tienda-titulo" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600; color:#4A3728;">Eslogan de Bienvenida</label>
-                        <input type="text" id="tienda-mensaje" style="border-radius: 16px; background: #FEFAE0;">
-                    </div>
-                </div>
-                <button type="button" onclick="guardarConfiguracionTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px;"><i class="fas fa-heart"></i> Actualizar Textos Web</button>
-            </div>
-
-            <div class="config-section" style="border: 1px solid #FAEDCD; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Paleta de Colores de la Tienda
-                </h4>
-                <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px;">
-                    <div>
-                        <label class="form-label" style="font-weight:600;">Tono Principal</label>
-                        <input type="color" id="tienda-color-primary" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #FAEDCD; cursor:pointer;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600;">Tono Secundario</label>
-                        <input type="color" id="tienda-color-secondary" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #FAEDCD; cursor:pointer;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600;">Fondo Soft</label>
-                        <input type="color" id="tienda-color-bg" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #FAEDCD; cursor:pointer;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:600;">Texto Oscuro</label>
-                        <input type="color" id="tienda-color-text" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #FAEDCD; cursor:pointer;">
-                    </div>
-                </div>
-                <button type="button" onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px;"><i class="fas fa-magic"></i> Vestir Tienda Online</button>
-            </div>
-
-            <div class="config-section" style="border: 1px solid #FAEDCD; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Descuento Mayorista Exclusivo
-                </h4>
-                <button type="button" id="btnMayoristaToggle" onclick="toggleMayorista()" class="tab-btn" style="margin-bottom: 20px; border-radius: 40px; font-weight:700; padding: 10px 24px;"><i class="fas fa-toggle-on"></i> Configurar</button>
-                
-                <div id="mayoristaPanel" style="background: #FEFAE0; padding: 20px; border-radius: 20px; border: 1px solid #FAEDCD; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);">
-                    <label class="form-label" style="font-weight:600; color:#4A3728;">Activar Descuento Según:</label>
-                    <div class="pago-tabs" style="margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
-                        <div class="modo-option" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px;">Mínimo de Prendas</div>
-                        <div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px;">Monto Total Límite ($)</div>
-                        <div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px;">Ambas Reglas</div>
-                    </div>
-                    <div class="form-row">
-                        <div id="configCantidad">
-                            <label class="form-label" style="font-weight:600;">Mínimo de Unidades</label>
-                            <input type="number" id="mayoristaCantidad" value="3" min="1" style="border-radius: 14px;">
-                        </div>
-                        <div id="configMonto">
-                            <label class="form-label" style="font-weight:600;">Monto Mínimo de Compra ($)</label>
-                            <input type="text" id="mayoristaMonto" value="80.000" style="border-radius: 14px;">
-                        </div>
-                    </div>
-                    <button type="button" onclick="guardarMayorista()" class="btn-confirm" style="margin-top: 20px; border-radius: 40px; background: #E0A899; color:white; font-weight:700;"><i class="fas fa-check"></i> Fijar Reglas Mayoristas</button>
-                </div>
-            </div>
-
-            <div class="config-section" style="border: 1px solid #FAEDCD; border-radius: 24px; padding: 24px; background: #fff;">
-                <h4 style="color: #D4A373; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-heart" style="font-size: 14px; color: #E0A899;"></i> Canales de Envío Ofertados (Uno por línea)
-                </h4>
-                <textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani" style="border-radius:18px; min-height:120px; font-family:inherit; font-size:14px; padding:14px; background: #FEFAE0; border-color: #FAEDCD;"></textarea>
-                <button type="button" onclick="guardarMetodosEnvio()" class="btn-confirm" style="margin-top: 20px; border-radius: 40px;"><i class="fas fa-truck"></i> Guardar Logística</button>
-            </div>
-        </div>
-    `;
-    
-    setTimeout(() => {
-        cargarConfiguracion();
-        cargarMetodosEnvio();
-    }, 50);
-    
-    return html;
-}
     
 function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero"><div class="backup-hero-icon">💾</div><h2>Sistema de Backup Total</h2><p>Protegé absolutamente todos tus datos.</p><button type="button" onclick="iniciarBackupTotal()" class="btn-backup-master" id="btn-backup-total"><i class="fas fa-shield-alt"></i> Crear Backup Completo</button></div><div class="backup-cards"><div class="backup-card-item" onclick="iniciarBackupTotal()"><div class="backup-card-icon" style="background:#eef2ff;color:#6366f1"><i class="fas fa-database"></i></div><h4>Backup Completo</h4><p>Incluye absolutamente todo.</p></div><div class="backup-card-item" onclick="document.getElementById('restore-section').scrollIntoView({behavior:'smooth'})"><div class="backup-card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-undo-alt"></i></div><h4>Restaurar Sistema</h4><p>Restaurá todo desde un archivo.</p></div></div><div class="config-section"><h3><i class="fas fa-history"></i> Historial <button type="button" onclick="cargarHistorialBackups()" class="tab-btn" style="float:right"><i class="fas fa-sync-alt"></i></button></h3><table class="history-table"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody id="backup-history-body"><tr><td colspan="3" style="text-align:center">Cargando...</td></tr></tbody></table></div><div class="config-section" style="border:2px solid #f59e0b" id="restore-section"><h3 style="color:#f59e0b"><i class="fas fa-upload"></i> Restaurar</h3><div class="restore-zone" onclick="document.getElementById('restore-file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.this.classList.remove('dragover')" ondrop="manejarDropRestore(event)"><i class="fas fa-cloud-upload-alt" style="font-size:48px;color:#f59e0b"></i><h4>Arrastrá el backup aquí</h4></div><input type="file" id="restore-file-input" accept=".backup,.zip" style="display:none" onchange="procesarArchivoRestore(this)"><button type="button" onclick="confirmarRestauracionTotal()" class="btn-backup-master" style="width:100%;background:#f59e0b;margin-top:16px;display:none" id="btn-restaurar"><i class="fas fa-exclamation-triangle"></i> Restaurar</button></div></div>`; }
 
@@ -1510,7 +1354,7 @@ async function imprimirTicket(id, tipo = 'termico') {
 
 async function subirLogo(i){if(!i.files?.[0])return;let f=new FormData();f.append('logo',i.files[0]);let d=await safeFetch('/subir-logo',{method:'POST',body:f});if(d.success){document.getElementById('logo-preview-img').src=d.url;document.getElementById('logo-preview-img').style.display='block';document.getElementById('logo-placeholder').style.display='none';}}
 async function eliminarLogo(){await safeFetch('/eliminar-logo',{method:'POST'});document.getElementById('logo-preview-img').style.display='none';document.getElementById('logo-placeholder').style.display='block';}
-async function guardarConfiguracion(){await safeFetch('/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({empresa:{nombre:document.getElementById('empresa-nombre').value,telefono:document.getElementById('empresa-telefono').value,email:document.getElementById('empresa-email').value,direccion:document.getElementById('empresa-direccion').value},horarios:{lunesViernes:document.getElementById('horario-lv').value,sabados:document.getElementById('horario-sab').value,domingos:document.getElementById('horario-dom').value},redes:{instagram:document.getElementById('red-instagram').value,facebook:document.getElementById('red-facebook').value,tiktok:document.getElementById('red-tiktok').value,whatsapp:document.getElementById('red-whatsapp').value},pagos:{alias:document.getElementById('pago-alias').value,cbu:document.getElementById('pago-cbu').value,banco:document.getElementById('pago-banco').value,titular:document.getElementById('pago-titular').value}})});mostrarToast('✅ Guardado');}
+async function guardarConfiguracion(){await safeFetch('/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({empresa:{nombre:document.getElementById('empresa-nombre').value,slogan:document.getElementById('empresa-slogan').value,telefono:document.getElementById('empresa-telefono').value,email:document.getElementById('empresa-email').value,direccion:document.getElementById('empresa-direccion').value},horarios:{lunesViernes:document.getElementById('horario-lv').value,sabados:document.getElementById('horario-sab').value,domingos:document.getElementById('horario-dom').value},redes:{instagram:document.getElementById('red-instagram').value,facebook:document.getElementById('red-facebook').value,tiktok:document.getElementById('red-tiktok').value,whatsapp:document.getElementById('red-whatsapp').value},pagos:{alias:document.getElementById('pago-alias').value,cbu:document.getElementById('pago-cbu').value,banco:document.getElementById('pago-banco').value,titular:document.getElementById('pago-titular').value}})});mostrarToast('✅ Guardado');}
 async function guardarDisenoTienda(){await safeFetch('/save-diseno-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({diseno:{colorPrimario:document.getElementById('tienda-color-primary').value,colorSecundario:document.getElementById('tienda-color-secondary').value,colorFondo:document.getElementById('tienda-color-bg').value,colorTexto:document.getElementById('tienda-color-text').value}})});mostrarToast('✅ Guardado');}
 async function guardarConfiguracionTienda(){await safeFetch('/save-tienda-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tienda:{habilitada:document.getElementById('tienda-on').classList.contains('active'),titulo:document.getElementById('tienda-titulo').value,mensajeBienvenida:document.getElementById('tienda-mensaje').value}})});mostrarToast('✅ Guardado');}
 function setTiendaHabilitada(h){document.getElementById('tienda-on').classList.toggle('active',h);document.getElementById('tienda-off').classList.toggle('active',!h);}
