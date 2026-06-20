@@ -895,7 +895,6 @@ function renderPaginaConfiguracion() {
                     <button type="button" onclick="eliminarLogo()" class="tab-btn btn-danger" style="border-radius: 9999px; padding: 12px 28px;">Quitar</button>
                 </div>
             </div>
-
             <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-signature" style="font-size: 14px; color: #C5A880;"></i> Ficha de la Empresa
@@ -926,8 +925,171 @@ function renderPaginaConfiguracion() {
                         <input type="text" id="empresa-direccion" placeholder="Ej: Av. Alem, Tucumán" style="border-radius: 20px; background: #FDFBF7;">
                     </div>
                 </div>
+                
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; margin-top: 28px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-clock" style="font-size: 14px; color: #C5A880;"></i> Horarios de Atención
+                </h4>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Lunes a Viernes</label>
+                        <input type="text" id="horario-lv" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Sábados</label>
+                        <input type="text" id="horario-sab" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 20px; margin-top: 12px;">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Domingos</label>
+                        <input type="text" id="horario-dom" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; margin-top: 28px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-share-alt" style="font-size: 14px; color: #C5A880;"></i> Redes Sociales
+                </h4>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Instagram (sin @)</label>
+                        <input type="text" id="red-instagram" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Facebook</label>
+                        <input type="text" id="red-facebook" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 20px; margin-top: 12px;">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">TikTok</label>
+                        <input type="text" id="red-tiktok" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">WhatsApp Enlace (Formato limpio)</label>
+                        <input type="text" id="red-whatsapp" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; margin-top: 28px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-money-check-alt" style="font-size: 14px; color: #C5A880;"></i> Datos de Cobro / Transferencias
+                </h4>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Alias de Cuenta</label>
+                        <input type="text" id="pago-alias" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">CBU / CVU</label>
+                        <input type="text" id="pago-cbu" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom: 20px; margin-top: 12px;">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Banco</label>
+                        <input type="text" id="pago-banco" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Titular de la Cuenta</label>
+                        <input type="text" id="pago-titular" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+                
+                <button type="button" onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px; background: #3D312A; font-weight:700;"><i class="fas fa-save"></i> Guardar Configuración General</button>
+            </div>
+
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-globe" style="font-size: 14px; color: #C5A880;"></i> Salón Virtual Web
+                </h4>
+                <label class="form-label" style="font-weight:600; color:#3D312A;">Estado de la Tienda Web</label>
+                <div class="entrega-tabs" style="margin-bottom: 20px; max-width: 320px; background: #F6F3EA; padding: 4px; border-radius: 40px; border: 1px solid #E6E1DA;">
+                    <button type="button" id="tienda-on" class="entrega-btn" style="border-radius: 40px;" onclick="setTiendaHabilitada(true)">Online</button>
+                    <button type="button" id="tienda-off" class="entrega-btn" style="border-radius: 40px;" onclick="setTiendaHabilitada(false)">Pausada</button>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Título Principal (Home)</label>
+                        <input type="text" id="tienda-titulo" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600; color:#3D312A;">Eslogan de Bienvenida</label>
+                        <input type="text" id="tienda-mensaje" style="border-radius: 20px; background: #FDFBF7;">
+                    </div>
+                </div>
+                <button type="button" onclick="guardarConfiguracionTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px;"><i class="fas fa-heading"></i> Actualizar Textos Web</button>
+            </div>
+
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-palette" style="font-size: 14px; color: #C5A880;"></i> Paleta de Colores de la Tienda
+                </h4>
+                <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px;">
+                    <div>
+                        <label class="form-label" style="font-weight:600;">Tono Principal</label>
+                        <input type="color" id="tienda-color-primary" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600;">Tono Secundario</label>
+                        <input type="color" id="tienda-color-secondary" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600;">Fondo Soft</label>
+                        <input type="color" id="tienda-color-bg" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:600;">Texto Oscuro</label>
+                        <input type="color" id="tienda-color-text" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
+                    </div>
+                </div>
+                <button type="button" onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px;"><i class="fas fa-magic"></i> Vestir Tienda Online</button>
+            </div>
+
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #fff; margin-bottom: 24px;">
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-tags" style="font-size: 14px; color: #C5A880;"></i> Descuento Mayorista Exclusivo
+                </h4>
+                <button type="button" id="btnMayoristaToggle" onclick="toggleMayorista()" class="tab-btn" style="margin-bottom: 20px; border-radius: 40px; font-weight:700; padding: 10px 24px;">Configurar</button>
+                
+                <div id="mayoristaPanel" style="background: #FDFBF7; padding: 20px; border-radius: 20px; border: 1px solid #E6E1DA;">
+                    <label class="form-label" style="font-weight:600; color:#3D312A;">Activar Descuento Según:</label>
+                    <div class="pago-tabs" style="margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
+                        <div class="modo-option" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px;">Mínimo de Prendas</div>
+                        <div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px;">Monto Total Límite ($)</div>
+                        <div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px;">Ambas Reglas</div>
+                    </div>
+                    <div class="form-row">
+                        <div id="configCantidad">
+                            <label class="form-label" style="font-weight:600;">Mínimo de Unidades</label>
+                            <input type="number" id="mayoristaCantidad" value="3" min="1" style="border-radius: 14px;">
+                        </div>
+                        <div id="configMonto">
+                            <label class="form-label" style="font-weight:600;">Monto Mínimo de Compra ($)</label>
+                            <input type="text" id="mayoristaMonto" value="80.000" style="border-radius: 14px;">
+                        </div>
+                    </div>
+                    <button type="button" onclick="guardarMayorista()" class="btn-confirm" style="margin-top: 20px; border-radius: 40px; background: #3D312A; color:white; font-weight:700;"><i class="fas fa-check"></i> Fijar Reglas Mayoristas</button>
+                </div>
+            </div>
+
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; background: #fff;">
+                <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-truck" style="font-size: 14px; color: #C5A880;"></i> Canales de Envío Ofertados (Uno por línea)
+                </h4>
+                <textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani" style="border-radius:18px; min-height:120px; font-family:inherit; font-size:14px; padding:14px; background: #FDFBF7; border-color: #E6E1DA;"></textarea>
+                <button type="button" onclick="guardarMetodosEnvio()" class="btn-confirm" style="margin-top: 20px; border-radius: 40px;"><i class="fas fa-truck"></i> Guardar Logística</button>
+            </div>
+        </div>
+    `;
     
-function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero"><div class="backup-hero-icon">💾</div><h2>Sistema de Backup Total</h2><p>Protegé absolutamente todos tus datos.</p><button type="button" onclick="iniciarBackupTotal()" class="btn-backup-master" id="btn-backup-total"><i class="fas fa-shield-alt"></i> Crear Backup Completo</button></div><div class="backup-cards"><div class="backup-card-item" onclick="iniciarBackupTotal()"><div class="backup-card-icon" style="background:#eef2ff;color:#6366f1"><i class="fas fa-database"></i></div><h4>Backup Completo</h4><p>Incluye absolutamente todo.</p></div><div class="backup-card-item" onclick="document.getElementById('restore-section').scrollIntoView({behavior:'smooth'})"><div class="backup-card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-undo-alt"></i></div><h4>Restaurar Sistema</h4><p>Restaurá todo desde un archivo.</p></div></div><div class="config-section"><h3><i class="fas fa-history"></i> Historial <button type="button" onclick="cargarHistorialBackups()" class="tab-btn" style="float:right"><i class="fas fa-sync-alt"></i></button></h3><table class="history-table"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody id="backup-history-body"><tr><td colspan="3" style="text-align:center">Cargando...</td></tr></tbody></table></div><div class="config-section" style="border:2px solid #f59e0b" id="restore-section"><h3 style="color:#f59e0b"><i class="fas fa-upload"></i> Restaurar</h3><div class="restore-zone" onclick="document.getElementById('restore-file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.this.classList.remove('dragover')" ondrop="manejarDropRestore(event)"><i class="fas fa-cloud-upload-alt" style="font-size:48px;color:#f59e0b"></i><h4>Arrastrá el backup aquí</h4></div><input type="file" id="restore-file-input" accept=".backup,.zip" style="display:none" onchange="procesarArchivoRestore(this)"><button type="button" onclick="confirmarRestauracionTotal()" class="btn-backup-master" style="width:100%;background:#f59e0b;margin-top:16px;display:none" id="btn-restaurar"><i class="fas fa-exclamation-triangle"></i> Restaurar</button></div></div>`; }
+    setTimeout(() => {
+        cargarConfiguracion();
+        cargarMetodosEnvio();
+    }, 50);
+    
+    return html;
+}
+    
+function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero">
 
 async function cargar() { try { const d=await safeFetch('/listar',{method:'POST'}); productos=d.lista||[]; renderProductosVenta(); actualizarEstadisticasRapidas(); } catch(e){} }
 async function cargarYRenderAdmin() { try { const d=await safeFetch('/listar',{method:'POST'}); productos=d.lista||[]; renderAdmin(); } catch(e){} }
