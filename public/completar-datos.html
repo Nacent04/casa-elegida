@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Completar Datos | Casa Elegida</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Completar Datos | ESENCIA CURVY</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
@@ -16,7 +16,7 @@
         label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#3E2A1E}
         input,select{width:100%;padding:12px;border:2px solid #F0E6DC;border-radius:12px;font-size:14px}
         input:focus,select:focus{outline:none;border-color:#8B5E3C}
-        input[readonly]{background:#F8F2EC;cursor:not-allowed}
+        input[readonly]{background:#F8F2EC;cursor:not-allowed;border-color:#E8DCD2}
         .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
         .btn-submit{width:100%;padding:16px;background:#8B5E3C;color:white;border:none;border-radius:50px;font-weight:700;cursor:pointer;font-size:15px;margin-top:16px}
         .btn-submit:hover{background:#6B4423}
@@ -113,25 +113,44 @@
     </div>
     
     <script>
-        const token = new URLSearchParams(window.location.search).get('token');
-        if (!token) window.location.href = '/login';
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const esGoogle = urlParams.get('google');
         
-        async function cargarEmail() {
-            try {
-                const res = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
-                const data = await res.json();
-                if (data.email) {
-                    document.getElementById('email').value = data.email;
-                    localStorage.setItem('token', token);
-                    localStorage.setItem('usuario', JSON.stringify(data));
-                }
-            } catch(e) {}
+        if (esGoogle !== 'true' && !token) {
+            window.location.href = '/login';
         }
-        cargarEmail();
+        
+        async function inicializarFormulario() {
+            if (esGoogle === 'true') {
+                console.log("✨ Modo Google: Email fijado, resto de datos limpios para carga manual.");
+                // Forzamos campos de identificación vacíos
+                if (document.getElementById('nombre')) document.getElementById('nombre').value = '';
+                if (document.getElementById('apellido')) document.getElementById('apellido').value = '';
+                
+                // El correo electrónico es la única propiedad que se hereda de forma fija
+                if (document.getElementById('email')) document.getElementById('email').value = urlParams.get('email') || '';
+            } 
+            else if (token) {
+                try {
+                    const res = await fetch('/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                    const data = await res.json();
+                    if (data.email) {
+                        document.getElementById('email').value = data.email;
+                        localStorage.setItem('token', token);
+                        localStorage.setItem('usuario', JSON.stringify(data));
+                    }
+                } catch(e) {
+                    console.error("Error al cargar perfil tradicional:", e);
+                }
+            }
+        }
+        inicializarFormulario();
         
         async function completarDatos() {
             const nombre = document.getElementById('nombre').value.trim();
             const apellido = document.getElementById('apellido').value.trim();
+            const email = document.getElementById('email').value.trim();
             const dni = document.getElementById('dni').value.trim();
             const telefono = document.getElementById('telefono').value.trim();
             const direccion = document.getElementById('direccion').value.trim();
@@ -144,21 +163,50 @@
                 return;
             }
             
+            const datosFormulario = { nombre, apellido, email, dni, telefono, direccion, provincia, localidad, cp };
+            
             try {
-                const res = await fetch('/auth/completar-datos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ nombre, apellido, dni, telefono, direccion, provincia, localidad, cp })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    mostrarToast('✅ Datos guardados');
-                    setTimeout(() => window.location.href = '/tienda', 1500);
-                } else {
-                    mostrarToast(data.error, true);
+                let res, data;
+                
+                if (esGoogle === 'true') {
+                    datosFormulario.googleId = urlParams.get('googleId');
+                    datosFormulario.foto = urlParams.get('foto');
+                    
+                    res = await fetch('/auth/crear-cuenta-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(datosFormulario)
+                    });
+                    
+                    data = await res.json();
+                    
+                    if (data.success) {
+                        mostrarToast('✅ Cuenta creada con éxito');
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                        setTimeout(() => window.location.href = '/tienda', 1500);
+                    } else {
+                        mostrarToast(data.error, true);
+                    }
+                } 
+                else {
+                    res = await fetch('/auth/completar-datos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ nombre, apellido, dni, telefono, direccion, provincia, localidad, cp })
+                    });
+                    
+                    data = await res.json();
+                    
+                    if (data.success) {
+                        mostrarToast('✅ Datos guardados');
+                        setTimeout(() => window.location.href = '/tienda', 1500);
+                    } else {
+                        mostrarToast(data.error, true);
+                    }
                 }
             } catch(e) {
-                mostrarToast('Error de conexión', true);
+                mostrarToast('Error de conexión con el servidor', true);
             }
         }
         
