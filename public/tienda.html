@@ -738,8 +738,9 @@ body {
     </div>
     <div class="logo-text">
         <h1 id="tienda-nombre">CASA ELEGIDA</h1>
-        <p id="tienda-slogan">TU ESENCIA NO TIENE TALLE</p>
+        <p id="tienda-slogan">Cargando...</p>
     </div>
+    }
 </div>
 <div class="search-bar"><input type="text" id="search-input" placeholder="🔍 Buscar prendas..."><button onclick="buscarProductos()"><i class="fas fa-search"></i></button></div>
 <div class="header-actions">
@@ -894,6 +895,7 @@ async function cargarDatos(){
         }
         
         document.getElementById('tienda-nombre').textContent = configuracion.tienda?.titulo || 'CASA ELEGIDA';
+        document.getElementById('tienda-slogan').textContent = configuracion.empresa?.slogan || 'BLANQUERÍA PREMIUM';
         document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || 'CASA ELEGIDA';
         document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
         
