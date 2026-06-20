@@ -3,183 +3,444 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Casa Elegida | Blanquería Premium</title>
+    <title>ESENCIA CURVY | Talles Especiales Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        :root{--primary:#1a1a1a;--primary-light:#333;--secondary:#c9a96e;--bg-light:#fafafa;--bg-white:#fff;--text-dark:#1a1a1a;--text-light:#666;--success:#4CAF50;--danger:#F44336;--warning:#FF9800;--shadow-sm:0 2px 8px rgba(0,0,0,0.04);--shadow-md:0 4px 16px rgba(0,0,0,0.06);--shadow-lg:0 8px 32px rgba(0,0,0,0.08);--border-radius:16px}
-        body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg-light);color:var(--text-dark);line-height:1.5}
-        .header{background:var(--bg-white);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100}
-        .header-top{background:var(--primary);color:white;padding:8px 0;font-size:12px}
-        .header-top-content{max-width:1400px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-        .header-main{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-        .logo{display:flex;align-items:center;gap:12px;text-decoration:none}
-        .logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#1a1a1a,#333);border-radius:14px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:all 0.3s}
-        .logo-icon img{width:100%;height:100%;object-fit:contain;border-radius:14px}
-        .logo:hover .logo-icon{transform:scale(1.05);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
-        .logo-text h1{font-size:20px;font-weight:800;color:var(--text-dark);letter-spacing:-0.5px;line-height:1.1}
-        .logo-text p{font-size:10px;color:var(--secondary);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
-        .search-bar{flex:1;max-width:400px;position:relative}
-        .search-bar input{width:100%;padding:12px 44px 12px 16px;border:2px solid #eee;border-radius:50px;font-size:14px;background:var(--bg-white);transition:all 0.3s}
-        .search-bar input:focus{outline:none;border-color:var(--secondary)}
-        .search-bar button{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:var(--primary);border:none;color:white;width:38px;height:38px;border-radius:50%;cursor:pointer}
-        .header-actions{display:flex;align-items:center;gap:12px}
-        .cart-btn,.user-btn{position:relative;background:var(--primary);border:none;color:white;padding:10px 18px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.3s}
-        .user-btn{padding:10px;border-radius:50%}
-        .cart-btn:hover,.user-btn:hover{background:var(--primary-light)}
-        .cart-count{background:var(--secondary);color:var(--text-dark);padding:2px 6px;border-radius:20px;font-size:12px;font-weight:700}
-        .user-menu{position:absolute;top:60px;right:0;background:white;border-radius:16px;box-shadow:var(--shadow-lg);min-width:200px;overflow:hidden;z-index:200;display:none}
-        .user-menu a{display:flex;align-items:center;gap:12px;padding:14px 18px;color:var(--text-dark);text-decoration:none;transition:background 0.2s}
-        .user-menu a:hover{background:#f5f5f5}
-        .categories-nav{background:var(--bg-white);border-bottom:1px solid #eee;padding:8px 0}
-        .categories-container{max-width:1400px;margin:0 auto;padding:0 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
-        .categories-container::-webkit-scrollbar{display:none}
-        .category-chip{padding:8px 14px;background:transparent;border:none;border-radius:50px;font-size:12px;font-weight:500;color:var(--text-light);cursor:pointer;white-space:nowrap;transition:all 0.3s;display:flex;align-items:center;gap:6px}
-        .category-chip:hover{background:#f5f5f5;color:var(--text-dark)}
-        .category-chip.active{background:var(--primary);color:white}
-        .hero{background:linear-gradient(135deg,#1a1a1a 0%,#333 50%,#c9a96e 100%);color:white;padding:40px 16px;margin-bottom:24px;position:relative;overflow:hidden}
-        .hero-content{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between}
-        .hero-text h2{font-size:28px;font-weight:800;margin-bottom:8px}
-        .hero-text p{font-size:14px;opacity:0.95;max-width:400px;margin-bottom:16px}
-        .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:50px;font-size:12px}
-        .main-content{max-width:1400px;margin:0 auto;padding:0 16px 40px;display:flex;gap:20px}
-        .filters-sidebar{width:240px;flex-shrink:0}
-        .filter-section{background:var(--bg-white);border-radius:var(--border-radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
-        .filter-section h4{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-        .subcategory-list{display:flex;flex-direction:column;gap:8px}
-        .subcategory-item{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:13px;color:var(--text-light)}
-        .subcategory-item:hover{color:var(--primary)}
-        .subcategory-item.active{color:var(--primary);font-weight:600}
-        .products-area{flex:1}
-        .products-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-        .products-header h3{font-size:18px;font-weight:700}
-        .sort-select{padding:8px 12px;border:2px solid #eee;border-radius:30px;background:var(--bg-white);font-size:12px;cursor:pointer}
-        .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
-        .product-card{background:var(--bg-white);border-radius:var(--border-radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:all 0.3s;cursor:pointer;position:relative}
-        .product-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
-        .product-badge{position:absolute;top:8px;left:8px;z-index:10}
-        .badge-mayorista{background:#FFB347;color:white;padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700}
-        .badge-stock{position:absolute;top:8px;right:8px;z-index:10;background:rgba(255,255,255,0.9);padding:2px 6px;border-radius:20px;font-size:9px;font-weight:600}
-        .badge-stock.low{background:#FEE2E2;color:#991B1B}
-        .badge-stock.ultimas{background:#F44336;color:white;animation:pulse 1.5s infinite}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
-        .product-image{width:100%;height:160px;object-fit:cover;background:#f5f5f5;pointer-events:none;-webkit-user-drag:none;user-select:none}
-        .product-info{padding:12px}
-        .product-name{font-size:14px;font-weight:700;margin-bottom:4px;line-height:1.3}
-        .product-prices{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
-        .price-current{font-size:18px;font-weight:800;color:var(--primary)}
-        .price-mayorista{font-size:10px;color:#FF8F00;font-weight:600}
-        .btn-add-product{width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
-        .btn-add-product:disabled{background:#CCC;cursor:not-allowed}
-        .destacado-card{background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 50%,#c9a96e 100%);border-radius:24px;padding:28px;color:white;display:flex;align-items:center;gap:24px;box-shadow:0 8px 32px rgba(0,0,0,0.15);position:relative;overflow:hidden}
-        .destacado-card::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:rgba(255,255,255,0.03);border-radius:50%}
-        .destacado-img{width:140px;height:140px;object-fit:cover;border-radius:18px;border:3px solid rgba(255,255,255,0.2);box-shadow:0 8px 24px rgba(0,0,0,0.2);flex-shrink:0}
-        .destacado-badge{display:inline-block;font-size:11px;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;margin-bottom:8px;font-weight:600;letter-spacing:0.5px}
-        .destacado-nombre{font-size:22px;font-weight:700;margin-bottom:4px}
-        .destacado-precio{font-size:26px;font-weight:800;margin-bottom:4px}
-        .destacado-btn{display:inline-block;background:white;color:#1a1a1a;padding:10px 24px;border-radius:30px;font-weight:700;font-size:13px;cursor:pointer;border:none;margin-top:8px;transition:all 0.3s}
-        .destacado-btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.2)}
-        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1000;justify-content:center;align-items:center;padding:16px}
-        .modal.active{display:flex}
-        .modal-content{background:var(--bg-white);border-radius:24px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto}
-        .modal-header{padding:18px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
-        .modal-header h3{font-size:18px;font-weight:700}
-        .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-light)}
-        .modal-body{padding:20px;display:grid;grid-template-columns:1fr;gap:20px}
-        .producto-imagen-modal{width:100%;height:350px;object-fit:contain;border-radius:16px;background:#f5f5f5;pointer-events:none;-webkit-user-drag:none;user-select:none;transition:opacity 0.3s ease}
-        .modal-details h4{font-size:22px;font-weight:700;margin-bottom:8px}
-        .modal-description{color:var(--text-light);margin-bottom:16px;font-size:14px}
-        .variant-selector{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-        .variant-chip{padding:10px 16px;background:#f5f5f5;border:2px solid transparent;border-radius:50px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s}
-        .variant-chip:hover{border-color:var(--primary);background:#e8e8e8}
-        .variant-chip.active{background:var(--primary);color:white;border-color:var(--primary)}
-        .variant-chip.disabled{opacity:0.5;cursor:not-allowed;border-color:transparent}
-        .variant-info-seleccionada{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px 16px;margin-bottom:16px;font-size:13px;color:#065f46;display:flex;align-items:center;gap:8px}
-        .quantity-selector{display:flex;align-items:center;gap:16px;margin:20px 0}
-        .quantity-control{display:flex;align-items:center;background:#f5f5f5;border-radius:50px}
-        .quantity-control button{width:36px;height:36px;border:none;background:transparent;font-size:18px;font-weight:700;cursor:pointer;color:var(--primary)}
-        .quantity-control input{width:50px;text-align:center;border:none;background:transparent;font-size:14px;font-weight:600}
-        .modal-footer{padding:16px 20px 20px;display:flex;gap:12px}
-        .btn-primary,.btn-secondary{flex:1;padding:14px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
-        .btn-primary{background:var(--primary);color:white;border:none}
-        .btn-primary:disabled{background:#CCC}
-        .btn-secondary{background:#f5f5f5;color:var(--text-dark);border:none}
-        .cart-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:1000;display:none}
-        .cart-overlay.active{display:block}
-        .cart-sidebar{position:fixed;right:-100%;top:0;width:100%;max-width:420px;height:100vh;background:var(--bg-white);box-shadow:-8px 0 40px rgba(0,0,0,0.12);z-index:1001;transition:right 0.3s ease;display:flex;flex-direction:column}
-        .cart-sidebar.active{right:0}
-        .cart-header{padding:18px;border-bottom:2px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-        .cart-header h3{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--primary)}
-        .cart-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light)}
-        .cart-items{flex:1;overflow-y:auto;padding:14px;background:#fafafa}
-        .cart-product-card{background:white;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,0.04);border:1px solid #eee}
-        .cart-footer{padding:16px 18px 20px;border-top:2px solid #eee;background:white;flex-shrink:0}
-        .cart-total{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-        .cart-total span:last-child{color:var(--primary);font-size:26px;font-weight:800}
-        .btn-checkout{width:100%;padding:16px;background:var(--primary);color:white;border:none;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;transition:all 0.3s}
-        .btn-checkout::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:left 0.5s}
-        .btn-checkout:hover::after{left:100%}
-        .btn-checkout:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.15)}
-        .btn-checkout:disabled{background:#CCC}
-        .footer{background:var(--primary);color:white;padding:32px 16px 20px;margin-top:40px}
-        .footer-content{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px}
-        .footer-section h4{font-size:14px;margin-bottom:12px}
-        .footer-section p{opacity:0.8;margin-bottom:6px;font-size:12px}
-        .toast{position:fixed;bottom:16px;right:16px;background:var(--success);color:white;padding:12px 18px;border-radius:40px;font-weight:600;font-size:13px;z-index:2000;animation:slideIn 0.3s ease}
-        .toast.error{background:var(--danger)}
-        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-        .whatsapp-float{position:fixed;bottom:80px;right:20px;background:#25D366;color:white;width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;text-decoration:none;transition:all 0.3s}
-        .whatsapp-float:hover{transform:scale(1.1)}
-        .progreso-mayorista{background:#f8fafc;border-radius:16px;padding:14px;margin:12px 0;border:2px solid #e2e8f0}
-        .progreso-mayorista-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px}
-        .progreso-mayorista-titulo{font-weight:700;color:#6366f1;display:flex;align-items:center;gap:6px}
-        .progreso-mayorista-porcentaje{font-weight:700;color:#10b981}
-        .progreso-barra{width:100%;height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden;margin:8px 0}
-        .progreso-relleno{height:100%;background:linear-gradient(90deg,#6366f1,#10b981);border-radius:5px;transition:width 0.5s ease}
-        .progreso-meta{display:flex;justify-content:space-between;font-size:10px;color:#64748b}
-        .progreso-completado{text-align:center;color:#10b981;font-weight:700;font-size:13px;animation:celebrar 0.5s ease}
-        .precio-tachado{text-decoration:line-through;color:#ef4444;font-size:12px;margin-right:6px}
-        .precio-descuento{color:#10b981;font-weight:800;font-size:16px;animation:descuentoAnim 0.5s ease}
-        @keyframes descuentoAnim{0%{transform:scale(1)}50%{transform:scale(1.2);color:#f59e0b}100%{transform:scale(1);color:#10b981}}
-        @keyframes celebrar{0%{transform:scale(0.8);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-        @keyframes agregadoCarrito{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
-        .badge-nuevo{background:#6366f1;color:white;padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700;position:absolute;top:36px;left:8px;z-index:10}
-        .favorito-btn{position:absolute;top:8px;right:8px;z-index:10;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}
-        .favorito-btn:hover{transform:scale(1.1)}.favorito-btn.activo{color:#ef4444}
-        .productos-relacionados{margin-top:16px;padding:12px;background:#f8fafc;border-radius:12px}
-        .productos-relacionados h5{font-size:13px;margin-bottom:10px;color:#6366f1}
-        .relacionados-grid{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
-        .relacionado-item{min-width:90px;text-align:center;cursor:pointer;transition:all 0.3s;background:white;border-radius:12px;padding:8px}
-        .relacionado-item:hover{transform:translateY(-3px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-        .relacionado-item img{width:70px;height:70px;object-fit:cover;border-radius:10px;margin-bottom:4px}
-        .relacionado-item span{font-size:10px;font-weight:600;display:block;line-height:1.2}
-        .whatsapp-comprobante{display:inline-flex;align-items:center;gap:6px;background:#25D366;color:white;padding:10px 16px;border-radius:20px;font-size:12px;text-decoration:none;margin-top:8px;cursor:pointer;font-weight:600}
-        .whatsapp-comprobante:hover{background:#1fa855;transform:translateY(-1px)}
-        .loader{width:40px;height:40px;border:3px solid #f3f3f3;border-top:3px solid #6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:20px auto}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        @media(min-width:640px){.products-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}.product-image{height:240px;object-fit:cover}.modal-body{grid-template-columns:1fr 1fr;gap:32px}.producto-imagen-modal{height:350px;object-fit:contain}}
-        @media(max-width:1024px){.main-content{flex-direction:column}.filters-sidebar{width:100%}.products-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
-        @media(max-width:768px){.header-main{flex-direction:column;gap:10px}.search-bar{max-width:100%}.header-actions{width:100%;justify-content:center}.hero{padding:24px 12px}.hero-text h2{font-size:22px}.hero-text p{font-size:12px}.products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.product-image{height:160px;object-fit:cover}.product-name{font-size:12px}.price-current{font-size:15px}.btn-add-product{font-size:11px;padding:8px}.modal-body{grid-template-columns:1fr!important}.producto-imagen-modal{height:200px;object-fit:contain;border-radius:12px}.cart-sidebar{max-width:100%}.footer-content{grid-template-columns:1fr 1fr;gap:16px}.modal-content{border-radius:20px;padding:12px}.modal-header{padding:12px 14px}.modal-body{padding:14px;gap:12px}.modal-footer{padding:12px 14px}.destacado-card{flex-direction:column;text-align:center;padding:20px}.destacado-img{width:120px;height:120px}.destacado-nombre{font-size:18px}.destacado-precio{font-size:22px}}
-        @media(max-width:480px){.header-top-content{font-size:10px;flex-direction:column;text-align:center}.hero{padding:16px 8px}.hero-text h2{font-size:18px}.products-grid{grid-template-columns:repeat(2,1fr);gap:8px}.product-card{border-radius:12px}.product-image{height:120px;object-fit:cover}.product-info{padding:8px}.product-name{font-size:11px}.price-current{font-size:13px}.filters-sidebar{display:none}.category-chip{padding:6px 10px;font-size:10px}.footer-content{grid-template-columns:1fr}.producto-imagen-modal{height:180px;object-fit:contain;border-radius:8px;background:#f5f5f5}.modal{padding:8px;align-items:flex-start}.modal-content{border-radius:14px;padding:6px;max-height:88vh}.modal-header{padding:6px 10px}.modal-header h3{font-size:13px}.modal-close{font-size:20px}.modal-body{padding:6px;gap:5px}.modal-footer{padding:6px 10px;flex-direction:row;gap:6px}.modal-details h4{font-size:14px;margin-bottom:1px}.modal-description{font-size:11px;margin-bottom:4px;line-height:1.3}.variant-chip{padding:5px 8px;font-size:10px;border-radius:25px}.btn-primary,.btn-secondary{padding:10px;font-size:12px;border-radius:25px}.variant-info-seleccionada{font-size:10px;padding:3px 6px;border-radius:6px}.quantity-selector{margin:6px 0;gap:10px}.quantity-control button{width:28px;height:28px;font-size:14px}.quantity-control input{width:36px;font-size:11px}.productos-relacionados{margin-top:6px;padding:6px}.productos-relacionados h5{font-size:11px;margin-bottom:4px}.relacionado-item{min-width:55px;padding:4px}.relacionado-item img{width:40px;height:40px;border-radius:6px}.relacionado-item span{font-size:8px}}
-    </style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#4A3728;--primary-light:#6B5344;--secondary:#D4A373;--bg-light:#FEFAE0;--bg-white:#fff;--text-dark:#4A3728;--text-light:#8B7355;--success:#4CAF50;--danger:#F44336;--warning:#FF9800;--shadow-sm:0 2px 8px rgba(212,163,115,0.1);--shadow-md:0 4px 16px rgba(212,163,115,0.15);--shadow-lg:0 8px 32px rgba(74,55,40,0.12);--border-radius:16px}
+body{font-family:'Poppins',sans-serif;background:var(--bg-light);color:var(--text-dark);line-height:1.5}
+.header{background:var(--bg-white);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100}
+.header-top{background:var(--primary);color:white;padding:8px 0;font-size:12px}
+.header-top-content{max-width:1400px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.header-main{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:16px;text-decoration:none}
+.logo-icon{width:80px;height:80px;background:transparent;border-radius:0;display:flex;align-items:center;justify-content:center;transition:all 0.3s}
+.logo-icon img{width:100%;height:100%;object-fit:contain;border-radius:0}
+.logo:hover .logo-icon{transform:scale(1.05)}
+.logo-text h1{font-size:26px;font-weight:800;color:var(--text-dark);letter-spacing:0.5px;line-height:1.1}
+.logo-text p{font-size:12px;color:var(--secondary);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.search-bar{flex:1;max-width:400px;position:relative}
+.search-bar input{width:100%;padding:12px 44px 12px 16px;border:2px solid #eee;border-radius:50px;font-size:14px;background:var(--bg-white);transition:all 0.3s}
+.search-bar input:focus{outline:none;border-color:var(--secondary)}
+.search-bar button{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:var(--primary);border:none;color:white;width:38px;height:38px;border-radius:50%;cursor:pointer}
+.header-actions{display:flex;align-items:center;gap:12px}
+.cart-btn,.user-btn{position:relative;background:var(--primary);border:none;color:white;padding:10px 18px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.3s}
+.user-btn{padding:10px;border-radius:50%}
+.cart-btn:hover,.user-btn:hover{background:var(--primary-light)}
+.cart-count{background:var(--secondary);color:var(--text-dark);padding:2px 6px;border-radius:20px;font-size:12px;font-weight:700}
+.user-menu{position:absolute;top:60px;right:0;background:white;border-radius:16px;box-shadow:var(--shadow-lg);min-width:200px;overflow:hidden;z-index:200;display:none}
+.user-menu a{display:flex;align-items:center;gap:12px;padding:14px 18px;color:var(--text-dark);text-decoration:none;transition:background 0.2s}
+.user-menu a:hover{background:#f5f5f5}
+.categories-nav{background:var(--bg-white);border-bottom:1px solid #eee;padding:8px 0}
+.categories-container{max-width:1400px;margin:0 auto;padding:0 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.categories-container::-webkit-scrollbar{display:none}
+.category-chip{padding:8px 14px;background:transparent;border:none;border-radius:50px;font-size:12px;font-weight:500;color:var(--text-light);cursor:pointer;white-space:nowrap;transition:all 0.3s;display:flex;align-items:center;gap:6px}
+.category-chip:hover{background:#f5f5f5;color:var(--text-dark)}
+.category-chip.active{background:var(--primary);color:white}
+.hero{background:linear-gradient(135deg,#4A3728 0%,#6B5344 50%,#D4A373 100%);color:white;padding:40px 16px;margin-bottom:24px;position:relative;overflow:hidden}
+.hero-content{max-width:1400px;margin:0 auto;position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between}
+.hero-text h2{font-size:28px;font-weight:800;margin-bottom:8px}
+.hero-text p{font-size:14px;opacity:0.95;max-width:400px;margin-bottom:16px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);padding:8px 16px;border-radius:50px;font-size:12px}
+.main-content{max-width:1400px;margin:0 auto;padding:0 16px 40px;display:flex;gap:20px}
+.filters-sidebar{width:240px;flex-shrink:0}
+.filter-section{background:var(--bg-white);border-radius:var(--border-radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+.filter-section h4{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.subcategory-list{display:flex;flex-direction:column;gap:8px}
+.subcategory-item{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:13px;color:var(--text-light)}
+.subcategory-item:hover{color:var(--primary)}
+.subcategory-item.active{color:var(--primary);font-weight:600}
+.products-area{flex:1}
+.products-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.products-header h3{font-size:18px;font-weight:700}
+.sort-select{padding:8px 12px;border:2px solid #eee;border-radius:30px;background:var(--bg-white);font-size:12px;cursor:pointer}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,280px));gap:16px}
+.product-card{background:var(--bg-white);border-radius:var(--border-radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:all 0.3s;cursor:pointer;position:relative}
+.product-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
+.product-badge{position:absolute;top:8px;left:8px;z-index:10}
+.badge-mayorista{background:#FFB347;color:white;padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700}
+.badge-stock{position:absolute;top:8px;right:8px;z-index:10;background:rgba(255,255,255,0.9);padding:2px 6px;border-radius:20px;font-size:9px;font-weight:600}
+.badge-stock.low{background:#FEE2E2;color:#991B1B}
+.badge-stock.ultimas{background:#F44336;color:white;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.product-image{width:100%;aspect-ratio:4/5;object-fit:cover;background:#FAEDCD}
+.product-info{padding:12px}
+.product-name{font-size:14px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.product-prices{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.price-current {
+    font-family: 'Playfair Display', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.3px;
+}
+.price-mayorista{font-size:10px;color:#FF8F00;font-weight:600}
+.btn-add-product{width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
+.btn-add-product:disabled{background:#CCC;cursor:not-allowed}
+.destacado-card{background:linear-gradient(135deg,#4A3728 0%,#6B5344 50%,#D4A373 100%);border-radius:24px;padding:28px;color:white;display:flex;align-items:center;gap:24px;box-shadow:0 8px 32px rgba(74,55,40,0.2);position:relative;overflow:hidden}
+.destacado-card::before{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:rgba(255,255,255,0.03);border-radius:50%}
+.destacado-img{width:140px;height:140px;object-fit:cover;border-radius:18px;border:3px solid rgba(255,255,255,0.2);box-shadow:0 8px 24px rgba(0,0,0,0.2);flex-shrink:0}
+.destacado-badge{display:inline-block;font-size:11px;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;margin-bottom:8px;font-weight:600;letter-spacing:0.5px}
+.destacado-nombre{font-size:22px;font-weight:700;margin-bottom:4px}
+.destacado-precio{font-size:26px;font-weight:800;margin-bottom:4px}
+.destacado-btn{display:inline-block;background:white;color:#4A3728;padding:10px 24px;border-radius:30px;font-weight:700;font-size:13px;cursor:pointer;border:none;margin-top:8px;transition:all 0.3s}
+.destacado-btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(74,55,40,0.6);backdrop-filter:blur(8px);z-index:1000;justify-content:center;align-items:center;padding:16px}
+.modal.active{display:flex}
+.modal-content{background:var(--bg-white);border-radius:24px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{padding:18px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:18px;font-weight:700}
+.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-light)}
+.modal-body{padding:20px;display:grid;grid-template-columns:1fr;gap:20px}
+.producto-imagen-modal{width:100%;height:450px;object-fit:cover;border-radius:16px;background:#FAEDCD;pointer-events:none;-webkit-user-drag:none;user-select:none;transition:opacity 0.3s ease}
+.modal-details h4{font-size:22px;font-weight:700;margin-bottom:8px}
+.modal-description{color:var(--text-light);margin-bottom:16px;font-size:14px}
+.variant-selector{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.variant-chip{padding:10px 16px;background:#f5f5f5;border:2px solid transparent;border-radius:50px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s}
+.variant-chip:hover{border-color:var(--primary);background:#e8e8e8}
+.variant-chip.active{background:var(--primary);color:white;border-color:var(--primary)}
+.variant-chip.disabled{opacity:0.5;cursor:not-allowed;border-color:transparent}
+.variant-info-seleccionada{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:8px 16px;margin-bottom:16px;font-size:13px;color:#065f46;display:flex;align-items:center;gap:8px}
+.quantity-selector{display:flex;align-items:center;gap:16px;margin:20px 0}
+.quantity-control{display:flex;align-items:center;background:#f5f5f5;border-radius:50px}
+.quantity-control button{width:36px;height:36px;border:none;background:transparent;font-size:18px;font-weight:700;cursor:pointer;color:var(--primary)}
+.quantity-control input{width:50px;text-align:center;border:none;background:transparent;font-size:14px;font-weight:600}
+.modal-footer{padding:16px 20px 20px;display:flex;gap:12px}
+.btn-primary,.btn-secondary{flex:1;padding:14px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-primary{background:var(--primary);color:white;border:none}
+.btn-primary:disabled{background:#CCC}
+.btn-secondary{background:#f5f5f5;color:var(--text-dark);border:none}
+.cart-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:1000;display:none}
+.cart-overlay.active{display:block}
+
+/* ==========================================================================
+   ESTILOS SÚPER COQUETTE Y PRECIOS NUMÉRICOS ORDENADOS (CARRITO)
+   ========================================================================== */
+.cart-sidebar {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    width: 100%;
+    max-width: 440px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -5px 0 25px rgba(74, 55, 40, 0.08);
+    z-index: 1001;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: 24px;
+    border-bottom-left-radius: 24px;
+}
+.cart-sidebar.active {
+    right: 0;
+}
+.cart-header {
+    padding: 20px 24px;
+    border-bottom: 1px dashed #FAEDCD;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    background: #ffffff;
+    border-top-left-radius: 24px;
+}
+.cart-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.cart-close {
+    background: #FEFAE0;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-light);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.cart-close:hover {
+    background: #FAEDCD;
+    color: var(--primary);
+}
+.cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #FEFAE0 100%);
+}
+.cart-product-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(212, 163, 115, 0.06);
+    border: 1px solid rgba(212, 163, 115, 0.15);
+    transition: transform 0.2s ease;
+}
+.cart-product-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--secondary);
+}
+.cart-product-card .precio-monto-elegante {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+}
+.cart-product-card .subtotal-monto-elegante {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+}
+.progreso-mayorista {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px;
+    margin: 16px 0 8px 0;
+    border: 1px solid rgba(212, 163, 115, 0.25);
+    box-shadow: 0 4px 10px rgba(212, 163, 115, 0.04);
+}
+.progreso-mayorista-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+.progreso-mayorista-titulo {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 13px;
+}
+.progreso-mayorista-porcentaje {
+    font-weight: 700;
+    color: var(--secondary);
+    font-size: 13px;
+}
+.progreso-barra {
+    width: 100%;
+    height: 8px;
+    background: #FEFAE0;
+    border-radius: 50px;
+    overflow: hidden;
+    margin: 10px 0;
+    border: 1px solid rgba(212, 163, 115, 0.1);
+}
+.progreso-relleno {
+    height: 100%;
+    background: linear-gradient(90deg, #E0A899 0%, var(--secondary) 100%);
+    border-radius: 50px;
+    transition: width 0.5s ease;
+}
+.progreso-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-light);
+    font-weight: 500;
+}
+.progreso-completado {
+    text-align: center;
+    color: #065f46;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+.cart-product-card .quantity-control-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #FEFAE0;
+    border-radius: 50px;
+    padding: 3px;
+    border: 1px solid rgba(212, 163, 115, 0.15);
+}
+.cart-product-card .quantity-btn-cart {
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: #ffffff;
+    border-radius: 50%;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s;
+}
+.cart-product-card .quantity-btn-cart:hover {
+    background: var(--primary);
+    color: #ffffff;
+}
+.precio-tachado {
+    text-decoration: line-through;
+    color: #94a3b8;
+    font-size: 11px;
+    margin-right: 6px;
+}
+.precio-descuento {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 13px;
+}
+.cart-footer {
+    padding: 20px 24px;
+    border-top: 1px dashed #FAEDCD;
+    background: #ffffff;
+    flex-shrink: 0;
+    border-bottom-left-radius: 24px;
+}
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(212, 163, 115, 0.2);
+}
+.cart-total span:first-child {
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+.cart-total span:last-child {
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--primary);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: #FEFAE0;
+    padding: 4px 16px;
+    border-radius: 50px;
+    border: 1px solid rgba(212, 163, 115, 0.15);
+    box-shadow: inset 0 1px 3px rgba(74, 55, 40, 0.02);
+}
+.btn-checkout {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+.btn-checkout:hover {
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(74, 55, 40, 0.15);
+}
+.whatsapp-comprobante {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #25D366;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    text-decoration: none;
+    margin-top: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.2s;
+}
+.whatsapp-comprobante:hover {
+    background: #1fa855;
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   CONTINUACIÓN ESTILOS GENERALES Y MEDIA QUERIES
+   ========================================================================== */
+.footer{background:var(--primary);color:white;padding:32px 16px 20px;margin-top:40px}
+.footer-content{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px}
+.footer-section h4{font-size:14px;margin-bottom:12px}
+.footer-section p{opacity:0.8;margin-bottom:6px;font-size:12px}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--success);color:white;padding:12px 18px;border-radius:40px;font-weight:600;font-size:13px;z-index:2000;animation:slideIn 0.3s ease}
+.toast.error{background:var(--danger)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.whatsapp-float{position:fixed;bottom:80px;right:20px;background:#25D366;color:white;width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;text-decoration:none;transition:all 0.3s}
+.whatsapp-float:hover{transform:scale(1.1)}
+.badge-nuevo{background:#D4A373;color:white;padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700;position:absolute;top:36px;left:8px;z-index:10}
+.favorito-btn{position:absolute;top:8px;right:8px;z-index:10;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}
+.favorito-btn:hover{transform:scale(1.1)}.favorito-btn.activo{color:#ef4444}
+.productos-relacionados{margin-top:16px;padding:12px;background:#FEFAE0;border-radius:12px}
+.productos-relacionados h5{font-size:13px;margin-bottom:10px;color:#D4A373}
+.relacionados-grid{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+.relacionado-item{min-width:90px;text-align:center;cursor:pointer;transition:all 0.3s;background:white;border-radius:12px;padding:8px}
+.relacionado-item:hover{transform:translateY(-3px);box-shadow:0 4px 12px rgba(212,163,115,0.2)}
+.relacionado-item img{width:70px;height:70px;object-fit:cover;border-radius:10px;margin-bottom:4px}
+.relacionado-item span{font-size:10px;font-weight:600;display:block;line-height:1.2}
+.loader{width:40px;height:40px;border:3px solid #FAEDCD;border-top:3px solid #D4A373;border-radius:50%;animation:spin 0.8s linear infinite;margin:20px auto}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+h1,h2,h3,h4,.product-name,.destacado-nombre,.logo-text h1,.modal-details h4{font-family:'Playfair Display',serif}
+@media(min-width:640px){.products-grid{grid-template-columns:repeat(auto-fill,minmax(260px,300px));gap:24px}.product-image{width:100%;aspect-ratio:4/5;object-fit:cover;background:#FAEDCD}.modal-body{grid-template-columns:1fr 1fr;gap:32px}}
+@media(max-width:768px){.modal-body{grid-template-columns:1fr}.producto-imagen-modal{height:280px}.destacado-card{flex-direction:column;text-align:center;padding:20px}.destacado-img{width:120px;height:120px}.destacado-nombre{font-size:18px}.destacado-precio{font-size:22px}}
+@media(max-width:1024px){.main-content{flex-direction:column}.filters-sidebar{width:100%}.products-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}}
+@media(max-width:768px){.header-main{flex-direction:column;gap:10px}.search-bar{max-width:100%}.header-actions{width:100%;justify-content:center}.hero{padding:24px 12px}.hero-text h2{font-size:22px}.hero-text p{font-size:12px}.products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.product-image{height:160px}.product-name{font-size:12px}.price-current{font-size:15px}.btn-add-product{font-size:11px;padding:8px}.modal-body{grid-template-columns:1fr!important}.producto-imagen-modal{height:250px}.cart-sidebar{max-width:100%}.footer-content{grid-template-columns:1fr 1fr;gap:16px}}
+@media(max-width:480px){.header-top-content{font-size:10px;flex-direction:column;text-align:center}.hero{padding:16px 8px}.hero-text h2{font-size:18px}.products-grid{grid-template-columns:repeat(2,1fr);gap:8px}.product-card{border-radius:12px}.product-image{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover}.product-info{padding:8px}.product-name{font-size:11px}.price-current{font-size:13px}.filters-sidebar{display:none}.category-chip{padding:6px 10px;font-size:10px}.footer-content{grid-template-columns:1fr}.producto-imagen-modal{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;border-radius:8px}.producto-imagen-principal{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover}}
+</style>
 </head>
 <body>
-<div class="header-top"><div class="header-top-content"><div><i class="fas fa-truck"></i> Envíos a todo el país | <i class="fas fa-phone"></i> <span id="header-phone"></span></div><div><i class="fas fa-clock"></i> <span id="header-hours-text">Cargando...</span></div></div></div>
+<div class="header-top"><div class="header-top-content"><div><i class="fas fa-truck"></i> Moda curvy premium con envíos a todo el país | <i class="fas fa-phone"></i> <span id="header-phone"></span></div><div><i class="fas fa-clock"></i> <span id="header-hours-text">Cargando...</span></div></div></div>
 <div class="header"><div class="header-main">
-    <div class="logo"><div class="logo-icon" id="logo-container"><i class="fas fa-store"></i></div><div class="logo-text"><h1 id="tienda-nombre">Casa Elegida</h1><p id="tienda-slogan">Calidad y confort</p></div></div>
-    <div class="search-bar"><input type="text" id="search-input" placeholder="🔍 Buscar productos..."><button onclick="buscarProductos()"><i class="fas fa-search"></i></button></div>
-    <div class="header-actions">
-        <button class="cart-btn" onclick="toggleCarrito()"><i class="fas fa-shopping-bag"></i> Mi Pedido <span class="cart-count" id="cart-count">0</span></button>
-        <div style="position:relative"><button class="user-btn" id="user-btn" onclick="toggleUserMenu()"><i class="fas fa-user"></i></button><div class="user-menu" id="user-menu"><a href="/perfil"><i class="fas fa-user-circle"></i> Mi Perfil</a><a href="#" onclick="verMisPedidos()"><i class="fas fa-shopping-bag"></i> Mis Pedidos</a><hr><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></div></div>
+<div class="logo">
+    <div class="logo-icon" id="logo-container">
+        <img src="https://via.placeholder.com/80x80/FEFAE0/D4A373?text=EC" style="width:100%;height:100%;object-fit:contain">
     </div>
+    <div class="logo-text">
+        <h1 id="tienda-nombre">ESENCIA CURVY</h1>
+        <p id="tienda-slogan">TU ESENCIA NO TIENE TALLE</p>
+    </div>
+</div>
+<div class="search-bar"><input type="text" id="search-input" placeholder="🔍 Buscar prendas..."><button onclick="buscarProductos()"><i class="fas fa-search"></i></button></div>
+<div class="header-actions">
+    <button class="cart-btn" onclick="toggleCarrito()"><i class="fas fa-shopping-bag"></i> Mi Pedido <span class="cart-count" id="cart-count">0</span></button>
+    <div style="position:relative"><button class="user-btn" id="user-btn" onclick="toggleUserMenu()"><i class="fas fa-user"></i></button><div class="user-menu" id="user-menu"><a href="/perfil"><i class="fas fa-user-circle"></i> Mi Perfil</a><a href="#" onclick="verMisPedidos()"><i class="fas fa-shopping-bag"></i> Mis Pedidos</a><hr><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></div></div>
+</div>
 </div></div>
 <div class="categories-nav"><div class="categories-container" id="categories-container"><button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button></div></div>
-<div class="hero"><div class="hero-content"><div class="hero-text"><h2 id="hero-titulo">Casa Elegida</h2><p id="hero-mensaje">Blanquería premium</p><div class="hero-badge"><i class="fas fa-tags"></i> <span id="mayorista-hero-text">✦ Precios especiales</span></div></div><div id="hero-logo" style="width:180px;height:180px;opacity:0.2;display:flex;align-items:center;justify-content:center"><i class="fas fa-store" style="font-size:80px"></i></div></div></div>
+<div class="hero"><div class="hero-content"><div class="hero-text"><h2 id="hero-titulo">ESENCIA CURVY</h2><p id="hero-mensaje">Ropa en Talles Especiales</p><div class="hero-badge"><i class="fas fa-tags"></i> <span id="mayorista-hero-text">✦ Precios especiales</span></div></div><div id="hero-logo" style="width:180px;height:180px;opacity:0.2;display:flex;align-items:center;justify-content:center"><i class="fas fa-store" style="font-size:80px"></i></div></div></div>
+<div id="banners-container" style="max-width:1400px;margin:12px auto;padding:0 16px;display:flex;flex-direction:column;gap:12px"></div>
 <div id="producto-destacado" style="max-width:1400px;margin:0 auto 24px;padding:0 16px"></div>
 <div class="main-content">
     <div class="filters-sidebar"><div class="filter-section"><h4><i class="fas fa-filter"></i> Subcategorías</h4><div class="subcategory-list" id="subcategory-list"></div></div></div>
     <div class="products-area"><div class="products-header"><h3 id="products-title">Nuestros Productos</h3><select class="sort-select" id="sort-select" onchange="ordenarProductos()"><option value="default">Ordenar por</option><option value="price-asc">Precio: Menor a Mayor</option><option value="price-desc">Precio: Mayor a Menor</option><option value="name-asc">Nombre: A-Z</option><option value="name-desc">Nombre: Z-A</option></select></div><div class="products-grid" id="products-grid"></div></div>
 </div>
-<footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">Casa Elegida</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p></div></div><div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2024 Casa Elegida. Todos los derechos reservados.</div></footer>
+<footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">ESENCIA CURVY</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p></div></div><div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2026 ESENCIA CURVY. Todos los derechos reservados.</div></footer>
 
 <div class="modal" id="product-modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title"></h3><button class="modal-close" onclick="cerrarModal()">&times;</button></div><div class="modal-body">
     <img id="modal-product-image" class="producto-imagen-modal" src="https://via.placeholder.com/400" alt="Producto" draggable="false" oncontextmenu="return false;">
@@ -203,10 +464,10 @@
 <div id="asistente-compra" style="position:fixed;bottom:100px;right:85px;z-index:998">
     <div id="asistente-burbuja" style="background:white;border-radius:20px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.2);max-width:340px;margin-bottom:12px;display:none">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:18px">🤖</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#D4A373,#E0A899);display:flex;align-items:center;justify-content:center;color:white;font-size:18px">🤖</div>
             <div><strong style="font-size:14px">Asistente Virtual</strong><p style="font-size:10px;color:#10b981">● En línea</p></div>
         </div>
-        <p id="asistente-mensaje" style="font-size:13px;margin-bottom:12px;line-height:1.5">¡Hola! Soy el asistente de Casa Elegida. ¿En qué puedo ayudarte?</p>
+        <p id="asistente-mensaje" style="font-size:13px;margin-bottom:12px;line-height:1.5">¡Hola! Soy el asistente de ESENCIA CURVY. ¿En qué puedo ayudarte?</p>
         <div id="asistente-opciones" style="display:flex;flex-wrap:wrap;gap:6px">
             <button onclick="asistenteResponder('comprar')" style="padding:8px 14px;background:#eef2ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#6366f1">🛒 ¿Cómo comprar?</button>
             <button onclick="asistenteResponder('mayorista')" style="padding:8px 14px;background:#f0fdf4;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#10b981">💎 Precios mayoristas</button>
@@ -215,7 +476,7 @@
             <button onclick="asistenteResponder('contacto')" style="padding:8px 14px;background:#e0e7ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#4f46e5">📞 Contacto</button>
         </div>
     </div>
-    <button id="asistente-btn" onclick="toggleAsistente()" style="width:55px;height:55px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);transition:all 0.3s;display:flex;align-items:center;justify-content:center">🤖</button>
+    <button id="asistente-btn" onclick="toggleAsistente()" style="width:55px;height:55px;border-radius:50%;background:linear-gradient(135deg,#D4A373,#E0A899);color:white;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(212,163,115,0.4);transition:all 0.3s;display:flex;align-items:center;justify-content:center">🤖</button>
 </div>
 
 <script>
@@ -239,7 +500,7 @@ let favoritos=JSON.parse(localStorage.getItem('favoritos')||'[]');
 
 function mostrarToast(msg,tipo='success'){const t=document.createElement('div');t.className=`toast ${tipo}`;t.innerHTML=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>t.remove(),4000)}
 function escapeHtml(s){if(!s)return'';return s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}
-function sanitizarUrl(url){if(!url)return'https://via.placeholder.com/400';if(url.startsWith('/uploads/')||url.startsWith('http'))return url;return'https://via.placeholder.com/400'}
+function sanitizarUrl(url){if(!url)return'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" fill="%23FAEDCD"><rect width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="%23D4A373" font-size="20">Sin foto</text></svg>';if(url.startsWith('/uploads/')||url.startsWith('http'))return url;return'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" fill="%23FAEDCD"><rect width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="%23D4A373" font-size="20">Sin foto</text></svg>'}
 async function safeFetch(url,options={}){const token=localStorage.getItem('token');if(token)options.headers={...options.headers,'Authorization':`Bearer ${token}`};try{const res=await fetch(url,options);if(!res.ok)throw new Error((await res.json().catch(()=>({}))).error||`HTTP ${res.status}`);return await res.json()}catch(e){mostrarToast(e.message,'error');throw e}}
 
 function checkLogin(){const token=localStorage.getItem('token');const userBtn=document.getElementById('user-btn');if(token){userBtn.innerHTML='<i class="fas fa-user-check"></i>';try{usuarioActual=JSON.parse(localStorage.getItem('usuario'))}catch(e){usuarioActual=null}}else{usuarioActual=null;userBtn.innerHTML='<i class="fas fa-user"></i>'}}
@@ -255,7 +516,15 @@ async function cargarDatos(){
         categorias = data.categorias || [];
         configuracion = data.configuracion || configuracion;
         
-        // Aplicar colores desde configuración
+        const esMobile = window.innerWidth <= 768;
+        productos.forEach(p => {
+            if (p.variantes) {
+                p.variantes.forEach(v => {
+                    if (esMobile && v.foto_mobile) v.foto = v.foto_mobile;
+                });
+            }
+        });
+        
         if(configuracion.diseno){
             const d = configuracion.diseno;
             const root = document.documentElement.style;
@@ -265,7 +534,6 @@ async function cargarDatos(){
             if(d.colorTexto) root.setProperty('--text-dark', d.colorTexto);
         }
         
-        // Aplicar tipografía
         if(configuracion.diseno?.fuentePrincipal){
             const link = document.createElement('link');
             link.href = `https://fonts.googleapis.com/css2?family=${configuracion.diseno.fuentePrincipal.replace(/ /g,'+')}:wght@400;600;700;800&display=swap`;
@@ -274,12 +542,10 @@ async function cargarDatos(){
             document.body.style.fontFamily = `'${configuracion.diseno.fuentePrincipal}', system-ui, sans-serif`;
         }
         
-        // Tamaño base
         if(configuracion.diseno?.tamanoBase){
             document.documentElement.style.fontSize = configuracion.diseno.tamanoBase;
         }
         
-        // Banners
         const bannersContainer = document.getElementById('banners-container');
         if(bannersContainer && configuracion.banners?.length){
             let bannerHTML = configuracion.banners.map(b => `
@@ -295,10 +561,9 @@ async function cargarDatos(){
             bannersContainer.innerHTML = bannerHTML;
         }
         
-        // Anuncios - eliminar anteriores antes de crear nuevos
         while(document.querySelector('.anuncio-flotante')) {
-    document.querySelector('.anuncio-flotante').remove();
-}
+            document.querySelector('.anuncio-flotante').remove();
+        }
         if(configuracion.anuncios?.length){
             configuracion.anuncios.filter(a => a.activo !== false).forEach(a => {
                 const el = document.createElement('div');
@@ -313,13 +578,12 @@ async function cargarDatos(){
             });
         }
         
-        // Datos de la tienda
-        document.getElementById('tienda-nombre').textContent = configuracion.tienda?.titulo || 'Casa Elegida';
-        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || 'Casa Elegida';
+        document.getElementById('tienda-nombre').textContent = configuracion.tienda?.titulo || 'ESENCIA CURVY';
+        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || 'ESENCIA CURVY';
         document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
         
         if(configuracion.logo){
-            document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:14px">`;
+            document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
             document.getElementById('hero-logo').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
         }
         if(configuracion.redes?.whatsapp){
@@ -332,8 +596,7 @@ async function cargarDatos(){
             document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
         }
         
-        // Footer
-        document.getElementById('footer-nombre').textContent = configuracion.empresa?.nombre || 'Casa Elegida';
+        document.getElementById('footer-nombre').textContent = configuracion.empresa?.nombre || 'ESENCIA CURVY';
         if(configuracion.empresa?.direccion){
             document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
         }
@@ -365,9 +628,9 @@ async function cargarDatos(){
         console.error(e);
     }
 }
-    
-function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='https://via.placeholder.com/140'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
 
+function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22140%22 fill=%22%23FAEDCD%22><rect width=%22140%22 height=%22140%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2214%22>Sin foto</text></svg>'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
+    
 function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i> ${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
 function renderizarSubcategorias(){const c=document.getElementById('subcategory-list');const subs=[...new Set(productos.filter(p=>p.subcategoria).map(p=>p.subcategoria))];let h=`<label class="subcategory-item ${!subcategoriaSeleccionada?'active':''}"><input type="radio" name="subcategory" value="" ${!subcategoriaSeleccionada?'checked':''} onchange="filtrarPorSubcategoria(null)"><span>Todas</span></label>`;subs.sort().forEach(s=>h+=`<label class="subcategory-item ${subcategoriaSeleccionada===s?'active':''}"><input type="radio" name="subcategory" value="${escapeHtml(s)}" ${subcategoriaSeleccionada===s?'checked':''} onchange="filtrarPorSubcategoria('${escapeHtml(s)}')"><span>${escapeHtml(s)}</span></label>`);c.innerHTML=h}
 function filtrarPorCategoria(cat){categoriaSeleccionada=cat;document.querySelectorAll('.category-chip').forEach(c=>c.classList.remove('active'));if(!cat)document.querySelector('.category-chip').classList.add('active');else document.querySelectorAll('.category-chip').forEach(c=>{if(c.textContent.includes(cat))c.classList.add('active')});renderizarProductos()}
@@ -381,78 +644,266 @@ function toggleFavorito(id,event){event.stopPropagation();const idx=favoritos.in
 
 function getRelacionados(producto,limite=5){const catId=producto.categoriaId;let rel=productos.filter(p=>p.id!==producto.id&&p.categoriaId===catId);if(rel.length<limite){rel=rel.concat(productos.filter(p=>p.id!==producto.id&&p.categoriaId!==catId))}return rel.slice(0,limite)}
 
-function renderizarProductos(){const g=document.getElementById('products-grid');const f=getProductosFiltrados();if(!f.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#666;grid-column:1/-1"><i class="fas fa-search" style="font-size:48px;margin-bottom:12px;opacity:0.4"></i><h3>No encontramos productos</h3></div>';return}let h='';f.forEach(p=>{if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];const stock=p.variantes.reduce((s,v)=>s+v.stock,0);const mayorista=p.precioMayor>0&&configuracion.mayorista?.habilitado;const stockBajo=stock<=2&&stock>0;h+=`<div class="product-card" onclick="abrirModalProducto(${p.id})">${mayorista?'<div class="product-badge"><span class="badge-mayorista"><i class="fas fa-tags"></i> Mayorista</span></div>':''}${p.nuevo?'<div class="badge-nuevo"><i class="fas fa-star"></i> Nuevo</div>':''}<span class="badge-stock ${stock<=5?'low':''} ${stockBajo?'ultimas':''}"><i class="fas fa-box"></i> ${stock} ${stockBajo?'⚡ ¡Últimas!':''}</span><button class="favorito-btn ${esFavorito(p.id)?'activo':''}" onclick="toggleFavorito(${p.id},event)"><i class="${esFavorito(p.id)?'fas':'far'} fa-heart"></i></button><img src="${sanitizarUrl(p.variantes[0].foto)}" class="product-image" onerror="this.src='https://via.placeholder.com/300'" draggable="false"><div class="product-info"><h3 class="product-name">${escapeHtml(p.nombre)}</h3><div class="product-prices"><span class="price-current">${fmt.format(p.precio)}</span></div>${mayorista?`<div style="font-size:11px;color:#FF8F00;font-weight:600;margin-top:-6px">💎 Mayorista: ${fmt.format(p.precioMayor)}</div>`:''}<button class="btn-add-product" ${stock===0?'disabled':''} onclick="event.stopPropagation();abrirModalProducto(${p.id})"><i class="fas fa-eye"></i> Ver</button></div></div>`});g.innerHTML=h}
-
-function abrirModalProducto(id){const p=productos.find(x=>x.id==id);if(!p)return;productoModalActual=p;varianteSeleccionada=0;if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];document.getElementById('modal-title').textContent=p.nombre;document.getElementById('modal-name').textContent=p.nombre;document.getElementById('modal-description').textContent=p.descripcion||'Producto de alta calidad';actualizarImagenModal();document.getElementById('modal-variants').innerHTML=p.variantes.map((v,i)=>`<div class="variant-chip ${i===0?'active':''} ${v.stock===0?'disabled':''}" onclick="${v.stock>0?`seleccionarVariante(${i})`:''}">${escapeHtml(v.nombre)} ${v.stock===0?'<small>(Sin stock)</small>':''}</div>`).join('');actualizarInfoVariante();actualizarInfoModal();const rel=getRelacionados(p);const relGrid=document.getElementById('relacionados-grid');if(relGrid&&rel.length){relGrid.innerHTML=rel.map(r=>`<div class="relacionado-item" onclick="abrirModalProducto(${r.id})"><img src="${sanitizarUrl(r.variantes[0]?.foto)}" onerror="this.src='https://via.placeholder.com/80'"><span>${r.nombre.substring(0,25)}</span><small style="color:#6366f1;font-weight:700">${fmt.format(r.precio)}</small></div>`).join('')}document.getElementById('product-modal').classList.add('active')}
+function renderizarProductos(){const g=document.getElementById('products-grid');const f=getProductosFiltrados();if(!f.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#666;grid-column:1/-1"><i class="fas fa-search" style="font-size:48px;margin-bottom:12px;opacity:0.4"></i><h3>No encontramos productos</h3></div>';return}let h='';f.forEach(p=>{if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];const stock=p.variantes.reduce((s,v)=>s+v.stock,0);const mayorista=p.precioMayor>0&&configuracion.mayorista?.habilitado;const stockBajo=stock<=2&&stock>0;h+=`<div class="product-card" onclick="abrirModalProducto(${p.id})">${mayorista?'<div class="product-badge"><span class="badge-mayorista"><i class="fas fa-tags"></i> Mayorista</span></div>':''}${p.nuevo?'<div class="badge-nuevo"><i class="fas fa-star"></i> Nuevo</div>':''}<span class="badge-stock ${stock<=5?'low':''} ${stockBajo?'ultimas':''}"><i class="fas fa-box"></i> ${stock} ${stockBajo?'⚡ ¡Últimas!':''}</span><button class="favorito-btn ${esFavorito(p.id)?'activo':''}" onclick="toggleFavorito(${p.id},event)"><i class="${esFavorito(p.id)?'fas':'far'} fa-heart"></i></button><img src="${sanitizarUrl(p.variantes[0].foto)}" class="product-image" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22 fill=%22%23FAEDCD%22><rect width=%22300%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2216%22>Sin foto</text></svg>'" draggable="false"><div class="product-info"><h3 class="product-name">${escapeHtml(p.nombre)}</h3><div class="product-prices"><span class="price-current">${fmt.format(p.precio)}</span></div>${mayorista?`<div style="font-size:11px;color:#FF8F00;font-weight:600;margin-top:-6px">💎 Mayorista: ${fmt.format(p.precioMayor)}</div>`:''}<button class="btn-add-product" ${stock===0?'disabled':''} onclick="event.stopPropagation();abrirModalProducto(${p.id})"><i class="fas fa-eye"></i> Ver</button></div></div>`});g.innerHTML=h}
+function abrirModalProducto(id){const p=productos.find(x=>x.id==id);if(!p)return;productoModalActual=p;if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];varianteSeleccionada=p.variantes.findIndex(v=>v.stock>0);if(varianteSeleccionada===-1)varianteSeleccionada=0;document.getElementById('modal-title').textContent=p.nombre;document.getElementById('modal-name').textContent=p.nombre;document.getElementById('modal-description').textContent=p.descripcion||'Producto de alta calidad';actualizarImagenModal();const porColor={};p.variantes.forEach((v,i)=>{const partes=v.nombre.split(' - ');const talle=partes[0]||'';const color=partes[1]||v.nombre;if(!porColor[color])porColor[color]=[];porColor[color].push({...v,index:i,talle:talle})});let variantesHTML='<div style="display:flex;flex-direction:column;gap:12px">';Object.entries(porColor).forEach(([color,talles])=>{variantesHTML+=`<div style="border:2px solid #FAEDCD;border-radius:12px;padding:10px;background:white"><div style="font-weight:700;color:#4A3728;margin-bottom:6px;font-size:13px">🎨 ${escapeHtml(color)}</div><div style="display:flex;flex-wrap:wrap;gap:5px">${talles.map(v=>`<div class="variant-chip ${varianteSeleccionada===v.index?'active':''} ${v.stock===0?'disabled':''}" data-index="${v.index}" style="padding:8px 10px;min-width:45px;text-align:center;font-size:11px" onclick="${v.stock>0?`seleccionarVariante(${v.index})`:''}">${escapeHtml(v.talle)}${v.stock===0?'<div style="font-size:8px;color:#ef4444">Sin stock</div>':''}</div>`).join('')}</div></div>`});variantesHTML+='</div>';document.getElementById('modal-variants').innerHTML=variantesHTML;actualizarInfoVariante();actualizarInfoModal();const rel=getRelacionados(p);const relGrid=document.getElementById('relacionados-grid');if(relGrid&&rel.length){relGrid.innerHTML=rel.map(r=>`<div class="relacionado-item" onclick="abrirModalProducto(${r.id})"><img src="${sanitizarUrl(r.variantes[0]?.foto)}" onerror="this.src='https://via.placeholder.com/80'"><span>${r.nombre.substring(0,25)}</span><small style="color:#D4A373;font-weight:700">${fmt.format(r.precio)}</small></div>`).join('')}document.getElementById('product-modal').classList.add('active')}
 function actualizarImagenModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];const img=document.getElementById('modal-product-image');if(img){img.style.opacity='0.4';setTimeout(()=>{img.src=sanitizarUrl(v.foto);img.onerror=function(){this.src='https://via.placeholder.com/400?text=Sin+Imagen'};img.style.opacity='1'},150)}}
 function actualizarInfoVariante(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];document.getElementById('variant-selected-name').textContent=v.nombre;document.getElementById('variant-selected-stock').textContent=v.stock}
-function seleccionarVariante(i){varianteSeleccionada=i;document.querySelectorAll('.variant-chip').forEach((c,j)=>{c.classList.toggle('active',j===i)});actualizarImagenModal();actualizarInfoVariante();actualizarInfoModal()}
+function seleccionarVariante(i){varianteSeleccionada=i;document.querySelectorAll('.variant-chip').forEach(c=>{const idx=parseInt(c.getAttribute('data-index'));c.classList.toggle('active',idx===i)});actualizarImagenModal();actualizarInfoVariante();actualizarInfoModal()}
 function actualizarInfoModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];document.getElementById('modal-price').textContent=fmt.format(productoModalActual.precio);document.getElementById('modal-price-mayorista').textContent=(productoModalActual.precioMayor>0&&configuracion.mayorista?.habilitado)?`Mayorista: ${fmt.format(productoModalActual.precioMayor)}`:'';document.getElementById('modal-quantity').max=v.stock;if(parseInt(document.getElementById('modal-quantity').value)>v.stock)document.getElementById('modal-quantity').value=v.stock;const btn=document.getElementById('modal-add-btn');btn.disabled=v.stock===0;btn.innerHTML=v.stock===0?'<i class="fas fa-box"></i> Sin Stock':'<i class="fas fa-cart-plus"></i> Agregar al Pedido'}
 function cambiarCantidadModal(d){const i=document.getElementById('modal-quantity');if(!i)return;const max=productoModalActual?.variantes[varianteSeleccionada]?.stock||1;i.value=Math.max(1,Math.min(parseInt(i.value)+d,max))}
 function agregarDesdeModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];const cant=parseInt(document.getElementById('modal-quantity').value);if(isNaN(cant)||cant<1)return;if(v.stock<cant){mostrarToast('❌ Stock insuficiente','error');return}const precio=productoModalActual.precio;const existente=carrito.find(i=>i.pId===productoModalActual.id&&i.vNom===v.nombre);if(existente){if(v.stock<existente.cant+cant){mostrarToast('❌ Stock insuficiente','error');return}existente.cant+=cant}else{carrito.push({pId:productoModalActual.id,pNom:productoModalActual.nombre,vNom:v.nombre,vFoto:v.foto,precio:precio,precioOriginal:productoModalActual.precio,cant:cant,esManual:false})}recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();actualizarProgresoMayorista();cerrarModal();mostrarToast('✅ ¡Agregado al pedido!')}
 function cerrarModal(){document.getElementById('product-modal').classList.remove('active');productoModalActual=null}
 function toggleCarrito(){document.getElementById('cart-sidebar').classList.toggle('active');document.getElementById('cart-overlay').classList.toggle('active')}
-function actualizarWhatsAppPago(){const wsp=configuracion.redes?.whatsapp||'';const el=document.getElementById('whatsapp-pago');if(el&&wsp){el.style.display='flex';el.href=`https://wa.me/${wsp.replace(/\D/g,'')}?text=Hola%20Casa%20Elegida%20adjunto%20comprobante%20de%20pago`}}
-function irACheckout(){if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}const token=localStorage.getItem('token');if(configuracion.registroObligatorio&&!token){guardarCarritoLocal();localStorage.setItem('carrito_pendiente',JSON.stringify(carrito));mostrarToast('🔐 Iniciá sesión para finalizar','error');setTimeout(()=>window.location.href='/registro?return=/checkout',1500);return}guardarCarritoLocal();localStorage.setItem('tienda_carrito',JSON.stringify(carrito));window.location.href='/checkout'}
+function actualizarWhatsAppPago(){const wsp=configuracion.redes?.whatsapp||'';const el=document.getElementById('whatsapp-pago');if(el&&wsp){el.style.display='flex';el.href=`https://wa.me/${wsp.replace(/\D/g,'')}?text=Hola%20Esencia%20Curvy%20adjunto%20comprobante%20de%20pago`}}
 
+function irACheckout(){
+    if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}
+    const token=localStorage.getItem('token');
+    
+    guardarCarritoLocal();
+    
+    if(configuracion.registroObligatorio && !token){
+        localStorage.setItem('carrito_respaldo_login', JSON.stringify(carrito));
+        mostrarToast('🔐 Iniciá sesión para finalizar','error');
+        setTimeout(()=>window.location.href='/login',1500);
+        return;
+    }
+    window.location.href='/checkout';
+}
+    
 function actualizarProgresoMayorista(){
     const container=document.getElementById('progreso-mayorista-container');
     if(!container)return;
-    if(!configuracion.mayorista?.habilitado){container.innerHTML='';return}
+    
+    let confMayorista = configuracion.mayorista;
+    if (typeof confMayorista === 'string') {
+        try { confMayorista = JSON.parse(confMayorista); } catch(e) { confMayorista = {}; }
+    }
+    
+    if(!confMayorista || !confMayorista.habilitado){
+        container.innerHTML='';
+        return;
+    }
+    
     const cantTotal=carrito.reduce((s,i)=>s+i.cant,0);
-    const montoTotal=carrito.reduce((s,i)=>{const p=productos.find(x=>x.id==i.pId);const precioCalc=p?.precioMayor||i.precio;return s+precioCalc*i.cant},0);
-    const modo=configuracion.mayorista.modo||'cantidad';
-    const metaCant=configuracion.mayorista.valorCantidad||3;
-    const metaMonto=configuracion.mayorista.valorMonto||80000;
-    let progreso=0,metaTexto='',actualTexto='';
-    if(modo==='cantidad'){progreso=Math.min(100,(cantTotal/metaCant)*100);metaTexto=`${metaCant} unid.`;actualTexto=`${cantTotal} unid.`}
-    else if(modo==='monto'){progreso=Math.min(100,(montoTotal/metaMonto)*100);metaTexto=fmt.format(metaMonto);actualTexto=fmt.format(montoTotal)}
-    else{const pC=Math.min(100,(cantTotal/metaCant)*100);const pM=Math.min(100,(montoTotal/metaMonto)*100);progreso=Math.min(pC,pM);metaTexto=`${metaCant} unid. y ${fmt.format(metaMonto)}`;actualTexto=`${cantTotal} unid. y ${fmt.format(montoTotal)}`}
-    if(progreso>=100){container.innerHTML=`<div class="progreso-mayorista"><div class="progreso-completado">🎉 ¡DESCUENTO MAYORISTA APLICADO! 🎉</div></div>`}
-    else{container.innerHTML=`<div class="progreso-mayorista"><div class="progreso-mayorista-header"><span class="progreso-mayorista-titulo">🏷️ Progreso Mayorista</span><span class="progreso-mayorista-porcentaje">${Math.round(progreso)}%</span></div><div class="progreso-barra"><div class="progreso-relleno" style="width:${progreso}%"></div></div><div class="progreso-meta"><span>${actualTexto}</span><span>🎯 ${metaTexto}</span></div></div>`}
+    const montoTotalMayorista=carrito.reduce((s,i)=>{
+        const p=productos.find(x=>x.id==i.pId);
+        const precioAUsar = (p && p.precioMayor > 0) ? p.precioMayor : (i.precioOriginal || i.precio);
+        return s + (precioAUsar * i.cant);
+    },0);
+    
+    const modo=confMayorista.modo||'cantidad';
+    const metaCant=parseInt(confMayorista.valorCantidad)||3;
+    const metaMonto=parseFloat(confMayorista.valorMonto)||80000;
+    
+    let progreso=0,metaTexto='',actualTexto='', aclaracionModo='';
+    if(modo==='cantidad'){
+        progreso=Math.min(100,(cantTotal/metaCant)*100);
+        metaTexto=`${metaCant} prendas`;
+        actualTexto=`${cantTotal} prendas`;
+        aclaracionModo='Mínimo de prendas';
+    }else if(modo==='monto'){
+        progreso=Math.min(100,(montoTotalMayorista/metaMonto)*100);
+        metaTexto=fmt.format(metaMonto);
+        actualTexto=fmt.format(montoTotalMayorista);
+        aclaracionModo='Monto en base a precio por mayor';
+    }else{
+        const pC=Math.min(100,(cantTotal/metaCant)*100);
+        const pM=Math.min(100,(montoTotalMayorista/metaMonto)*100);
+        progreso=Math.min(pC,pM);
+        metaTexto=`${metaCant} prendas y ${fmt.format(metaMonto)}`;
+        actualTexto=`${cantTotal} prendas y ${fmt.format(montoTotalMayorista)}`;
+        aclaracionModo='Prendas y monto por mayor';
+    }
+    
+    if(progreso>=100){
+        container.innerHTML=`<div class="progreso-mayorista"><div class="progreso-completado">🎉 ¡DESCUENTO MAYORISTA APLICADO! 🎉</div></div>`;
+    }else{
+        container.innerHTML=`<div class="progreso-mayorista"><div class="progreso-mayorista-header"><span class="progreso-mayorista-titulo">🏷️ Progreso Mayorista <small style="font-size:10px; color:var(--text-light); font-weight:normal; display:block;">(${aclaracionModo})</small></span><span class="progreso-mayorista-porcentaje">${Math.round(progreso)}%</span></div><div class="progreso-barra"><div class="progreso-relleno" style="width:${progreso}%"></div></div><div class="progreso-meta"><span>${actualTexto}</span><span>🎯 Meta: ${metaTexto}</span></div></div>`;
+    }
 }
 
-function renderizarCarrito(){const c=document.getElementById('cart-items');const t=document.getElementById('cart-total');const cnt=document.getElementById('cart-count');if(!c||!t||!cnt)return;if(!carrito.length){c.innerHTML='<div style="text-align:center;padding:48px;color:#666"><i class="fas fa-shopping-bag" style="font-size:48px;margin-bottom:12px;opacity:0.4"></i><h3>Tu pedido está vacío</h3><p style="font-size:13px">¡Agregá productos desde la tienda!</p></div>';t.textContent='$0';cnt.textContent='0';return}let h='',total=0,cantTotal=0;carrito.forEach((it,i)=>{total+=it.precio*it.cant;cantTotal+=it.cant;const tieneMayorista=it.precioOriginal&&it.precio<it.precioOriginal;h+=`<div class="cart-product-card"><div style="display:flex;gap:10px"><img src="${sanitizarUrl(it.vFoto)}" style="width:60px;height:60px;object-fit:cover;border-radius:10px;pointer-events:none" onerror="this.src='https://via.placeholder.com/60'" draggable="false"><div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-weight:700;font-size:13px">${escapeHtml(it.pNom)} ${tieneMayorista?'<span style="background:#FF8F00;color:white;padding:2px 5px;border-radius:10px;font-size:8px">MAY</span>':''}</span><button onclick="eliminarDelCarrito(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px"><i class="fas fa-times"></i></button></div><p style="font-size:10px;color:#666;margin:4px 0">${escapeHtml(it.vNom)}</p><div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span style="font-weight:700;color:#1a1a1a;font-size:13px">${tieneMayorista?`<span class="precio-tachado">${fmt.format(it.precioOriginal)}</span> <span class="precio-descuento">${fmt.format(it.precio)}</span>`:`${fmt.format(it.precio)}`} c/u</span><div style="display:flex;align-items:center;gap:2px;background:#f5f5f5;border-radius:20px;padding:2px"><button onclick="modificarCantidadCarrito(${i},-1)" style="width:28px;height:28px;border:none;background:white;border-radius:50%;font-weight:700;cursor:pointer;font-size:14px">−</button><span style="min-width:28px;text-align:center;font-weight:700;font-size:13px">${it.cant}</span><button onclick="modificarCantidadCarrito(${i},1)" style="width:28px;height:28px;border:none;background:white;border-radius:50%;font-weight:700;cursor:pointer;font-size:14px">+</button></div></div><div style="text-align:right;margin-top:8px;padding-top:6px;border-top:1px solid #eee;font-size:11px">Subtotal: <strong style="color:#1a1a1a;font-size:14px">${fmt.format(it.precio*it.cant)}</strong></div></div></div></div>`});c.innerHTML=h;t.textContent=fmt.format(total);cnt.textContent=cantTotal;actualizarProgresoMayorista()}
+function recalcularPreciosMayoristas(){
+    let confMayorista = configuracion.mayorista;
+    if (typeof confMayorista === 'string') {
+        try { confMayorista = JSON.parse(confMayorista); } catch(e) { confMayorista = {}; }
+    }
+
+    if(!confMayorista || !confMayorista.habilitado){
+        carrito.forEach(i=>{
+            if(i.precioOriginal){
+                i.precio=i.precioOriginal;
+                delete i.precioOriginal;
+            }
+        });
+        renderizarCarrito();
+        actualizarProgresoMayorista();
+        return;
+    }
+    
+    const modo = confMayorista.modo || 'cantidad';
+    const valorCantidad = parseInt(confMayorista.valorCantidad) || 3;
+    const valorMonto = parseFloat(confMayorista.valorMonto) || 80000;
+    
+    const cantTotal=carrito.reduce((s,i)=>s+i.cant,0);
+    const montoTotalMayorista=carrito.reduce((s,i)=>{
+        const p=productos.find(x=>x.id==i.pId);
+        const precioAUsar = (p && p.precioMayor > 0) ? p.precioMayor : (i.precioOriginal || i.precio);
+        return s + (precioAUsar * i.cant);
+    },0);
+    
+    let cumple = false;
+    if (modo === 'cantidad') {
+        cumple = cantTotal >= valorCantidad;
+    } else if (modo === 'monto') {
+        cumple = montoTotalMayorista >= valorMonto;
+    } else if (modo === 'ambas') {
+        cumple = (cantTotal >= valorCantidad && montoTotalMayorista >= valorMonto);
+    }
+    
+    carrito.forEach(i=>{
+        if(i.esManual)return;
+        const p=productos.find(x=>x.id==i.pId);
+        if(!p)return;
+        if(cumple && p.precioMayor>0){
+            if(!i.precioOriginal) i.precioOriginal=i.precio;
+            i.precio=p.precioMayor;
+        }else if(i.precioOriginal){
+            i.precio=i.precioOriginal;
+            delete i.precioOriginal;
+        }
+    });
+    renderizarCarrito();
+    actualizarProgresoMayorista();
+}
+    
+function renderizarCarrito(){
+    const c=document.getElementById('cart-items');
+    const t=document.getElementById('cart-total');
+    const cnt=document.getElementById('cart-count');
+    if(!c||!t||!cnt)return;
+    
+    if(!carrito.length){
+        c.innerHTML='<div style="text-align:center;padding:48px;color:var(--text-light)"><i class="fas fa-shopping-bag" style="font-size:42px;margin-bottom:12px;opacity:0.3"></i><h3>Tu pedido está vacío</h3><p style="font-size:12px">¡Agregá hermosas prendas desde la tienda!</p></div>';
+        t.textContent='$0';
+        cnt.textContent='0';
+        return;
+    }
+    
+    let h='',total=0,cantTotal=0;
+    carrito.forEach((it,i)=>{
+        total+=it.precio*it.cant;
+        cantTotal+=it.cant;
+        const tieneMayorista=it.precioOriginal&&it.precio<it.precioOriginal;
+        h+=`<div class="cart-product-card">
+            <div style="display:flex;gap:12px">
+                <img src="${sanitizarUrl(it.vFoto)}" style="width:65px;height:65px;object-fit:cover;border-radius:12px;border:1px solid rgba(212,163,115,0.1)" onerror="this.src='https://via.placeholder.com/65'" draggable="false">
+                <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                        <span style="font-weight:700;font-size:13px;color:var(--text-dark);line-height:1.2;">${escapeHtml(it.pNom)} ${tieneMayorista?'<span style="background:var(--secondary);color:white;padding:1px 5px;border-radius:10px;font-size:8px;font-weight:700;margin-left:2px">MAY</span>':''}</span>
+                        <button onclick="eliminarDelCarrito(${i})" style="background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:14px;transition:color 0.2s" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'"><i class="fas fa-times"></i></button>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-light);margin:2px 0 6px 0">${escapeHtml(it.vNom)}</p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span class="precio-monto-elegante">${tieneMayorista?`<span class="precio-tachado">${fmt.format(it.precioOriginal)}</span><span class="precio-descuento">${fmt.format(it.precio)}</span>`:`${fmt.format(it.precio)}`} c/u</span>
+                        <div class="quantity-control-wrapper">
+                            <button class="quantity-btn-cart" onclick="modificarCantidadCarrito(${i},-1)">−</button>
+                            <span style="min-width:24px;text-align:center;font-weight:600;font-size:12px;color:var(--text-dark)">${it.cant}</span>
+                            <button class="quantity-btn-cart" onclick="modificarCantidadCarrito(${i},1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:right;margin-top:8px;padding-top:6px;border-top:1px dotted rgba(212,163,115,0.15);font-size:11px;color:var(--text-light);">Subtotal: <strong class="subtotal-monto-elegante">${fmt.format(it.precio*it.cant)}</strong></div>
+        </div>`;
+    });
+    c.innerHTML=h;
+    t.textContent=fmt.format(total);
+    cnt.textContent=cantTotal;
+    actualizarProgresoMayorista();
+}
+    
 function modificarCantidadCarrito(i,d){const it=carrito[i];if(!it)return;const nc=it.cant+d;if(nc<=0){eliminarDelCarrito(i);return}if(!it.esManual){const p=productos.find(x=>x.id==it.pId);const v=p?.variantes?.find(x=>x.nombre===it.vNom);if(v&&v.stock<nc){mostrarToast('❌ Stock insuficiente','error');return}}it.cant=nc;recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();actualizarProgresoMayorista()}
 function eliminarDelCarrito(i){carrito.splice(i,1);recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();actualizarProgresoMayorista();mostrarToast('🗑️ Producto eliminado')}
-function recalcularPreciosMayoristas(){if(!configuracion.mayorista?.habilitado){carrito.forEach(i=>{if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal}});renderizarCarrito();actualizarProgresoMayorista();return}const cantTotal=carrito.reduce((s,i)=>s+i.cant,0);const montoTotal=carrito.reduce((s,i)=>{const p=productos.find(x=>x.id==i.pId);const precioCalc=p?.precioMayor||i.precio;return s+precioCalc*i.cant},0);const{modo,valorCantidad,valorMonto}=configuracion.mayorista;const cumple=modo==='cantidad'?cantTotal>=valorCantidad:modo==='monto'?montoTotal>=valorMonto:cantTotal>=valorCantidad&&montoTotal>=valorMonto;carrito.forEach(i=>{if(i.esManual)return;const p=productos.find(x=>x.id==i.pId);if(!p)return;if(cumple&&p.precioMayor>0){if(!i.precioOriginal)i.precioOriginal=i.precio;if(i.precio!==p.precioMayor)i.precio=p.precioMayor}else if(i.precioOriginal){i.precio=i.precioOriginal;delete i.precioOriginal}});renderizarCarrito();actualizarProgresoMayorista()}
-function guardarCarritoLocal(){const token=localStorage.getItem('token');const key=token?'carrito_'+token:'carrito_anonimo';localStorage.setItem(key,JSON.stringify(carrito));localStorage.setItem('carrito_timestamp',Date.now())}
-function cargarCarritoLocal(){const pendiente=localStorage.getItem('carrito_pendiente');if(pendiente&&(!carrito||carrito.length===0)){try{carrito=JSON.parse(pendiente);localStorage.removeItem('carrito_pendiente');recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista();return}catch(e){}}const token=localStorage.getItem('token');const key=token?'carrito_'+token:'carrito_anonimo';const g=localStorage.getItem(key);const ts=localStorage.getItem('carrito_timestamp');if(g&&ts&&(Date.now()-ts<7*24*60*60*1000)){try{carrito=JSON.parse(g);recalcularPreciosMayoristas();renderizarCarrito();actualizarProgresoMayorista()}catch(e){carrito=[]}}}
 
-function toggleAsistente(){const burbuja=document.getElementById('asistente-burbuja');burbuja.style.display=burbuja.style.display==='block'?'none':'block'}
-function asistenteResponder(tema){
-    const msg=document.getElementById('asistente-mensaje');
-    const opciones=document.getElementById('asistente-opciones');
-    switch(tema){
-        case 'comprar':msg.innerHTML='🛒 <strong>Para comprar es muy fácil:</strong><br><br>1️⃣ Navegá por las categorías o buscá un producto<br>2️⃣ Hacé clic en <strong>"Ver"</strong> para ver los detalles<br>3️⃣ Elegí la variante (color, tamaño) y la cantidad<br>4️⃣ Clic en <strong>"Agregar al Pedido"</strong><br>5️⃣ Cuando termines, andá al carrito 🛒<br>6️⃣ Presioná <strong>"Finalizar Compra"</strong><br><br>¿Querés que te ayude con algo más?';break;
-        case 'mayorista':msg.innerHTML='💎 <strong>¡Precios especiales por mayor!</strong><br><br>🏷️ Llevando <strong>cierta cantidad</strong> de productos, accedés a precios mayoristas con descuento.<br><br>📊 En el carrito vas a ver una <strong>barra de progreso</strong> que te muestra cuánto te falta para alcanzar el descuento.<br><br>🎉 ¡Al alcanzarlo, los precios se actualizan automáticamente!';break;
-        case 'envios':msg.innerHTML='🚚 <strong>Información de envíos:</strong><br><br>📦 Hacemos envíos a <strong>todo el país</strong><br>🚀 Despachamos dentro de las <strong>72hs hábiles</strong> (muchas veces antes)<br>📍 Podés elegir entre:<br>• Retiro en nuestro local<br>• Envío a domicilio<br><br>El costo se calcula al finalizar la compra según tu ubicación.';break;
-        case 'pagos':msg.innerHTML='💳 <strong>Medios de pago:</strong><br><br>💵 <strong>Efectivo</strong> (en el local)<br>🏦 <strong>Transferencia bancaria</strong><br><br>⚠️ Los pedidos tienen <strong>24hs hábiles</strong> para ser abonados por transferencia, o serán cancelados.';break;
-        case 'contacto':const ws=configuracion.redes?.whatsapp||'';const tel=configuracion.empresa?.telefono||'';msg.innerHTML='📞 <strong>Contactanos:</strong><br><br>📱 WhatsApp: <strong>'+ws+'</strong><br>📞 Teléfono: <strong>'+tel+'</strong><br>📧 Email: <strong>'+ (configuracion.empresa?.email||'casaelegida20@gmail.com') +'</strong><br><br>⏰ Horarios:<br>'+ (configuracion.horarios?.lunesViernes||'9:00 a 18:00') +'<br>¡Te esperamos!';break;
+function guardarCarritoLocal(){
+    const token = localStorage.getItem('token');
+    const key = token ? 'carrito_' + token : 'carrito_anonimo';
+    
+    localStorage.setItem(key, JSON.stringify(carrito));
+    localStorage.setItem('tienda_carrito', JSON.stringify(carrito)); 
+    localStorage.setItem('carrito_timestamp', Date.now());
+
+    if (token) {
+        fetch('/api/guardar-carrito', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ carrito: carrito }) 
+        }).catch(e => console.log("Error de sincronización con servidor de base de datos"));
     }
-    opciones.innerHTML='<button onclick="volverMenuAyuda()" style="padding:8px 14px;background:#6366f1;color:white;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;width:100%">🔙 Volver al menú</button>';
 }
-function volverMenuAyuda(){
-    document.getElementById('asistente-mensaje').innerHTML='¡Hola! Soy el asistente de Casa Elegida. ¿En qué puedo ayudarte?';
-    document.getElementById('asistente-opciones').innerHTML=`
-        <button onclick="asistenteResponder('comprar')" style="padding:8px 14px;background:#eef2ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#6366f1">🛒 ¿Cómo comprar?</button>
-        <button onclick="asistenteResponder('mayorista')" style="padding:8px 14px;background:#f0fdf4;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#10b981">💎 Precios mayoristas</button>
-        <button onclick="asistenteResponder('envios')" style="padding:8px 14px;background:#fef3c7;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#f59e0b">🚚 Envíos</button>
-        <button onclick="asistenteResponder('pagos')" style="padding:8px 14px;background:#fce7f3;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#ec4899">💳 Medios de pago</button>
-        <button onclick="asistenteResponder('contacto')" style="padding:8px 14px;background:#e0e7ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#4f46e5">📞 Contacto</button>
-    `;
+
+async function cargarCarritoLocal(){
+    const token = localStorage.getItem('token');
+    const key = token ? 'carrito_' + token : 'carrito_anonimo';
+    
+    try {
+        if (token) {
+            const res = await fetch('/api/obtener-carrito', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success && data.carrito && data.carrito.length > 0) {
+                carrito = data.carrito;
+                recalcularPreciosMayoristas();
+                renderizarCarrito();
+                actualizarProgresoMayorista();
+                return;
+            }
+        }
+    } catch(e) {
+        console.log("Servidor ocupado, usando respaldo de memoria local...");
+    }
+
+    const g = localStorage.getItem(key) || localStorage.getItem('tienda_carrito');
+    const ts = localStorage.getItem('carrito_timestamp');
+    if (g && ts && (Date.now() - ts < 7 * 24 * 60 * 60 * 1000)) {
+        try {
+            carrito = JSON.parse(g);
+            recalcularPreciosMayoristas();
+            renderizarCarrito();
+            actualizarProgresoMayorista();
+        } catch(e) {
+            carrito = [];
+        }
+    }
 }
-setTimeout(()=>{const burbuja=document.getElementById('asistente-burbuja');if(burbuja&&burbuja.style.display==='none'){burbuja.style.display='block';}},30000);
+    
+function toggleAsistente(){const burbuja=document.getElementById('asistente-burbuja');burbuja.style.display=burbuja.style.display==='block'?'none':'block'}
+function asistenteResponder(tema){const msg=document.getElementById('asistente-mensaje');const opciones=document.getElementById('asistente-opciones');switch(tema){case 'comprar':msg.innerHTML='🛒 <strong>Para comprar es muy fácil:</strong><br><br>1️⃣ Navegá por las categorías o buscá un producto<br>2️⃣ Hacé clic en <strong>"Ver"</strong> para ver los detalles<br>3️⃣ Elegí la variante (color, tamaño) y la cantidad<br>4️⃣ Clic en <strong>"Agregar al Pedido"</strong><br>5️⃣ Cuando termines, andá al carrito 🛒<br>6️⃣ Presioná <strong>"Finalizar Compra"</strong><br><br>¿Querés que te ayude con algo más?';break;case 'mayorista':msg.innerHTML='💎 <strong>¡Precios especiales por mayor!</strong><br><br>🏷️ Llevando <strong>cierta cantidad</strong> de productos, accedés a precios mayoristas con descuento.<br><br>📊 En el carrito vas a ver una <strong>barra de progreso</strong> que te muestra cuánto te falta para alcanzar el descuento.<br><br>🎉 ¡Al alcanzarlo, los precios se actualizan automáticamente!';break;case 'envios':msg.innerHTML='🚚 <strong>Información de envíos:</strong><br><br>📦 Hacemos envíos a <strong>todo el país</strong><br>🚀 Despachamos dentro de las <strong>72hs hábiles</strong> (muchas veces antes)<br>📍 Podés elegir entre:<br>• Retiro en nuestro local<br>• Envío a domicilio<br><br>El costo se calcula al finalizar la compra según tu ubicación.';break;case 'pagos':msg.innerHTML='💳 <strong>Medios de pago:</strong><br><br>💵 <strong>Efectivo</strong> (en el local)<br>🏦 <strong>Transferencia bancaria</strong><br><br>⚠️ Los pedidos tienen <strong>24hs hábiles</strong> para ser abonados por transferencia, o serán cancelados.';break;case 'contacto':const ws=configuracion.redes?.whatsapp||'';const tel=configuracion.empresa?.telefono||'';msg.innerHTML='📞 <strong>Contactanos:</strong><br><br>📱 WhatsApp: <strong>'+ws+'</strong><br>📞 Teléfono: <strong>'+tel+'</strong><br>📧 Email: <strong>'+(configuracion.empresa?.email||'esenciacurvy26@gmail.com')+'</strong><br><br>⏰ Horarios:<br>'+(configuracion.horarios?.lunesViernes||'9:00 a 18:00')+'<br>¡Te esperamos!';break}opciones.innerHTML='<button onclick="volverMenuAyuda()" style="padding:8px 14px;background:#6366f1;color:white;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;width:100%">🔙 Volver al menú</button>'}
+function volverMenuAyuda(){document.getElementById('asistente-mensaje').innerHTML='¡Hola! Soy el asistente de ESENCIA CURVY. ¿En qué puedo ayudarte?';document.getElementById('asistente-opciones').innerHTML=`<button onclick="asistenteResponder('comprar')" style="padding:8px 14px;background:#eef2ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#6366f1">🛒 ¿Cómo comprar?</button><button onclick="asistenteResponder('mayorista')" style="padding:8px 14px;background:#f0fdf4;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#10b981">💎 Precios mayoristas</button><button onclick="asistenteResponder('envios')" style="padding:8px 14px;background:#fef3c7;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#f59e0b">🚚 Envíos</button><button onclick="asistenteResponder('pagos')" style="padding:8px 14px;background:#fce7f3;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#ec4899">💳 Medios de pago</button><button onclick="asistenteResponder('contacto')" style="padding:8px 14px;background:#e0e7ff;border:none;border-radius:20px;font-size:11px;cursor:pointer;font-weight:600;color:#4f46e5">📞 Contacto</button>`}
+setTimeout(()=>{const burbuja=document.getElementById('asistente-burbuja');if(burbuja&&burbuja.style.display==='none'){burbuja.style.display='block'}},30000);
 
 document.addEventListener('DOMContentLoaded',()=>{
-    // Recuperar carrito pendiente al cargar la página
-    const pendiente = localStorage.getItem('carrito_pendiente');
-    if (pendiente && carrito.length === 0) {
+    const token = localStorage.getItem('token');
+    const respaldo = localStorage.getItem('carrito_respaldo_login');
+    
+    if (respaldo) {
         try {
-            carrito = JSON.parse(pendiente);
-            localStorage.removeItem('carrito_pendiente');
+            const tempCart = JSON.parse(respaldo);
+            if (tempCart && tempCart.length > 0) {
+                carrito = tempCart;
+                const key = token ? 'carrito_' + token : 'carrito_anonimo';
+                localStorage.setItem(key, JSON.stringify(carrito));
+                localStorage.setItem('carrito_timestamp', Date.now());
+            }
         } catch(e) {}
+        localStorage.removeItem('carrito_respaldo_login');
     }
+
     cargarDatos();
     document.addEventListener('dragstart',(e)=>{if(e.target.tagName==='IMG')e.preventDefault()});
     document.getElementById('search-input').addEventListener('keypress',e=>{if(e.key==='Enter')buscarProductos()});
