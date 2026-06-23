@@ -795,12 +795,65 @@ body {
 }
 .btn-checkout:hover { background: var(--primary-light); }
 
-/* Footer y Complementos */
+/* Footer y Complementos - Estilo Textil Boutique */
 .footer {
-    background: var(--primary);
-    border-top: 4px solid var(--secondary);
+    background: #1a1a1a;
+    color: #ffffff;
+    border-top: 3px solid var(--secondary);
+    padding: 40px 16px 20px;
+    margin-top: 60px;
+    font-size: 13px;
 }
 
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 32px;
+    padding-bottom: 30px;
+}
+
+.footer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-section h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-section p, .footer-section a {
+    color: #b3b3b3;
+    text-decoration: none;
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s ease;
+}
+
+.footer-section a:hover {
+    color: #ffffff;
+}
+
+@media(max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        text-align: left;
+    }
+}
 .productos-relacionados {
     background: #F6F3EA;
     border-radius: var(--border-radius);
