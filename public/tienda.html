@@ -922,7 +922,7 @@ async function cargarDatos(){
         categorias = data.categorias || [];
         configuracion = data.configuracion || configuracion;
         
-        // Desempaquetar los objetos JSON de la base de datos si vienen como strings
+        // Desempaquetar de forma segura los objetos JSON de la base de datos
         if (typeof configuracion.empresa === 'string') { try { configuracion.empresa = JSON.parse(configuracion.empresa); } catch(e){} }
         if (typeof configuracion.horarios === 'string') { try { configuracion.horarios = JSON.parse(configuracion.horarios); } catch(e){} }
         if (typeof configuracion.redes === 'string') { try { configuracion.redes = JSON.parse(configuracion.redes); } catch(e){} }
@@ -987,17 +987,17 @@ async function cargarDatos(){
             });
         }
         
-        // Forzar datos desde configuracion.empresa de la base de datos
-        const miEmpresaNombre = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'ESENCIA CURVY';
-        const miEmpresaSlogan = configuracion.empresa?.slogan || '';
+        // Control de contingencia estricto para CASA ELEGIDA
+        const miEmpresaNombre = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'CASA ELEGIDA';
+        const miEmpresaSlogan = configuracion.empresa?.slogan || 'TEXTILES PREMIUM';
         
         document.getElementById('tienda-nombre').textContent = miEmpresaNombre;
         document.getElementById('tienda-slogan').textContent = miEmpresaSlogan;
         document.getElementById('hero-titulo').textContent = miEmpresaNombre;
-        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
+        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || 'Calidad y confort';
         document.getElementById('footer-nombre').textContent = miEmpresaNombre;
         if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').textContent = miEmpresaNombre;
-        document.title = miEmpresaNombre;
+        document.title = miEmpresaNombre + " | Tienda Oficial";
 
         if(configuracion.logo){
             document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
@@ -1007,25 +1007,49 @@ async function cargarDatos(){
         if(configuracion.empresa?.telefono){
             document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
             document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
+        } else {
+            document.getElementById('header-phone').textContent = '';
+            document.getElementById('footer-telefono').innerHTML = '';
         }
+
         if(configuracion.horarios){
-            document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes || ''} | Sáb ${configuracion.horarios.sabados || ''}`;
-            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes || ''}`;
-            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados || ''}`;
+            const lv = configuracion.horarios.lunesViernes || '';
+            const sab = configuracion.horarios.sabados || '';
+            document.getElementById('header-hours-text').textContent = lv ? `L a V ${lv} | Sáb ${sab}` : 'Consultar horarios';
+            document.getElementById('footer-horario-lv').innerHTML = lv ? `<i class="fas fa-clock"></i> L a V: ${lv}` : '';
+            document.getElementById('footer-horario-sab').innerHTML = sab ? `<i class="fas fa-clock"></i> Sáb: ${sab}` : '';
         }
+        
         if(configuracion.empresa?.direccion){
             document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
+        } else {
+            document.getElementById('footer-direccion').innerHTML = '';
         }
+
+        if(configuracion.empresa?.email){
+            document.getElementById('footer-email').innerHTML = `<i class="fas fa-envelope"></i> ${configuracion.empresa.email}`;
+        } else {
+            document.getElementById('footer-email').innerHTML = '';
+        }
+
         if(configuracion.redes?.whatsapp){
             const linkWsp = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
             document.getElementById('footer-whatsapp').innerHTML = linkWsp;
             if(document.getElementById('whatsapp-float')) document.getElementById('whatsapp-float').href = `https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`;
+        } else {
+            document.getElementById('footer-whatsapp').innerHTML = '';
         }
+
         if(configuracion.redes?.instagram){
             document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${configuracion.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${configuracion.redes.instagram.replace('@','')}</a>`;
+        } else {
+            document.getElementById('footer-instagram').innerHTML = '';
         }
+
         if(configuracion.redes?.facebook){
             document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${configuracion.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${configuracion.redes.facebook}</a>`;
+        } else {
+            document.getElementById('footer-facebook').innerHTML = '';
         }
         
         renderizarCategorias();
@@ -1036,7 +1060,7 @@ async function cargarDatos(){
         mostrarProductoDestacado();
         actualizarWhatsAppPago();
     } catch(e) {
-        console.error(e);
+        console.error("Error crítico al renderizar interfaz:", e);
     }
 }
     
