@@ -904,7 +904,7 @@ async function cargarDatos(){
             document.getElementById('hero-logo').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
         }
         if(configuracion.redes?.whatsapp){
-            document.getElementById('whatsapp-float').href = `https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`;
+            document.getElementById('footer-whatsapp').innerHTML = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
         }
         if(configuracion.empresa?.telefono){
             document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
