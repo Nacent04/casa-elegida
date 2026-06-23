@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>CASA ELEGIDA | TEXTILES PREMIUM</title>
+    <title>TIENDA ONLINE | PREMIUM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -828,7 +828,7 @@ body {
         <img src="https://via.placeholder.com/80x80/FEFAE0/D4A373?text=EC" style="width:100%;height:100%;object-fit:contain">
     </div>
     <div class="logo-text">
-        <h1 id="tienda-nombre">CASA ELEGIDA</h1>
+        <h1 id="tienda-nombre">Cargando...</h1>
         <p id="tienda-slogan">Cargando...</p>
     </div>
 </div>
@@ -839,15 +839,15 @@ body {
 </div>
 </div></div>
 <div class="categories-nav"><div class="categories-container" id="categories-container"><button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button></div></div>
-<div class="hero"><div class="hero-content"><div class="hero-text"><h2 id="hero-titulo">CASA ELEGIDA</h2><p id="hero-mensaje">Ropa en Talles Especiales</p><div class="hero-badge"><i class="fas fa-tags"></i> <span id="mayorista-hero-text">✦ Precios especiales</span></div></div><div id="hero-logo" style="width:180px;height:180px;opacity:0.2;display:flex;align-items:center;justify-content:center"><i class="fas fa-store" style="font-size:80px"></i></div></div></div>
+<div class="hero"><div class="hero-content"><div class="hero-text"><h2 id="hero-titulo">Cargando...</h2><p id="hero-mensaje">Cargando...</p><div class="hero-badge"><i class="fas fa-tags"></i> <span id="mayorista-hero-text">✦ Precios especiales</span></div></div><div id="hero-logo" style="width:180px;height:180px;opacity:0.2;display:flex;align-items:center;justify-content:center"><i class="fas fa-store" style="font-size:80px"></i></div></div></div>
 <div id="banners-container" style="max-width:1400px;margin:12px auto;padding:0 16px;display:flex;flex-direction:column;gap:12px"></div>
 <div id="producto-destacado" style="max-width:1400px;margin:0 auto 24px;padding:0 16px"></div>
 <div class="main-content">
     <div class="filters-sidebar"><div class="filter-section"><h4><i class="fas fa-filter"></i> Subcategorías</h4><div class="subcategory-list" id="subcategory-list"></div></div></div>
     <div class="products-area"><div class="products-header"><h3 id="products-title">Nuestros Productos</h3><select class="sort-select" id="sort-select" onchange="ordenarProductos()"><option value="default">Ordenar por</option><option value="price-asc">Precio: Menor a Mayor</option><option value="price-desc">Precio: Mayor a Menor</option><option value="name-asc">Nombre: A-Z</option><option value="name-desc">Nombre: Z-A</option></select></div><div class="products-grid" id="products-grid"></div></div>
 </div>
-<footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">CASA ELEGIDA</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p></div></div><div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2026 CASA ELEGIDA. Todos los derechos reservados.</div></footer>
-
+<footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">Cargando...</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p></div></div><div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2026 <span id="footer-copyright">Tienda</span>. Todos los derechos reservados.</div></footer>
+    
 <div class="modal" id="product-modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title"></h3><button class="modal-close" onclick="cerrarModal()">&times;</button></div><div class="modal-body">
     <img id="modal-product-image" class="producto-imagen-modal" src="https://via.placeholder.com/400" alt="Producto" draggable="false" oncontextmenu="return false;">
     <div class="modal-details">
@@ -984,10 +984,14 @@ async function cargarDatos(){
             });
         }
         
-        document.getElementById('tienda-nombre').textContent = configuracion.tienda?.titulo || 'CASA ELEGIDA';
-        document.getElementById('tienda-slogan').textContent = configuracion.empresa?.slogan || 'BLANQUERÍA PREMIUM';
-        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || 'CASA ELEGIDA';
+        const nombreFinal = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'Mi Tienda';
+        document.getElementById('tienda-nombre').textContent = nombreFinal;
+        document.getElementById('tienda-slogan').textContent = configuracion.empresa?.slogan || '';
+        document.getElementById('hero-titulo').textContent = nombreFinal;
         document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
+        document.getElementById('footer-nombre').textContent = nombreFinal;
+        document.getElementById('footer-copyright').textContent = nombreFinal;
+        document.title = nombreFinal + ' | Premium';
         
         if(configuracion.logo){
             document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
