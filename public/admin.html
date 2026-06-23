@@ -873,7 +873,7 @@ function renderPaginaEdicionWeb() { return `<div class="panel"><h3><i class="fas
 
 function renderPaginaConfiguracion() {
     const html = `
-        <div class="panel" style="border: 2px solid #3D312A; background: #ffffff; padding: 36px; box-shadow: 0 20px 50px rgba(61,49,42,0.08);">
+        <div class="panel" style="border: 1px solid #E6E1DA; background: #ffffff; padding: 36px;">
             <div style="text-align: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 3px double #C5A880;">
                 <h3 style="color: #3D312A; font-size: 32px; font-family: 'Playfair Display', serif; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
                     <i class="fas fa-crown" style="color: #C5A880; margin-right: 12px;"></i> Panel de Control
@@ -882,50 +882,50 @@ function renderPaginaConfiguracion() {
             </div>
             
             <!-- Imagen de Identidad (Logo) -->
-            <div class="config-section" style="border: 1px solid #3D312A; border-radius: 0px; padding: 28px; background: #FDFBF7; margin-bottom: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 28px; padding: 28px; background: #FDFBF7; margin-bottom: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E1DA; padding-bottom: 8px;">
                     <i class="fas fa-image" style="color: #C5A880;"></i> Imagen de Marca (Logo)
                 </h4>
-                <div class="logo-preview" style="background: #ffffff; border: 1px solid #3D312A; border-radius: 0px; padding: 24px; min-height: 140px; display: flex; align-items: center; justify-content: center;">
+                <div class="logo-preview" style="background: #ffffff; border: 1px solid #E6E1DA; border-radius: 24px; padding: 24px; min-height: 140px; display: flex; align-items: center; justify-content: center;">
                     <img id="logo-preview-img" src="" style="display:none; max-width:260px; max-height:100px; object-fit:contain;">
                     <span id="logo-placeholder" style="text-align: center; color: #8C7E74;"><i class="fas fa-feather-alt" style="font-size:36px; color:#C5A880; margin-bottom: 12px;"></i><br><small style="font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:1px;">Línea Estética Boutique</small></span>
                 </div>
                 <div class="logo-actions" style="margin-top: 20px; display: flex; gap: 16px; justify-content: center;">
                     <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="subirLogo(this)">
-                    <button type="button" onclick="document.getElementById('logo-input').click()" class="tab-btn" style="background: #3D312A; color: white; border-radius: 0px; font-weight: 700; padding: 14px 36px; border: none; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Actualizar Logo</button>
-                    <button type="button" onclick="eliminarLogo()" class="tab-btn btn-danger" style="border-radius: 0px; padding: 14px 36px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Remover</button>
+                    <button type="button" onclick="document.getElementById('logo-input').click()" class="tab-btn" style="background: #3D312A; color: white; border-radius: 9999px; font-weight: 700; padding: 12px 28px; border: none; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Actualizar Logo</button>
+                    <button type="button" onclick="eliminarLogo()" class="tab-btn btn-danger" style="border-radius: 9999px; padding: 12px 28px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Remover</button>
                 </div>
             </div>
 
             <!-- Ficha de la Empresa -->
-            <div class="config-section" style="border: 1px solid #3D312A; border-radius: 0px; padding: 28px; background: #fff; margin-bottom: 28px;">
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 28px; padding: 28px; background: #fff; margin-bottom: 28px;">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E1DA; padding-bottom: 8px;">
                     <i class="fas fa-signature" style="color: #C5A880;"></i> Ficha de la Empresa
                 </h4>
                 <div class="form-row">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Nombre Comercial</label>
-                        <input type="text" id="empresa-nombre" placeholder="Ej: CASA ELEGIDA" style="border-radius: 0px; border: 1px solid #3D312A; font-weight: 600; background: #FDFBF7;">
+                        <input type="text" id="empresa-nombre" placeholder="Ej: CASA ELEGIDA" style="border-radius: 20px; border: 1px solid #E6E1DA; font-weight: 600; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Slogan Comercial (A la par del Nombre)</label>
-                        <input type="text" id="empresa-slogan" placeholder="Ej: TU ESENCIA NO TIENE TALLE" style="border-radius: 0px; border: 1px solid #3D312A; font-weight: 600; background: #FDFBF7;">
+                        <input type="text" id="empresa-slogan" placeholder="Ej: TU ESENCIA NO TIENE TALLE" style="border-radius: 20px; border: 1px solid #E6E1DA; font-weight: 600; background: #FDFBF7;">
                     </div>
                 </div>
                 <div class="form-row" style="margin-top: 16px;">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">WhatsApp / Teléfono Comercial</label>
-                        <input type="text" id="empresa-telefono" placeholder="Ej: 381xxxxxxx" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="empresa-telefono" placeholder="Ej: 381xxxxxxx" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Email de Contacto</label>
-                        <input type="email" id="empresa-email" placeholder="Ej: info@tu-tienda.com" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="email" id="empresa-email" placeholder="Ej: info@tu-tienda.com" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
                 <div class="form-row" style="margin-bottom: 20px; margin-top: 16px; grid-template-columns: 1fr;">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Dirección Física / Showroom</label>
-                        <input type="text" id="empresa-direccion" placeholder="Ej: Av. Alem, Tucumán" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="empresa-direccion" placeholder="Ej: Av. Alem, Tucumán" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
                 
@@ -936,17 +936,17 @@ function renderPaginaConfiguracion() {
                 <div class="form-row">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Lunes a Viernes</label>
-                        <input type="text" id="horario-lv" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="horario-lv" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Sábados</label>
-                        <input type="text" id="horario-sab" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="horario-sab" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
                 <div class="form-row" style="margin-bottom: 20px; margin-top: 16px;">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Domingos</label>
-                        <input type="text" id="horario-dom" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="horario-dom" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
 
@@ -957,21 +957,21 @@ function renderPaginaConfiguracion() {
                 <div class="form-row">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Instagram (sin @)</label>
-                        <input type="text" id="red-instagram" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="red-instagram" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Facebook</label>
-                        <input type="text" id="red-facebook" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="red-facebook" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
                 <div class="form-row" style="margin-bottom: 20px; margin-top: 16px;">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">TikTok</label>
-                        <input type="text" id="red-tiktok" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="red-tiktok" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">WhatsApp Enlace (Formato limpio)</label>
-                        <input type="text" id="red-whatsapp" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="red-whatsapp" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
 
@@ -982,122 +982,114 @@ function renderPaginaConfiguracion() {
                 <div class="form-row">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Alias de Cuenta</label>
-                        <input type="text" id="pago-alias" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="pago-alias" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">CBU / CVU</label>
-                        <input type="text" id="pago-cbu" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="pago-cbu" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
                 <div class="form-row" style="margin-bottom: 20px; margin-top: 16px;">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Banco</label>
-                        <input type="text" id="pago-banco" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="pago-banco" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Titular de la Cuenta</label>
-                        <input type="text" id="pago-titular" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="pago-titular" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
                 
-                <button type="button" onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top: 24px; border-radius: 0px; background: #3D312A; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-save"></i> Guardar Configuración General</button>
+                <button type="button" onclick="guardarConfiguracion()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px; background: #3D312A; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-save"></i> Guardar Configuración General</button>
             </div>
 
             <!-- Salón Virtual Web -->
-            <div class="config-section" style="border: 1px solid #3D312A; border-radius: 0px; padding: 28px; background: #fff; margin-bottom: 28px;">
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 28px; padding: 28px; background: #fff; margin-bottom: 28px;">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E1DA; padding-bottom: 8px;">
                     <i class="fas fa-globe" style="color: #C5A880;"></i> Salón Virtual Web
                 </h4>
                 <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Estado de la Tienda Web</label>
-                <div class="entrega-tabs" style="margin-bottom: 20px; max-width: 320px; background: #F6F3EA; padding: 4px; border-radius: 0px; border: 1px solid #3D312A;">
-                    <button type="button" id="tienda-on" class="entrega-btn" style="border-radius: 0px;" onclick="setTiendaHabilitada(true)">Online</button>
-                    <button type="button" id="tienda-off" class="entrega-btn" style="border-radius: 0px;" onclick="setTiendaHabilitada(false)">Pausada</button>
+                <div class="entrega-tabs" style="margin-bottom: 20px; max-width: 320px; background: #F6F3EA; padding: 4px; border-radius: 40px; border: 1px solid #E6E1DA;">
+                    <button type="button" id="tienda-on" class="entrega-btn" style="border-radius: 40px;" onclick="setTiendaHabilitada(true)">Online</button>
+                    <button type="button" id="tienda-off" class="entrega-btn" style="border-radius: 40px;" onclick="setTiendaHabilitada(false)">Pausada</button>
                 </div>
                 <div class="form-row">
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Título Principal (Home)</label>
-                        <input type="text" id="tienda-titulo" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="tienda-titulo" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px; text-transform: uppercase; letter-spacing: 0.5px;">Eslogan de Bienvenida</label>
-                        <input type="text" id="tienda-mensaje" style="border-radius: 0px; border: 1px solid #3D312A; background: #FDFBF7;">
+                        <input type="text" id="tienda-mensaje" style="border-radius: 20px; border: 1px solid #E6E1DA; background: #FDFBF7;">
                     </div>
                 </div>
-                <button type="button" onclick="guardarConfiguracionTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 0px; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-heading"></i> Actualizar Textos Web</button>
+                <button type="button" onclick="guardarConfiguracionTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-heading"></i> Actualizar Textos Web</button>
             </div>
 
             <!-- Paleta de Colores -->
-            <div class="config-section" style="border: 1px solid #3D312A; border-radius: 0px; padding: 28px; background: #fff; margin-bottom: 28px;">
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 28px; padding: 28px; background: #fff; margin-bottom: 28px;">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E1DA; padding-bottom: 8px;">
                     <i class="fas fa-palette" style="color: #C5A880;"></i> Paleta de Colores de la Tienda
                 </h4>
                 <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px;">
                     <div>
                         <label class="form-label" style="font-weight:700; font-size:12px;">Tono Principal</label>
-                        <input type="color" id="tienda-color-primary" style="padding:4px; height:48px; border-radius: 0px; border:1px solid #3D312A; cursor:pointer;">
+                        <input type="color" id="tienda-color-primary" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; font-size:12px;">Tono Secundario</label>
-                        <input type="color" id="tienda-color-secondary" style="padding:4px; height:48px; border-radius: 0px; border:1px solid #3D312A; cursor:pointer;">
+                        <input type="color" id="tienda-color-secondary" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; font-size:12px;">Fondo Soft</label>
-                        <input type="color" id="tienda-color-bg" style="padding:4px; height:48px; border-radius: 0px; border:1px solid #3D312A; cursor:pointer;">
+                        <input type="color" id="tienda-color-bg" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
                     </div>
                     <div>
                         <label class="form-label" style="font-weight:700; font-size:12px;">Texto Oscuro</label>
-                        <input type="color" id="tienda-color-text" style="padding:4px; height:48px; border-radius: 0px; border:1px solid #3D312A; cursor:pointer;">
+                        <input type="color" id="tienda-color-text" style="padding:4px; height:48px; border-radius: 14px; border:1px solid #E6E1DA; cursor:pointer;">
                     </div>
                 </div>
-                <button type="button" onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 0px; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-magic"></i> Vestir Tienda Online</button>
+                <button type="button" onclick="guardarDisenoTienda()" class="btn-confirm" style="margin-top: 24px; border-radius: 40px; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-magic"></i> Vestir Tienda Online</button>
             </div>
 
             <!-- Descuento Mayorista Exclusivo -->
-            <div class="config-section" style="border: 1px solid #3D312A; border-radius: 0px; padding: 28px; background: #fff; margin-bottom: 28px;">
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 28px; padding: 28px; background: #fff; margin-bottom: 28px;">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E1DA; padding-bottom: 8px;">
                     <i class="fas fa-tags" style="color: #C5A880;"></i> Descuento Mayorista Exclusivo
                 </h4>
-                <button type="button" id="btnMayoristaToggle" onclick="toggleMayorista()" class="tab-btn" style="margin-bottom: 20px; border-radius: 0px; font-weight:700; padding: 12px 28px; border: 1px solid #3D312A;">Configurar</button>
+                <button type="button" id="btnMayoristaToggle" onclick="toggleMayorista()" class="tab-btn" style="margin-bottom: 20px; border-radius: 40px; font-weight:700; padding: 12px 28px; border: 1px solid #E6E1DA;">Configurar</button>
                 
-                <div id="mayoristaPanel" style="background: #FDFBF7; padding: 20px; border-radius: 0px; border: 1px solid #3D312A;">
+                <div id="mayoristaPanel" style="background: #FDFBF7; padding: 20px; border-radius: 20px; border: 1px solid #E6E1DA;">
                     <label class="form-label" style="font-weight:700; color:#3D312A; font-size:12px;">Activar Descuento Según:</label>
                     <div class="pago-tabs" style="margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
-                        <div class="modo-option" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')" style="padding:12px 18px; border-radius: 0px; font-weight:600; font-size:13px; border: 1px solid #3D312A;">Mínimo de Prendas</div>
-                        <div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')" style="padding:12px 18px; border-radius: 0px; font-weight:600; font-size:13px; border: 1px solid #3D312A;">Monto Total Límite ($)</div>
-                        <div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')" style="padding:12px 18px; border-radius: 0px; font-weight:600; font-size:13px; border: 1px solid #3D312A;">Ambas Reglas</div>
+                        <div class="modo-option" data-modo="cantidad" onclick="selectMayoristaModo('cantidad')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px; border: 1px solid #3D312A;">Mínimo de Prendas</div>
+                        <div class="modo-option" data-modo="monto" onclick="selectMayoristaModo('monto')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px; border: 1px solid #3D312A;">Monto Total Límite ($)</div>
+                        <div class="modo-option" data-modo="ambas" onclick="selectMayoristaModo('ambas')" style="padding:12px 18px; border-radius:40px; font-weight:600; font-size:13px; border: 1px solid #3D312A;">Ambas Reglas</div>
                     </div>
                     <div class="form-row">
                         <div id="configCantidad">
                             <label class="form-label" style="font-weight:700; font-size:12px;">Mínimo de Unidades</label>
-                            <input type="number" id="mayoristaCantidad" value="3" min="1" style="border-radius: 0px; border: 1px solid #3D312A;">
+                            <input type="number" id="mayoristaCantidad" value="3" min="1" style="border-radius: 20px; border: 1px solid #3D312A;">
                         </div>
                         <div id="configMonto">
                             <label class="form-label" style="font-weight:700; font-size:12px;">Monto Mínimo de Compra ($)</label>
-                            <input type="text" id="mayoristaMonto" value="80.000" style="border-radius: 0px; border: 1px solid #3D312A;">
+                            <input type="text" id="mayoristaMonto" value="80.000" style="border-radius: 20px; border: 1px solid #3D312A;">
                         </div>
                     </div>
-                    <button type="button" onclick="guardarMayorista()" class="btn-confirm" style="margin-top: 20px; border-radius: 0px; background: #3D312A; color:white; font-weight:700; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-check"></i> Fijar Reglas Mayoristas</button>
+                    <button type="button" onclick="guardarMayorista()" class="btn-confirm" style="margin-top: 20px; border-radius: 40px; background: #3D312A; color:white; font-weight:700; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-check"></i> Fijar Reglas Mayoristas</button>
                 </div>
             </div>
 
             <!-- Canales de Envío Ofertados -->
-            <div class="config-section" style="border: 1px solid #3D312A; border-radius: 0px; padding: 28px; background: #fff;">
+            <div class="config-section" style="border: 1px solid #E6E1DA; border-radius: 28px; padding: 28px; background: #fff;">
                 <h4 style="color: #3D312A; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E6E1DA; padding-bottom: 8px;">
                     <i class="fas fa-truck" style="color: #C5A880;"></i> Canales de Envío Ofertados (Uno por línea)
                 </h4>
-                <textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani" style="border-radius:0px; border: 1px solid #3D312A; min-height:120px; font-family:inherit; font-size:14px; padding:14px; background: #FDFBF7;"></textarea>
-                <button type="button" onclick="guardarMetodosEnvio()" class="btn-confirm" style="margin-top: 20px; border-radius: 0px; background: #3D312A; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-truck"></i> Guardar Logística</button>
+                <textarea id="metodos-envio-lista" rows="5" placeholder="Via Cargo&#10;Correo Argentino&#10;Andreani" style="border-radius:20px; border: 1px solid #E6E1DA; min-height:120px; font-family:inherit; font-size:14px; padding:14px; background: #FDFBF7;"></textarea>
+                <button type="button" onclick="guardarMetodosEnvio()" class="btn-confirm" style="margin-top: 20px; border-radius: 40px; background: #3D312A; text-transform: uppercase; letter-spacing: 1px; padding: 16px;"><i class="fas fa-truck"></i> Guardar Logística</button>
             </div>
         </div>
     `;
-    
-    setTimeout(() => {
-        cargarConfiguracion();
-        cargarMetodosEnvio();
-    }, 50);
-    
-    return html;
-}
     
 function renderPaginaBackup() { return `<div class="panel"><div class="backup-hero"><div class="backup-hero-icon">💾</div><h2>Sistema de Backup Total</h2><p>Protegé absolutamente todos tus datos.</p><button type="button" onclick="iniciarBackupTotal()" class="btn-backup-master" id="btn-backup-total"><i class="fas fa-shield-alt"></i> Crear Backup Completo</button></div><div class="backup-cards"><div class="backup-card-item" onclick="iniciarBackupTotal()"><div class="backup-card-icon" style="background:#eef2ff;color:#6366f1"><i class="fas fa-database"></i></div><h4>Backup Completo</h4><p>Incluye absolutamente todo.</p></div><div class="backup-card-item" onclick="document.getElementById('restore-section').scrollIntoView({behavior:'smooth'})"><div class="backup-card-icon" style="background:#fef3c7;color:#f59e0b"><i class="fas fa-undo-alt"></i></div><h4>Restaurar Sistema</h4><p>Restaurá todo desde un archivo.</p></div></div><div class="config-section"><h3><i class="fas fa-history"></i> Historial <button type="button" onclick="cargarHistorialBackups()" class="tab-btn" style="float:right"><i class="fas fa-sync-alt"></i></button></h3><table class="history-table"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead><tbody id="backup-history-body"><tr><td colspan="3" style="text-align:center">Cargando...</td></tr></tbody></table></div><div class="config-section" style="border:2px solid #f59e0b" id="restore-section"><h3 style="color:#f59e0b"><i class="fas fa-upload"></i> Restaurar</h3><div class="restore-zone" onclick="document.getElementById('restore-file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.this.classList.remove('dragover')" ondrop="manejarDropRestore(event)"><i class="fas fa-cloud-upload-alt" style="font-size:48px;color:#f59e0b"></i><h4>Arrastrá el backup aquí</h4></div><input type="file" id="restore-file-input" accept=".backup,.zip" style="display:none" onchange="procesarArchivoRestore(this)"><button type="button" onclick="confirmarRestauracionTotal()" class="btn-backup-master" style="width:100%;background:#f59e0b;margin-top:16px;display:none" id="btn-restaurar"><i class="fas fa-exclamation-triangle"></i> Restaurar</button></div></div>`; }
 
@@ -1112,7 +1104,7 @@ async function cargarMetodosEnvio() {
         metodosEnvio = d.lista || []; 
         const el = document.getElementById('metodos-envio-lista');
         if (el) {
-            el.value = metodosEnvio.join('\n');
+            el.value = metodosEnvio.length > 0 ? metodosEnvio.join('\n') : '';
         }
     } catch(e) {} 
 }
