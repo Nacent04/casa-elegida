@@ -802,7 +802,7 @@ body {
     border-top: 3px solid var(--secondary);
     padding: 40px 16px 20px;
     margin-top: 60px;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .footer-content {
@@ -840,6 +840,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 14px;
     transition: color 0.2s ease;
 }
 
@@ -853,6 +854,30 @@ body {
         gap: 24px;
         text-align: left;
     }
+}
+
+/* Botón Flotante de WhatsApp Boutique */
+.whatsapp-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background-color: #25d366;
+    color: #ffffff !important;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1500;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.05);
 }
 .productos-relacionados {
     background: #F6F3EA;
@@ -899,7 +924,7 @@ body {
     <div class="filters-sidebar"><div class="filter-section"><h4><i class="fas fa-filter"></i> Subcategorías</h4><div class="subcategory-list" id="subcategory-list"></div></div></div>
     <div class="products-area"><div class="products-header"><h3 id="products-title">Nuestros Productos</h3><select class="sort-select" id="sort-select" onchange="ordenarProductos()"><option value="default">Ordenar por</option><option value="price-asc">Precio: Menor a Mayor</option><option value="price-desc">Precio: Mayor a Menor</option><option value="name-asc">Nombre: A-Z</option><option value="name-desc">Nombre: Z-A</option></select></div><div class="products-grid" id="products-grid"></div></div>
 </div>
-<footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">Cargando...</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p></div></div><div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2026 <span id="footer-copyright">Tienda</span>. Todos los derechos reservados.</div></footer>
+<footer class="footer"><div class="footer-content"><div class="footer-section"><h4><i class="fas fa-store"></i> <span id="footer-nombre">Cargando...</span></h4><p id="footer-direccion"></p><p id="footer-email"></p></div><div class="footer-section"><h4>Contacto</h4><p id="footer-telefono"></p><p id="footer-whatsapp"></p></div><div class="footer-section"><h4>Horarios</h4><p id="footer-horario-lv"></p><p id="footer-horario-sab"></p></div><div class="footer-section"><h4>Síguenos</h4><p id="footer-instagram"></p><p id="footer-facebook"></p><p id="footer-tiktok"></p></div></div><div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;opacity:0.7">© 2026 <span id="footer-copyright">Tienda</span>. Todos los derechos reservados.</div></footer>
     
 <div class="modal" id="product-modal"><div class="modal-content"><div class="modal-header"><h3 id="modal-title"></h3><button class="modal-close" onclick="cerrarModal()">&times;</button></div><div class="modal-body">
     <img id="modal-product-image" class="producto-imagen-modal" src="https://via.placeholder.com/400" alt="Producto" draggable="false" oncontextmenu="return false;">
@@ -1071,15 +1096,32 @@ async function cargarDatos(){
             document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${misConfiguraciones.empresa.direccion}`;
         }
         if(misConfiguraciones.horarios){
-            document.getElementById('header-hours-text').textContent = `L a V ${misConfiguraciones.horarios.lunesViernes || ''} | Sáb ${misConfiguraciones.horarios.sabados || ''}`;
-            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${misConfiguraciones.horarios.lunesViernes || ''}`;
-            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${misConfiguraciones.horarios.sabados || ''}`;
+            document.getElementById('header-hours-text').textContent = `Lunes a Viernes ${misConfiguraciones.horarios.lunesViernes || ''} | Sáb ${misConfiguraciones.horarios.sabados || ''}`;
+            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> Lunes a Viernes: ${misConfiguraciones.horarios.lunesViernes || ''}`;
+            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sábados: ${misConfiguraciones.horarios.sabados || ''}`;
         }
+        if(misConfiguraciones.empresa?.email){
+            document.getElementById('footer-email').innerHTML = `<i class="fas fa-envelope"></i> ${misConfiguraciones.empresa.email}`;
+        } else {
+            document.getElementById('footer-email').innerHTML = '';
+        }
+
         if(misConfiguraciones.redes?.instagram){
-            document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${misConfiguraciones.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${misConfiguraciones.redes.instagram.replace('@','')}</a>`;
+            document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${misConfiguraciones.redes.instagram.replace('@','')}" target="_blank"><i class="fab fa-instagram"></i> @${misConfiguraciones.redes.instagram.replace('@','')}</a>`;
+        } else {
+            document.getElementById('footer-instagram').innerHTML = '';
         }
+
         if(misConfiguraciones.redes?.facebook){
-            document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${misConfiguraciones.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${misConfiguraciones.redes.facebook}</a>`;
+            document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${misConfiguraciones.redes.facebook}" target="_blank"><i class="fab fa-facebook"></i> /${misConfiguraciones.redes.facebook}</a>`;
+        } else {
+            document.getElementById('footer-facebook').innerHTML = '';
+        }
+
+        if(misConfiguraciones.redes?.tiktok){
+            document.getElementById('footer-tiktok').innerHTML = `<a href="https://tiktok.com/@${misConfiguraciones.redes.tiktok.replace('@','')}" target="_blank"><i class="fab fa-tiktok"></i> @${misConfiguraciones.redes.tiktok.replace('@','')}</a>`;
+        } else {
+            document.getElementById('footer-tiktok').innerHTML = '';
         }
         
         renderizarCategorias();
