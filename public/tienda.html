@@ -886,7 +886,7 @@ body {
 </div>
 
 <script>
-let productos=[],categorias=[],carrito=[],configuracion={empresa:{},tienda:{},mayorista:{},redes:{},pagos:{}};
+let productos=[],categorias=[],carrito=[],misConfiguraciones={empresa:{},tienda:{},mayorista:{},redes:{},pagos:{}};
 let productoModalActual=null,varianteSeleccionada=0,categoriaSeleccionada=null,subcategoriaSeleccionada=null,busquedaActual='',ordenActual='default',usuarioActual=null;
 const fmt=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0});
 let favoritos=JSON.parse(localStorage.getItem('favoritos')||'[]');
@@ -921,25 +921,24 @@ async function cargarDatos(){
         productos = data.productos || [];
         categorias = data.categorias || [];
         
-        // Asignamos la configuración recibida
         let conf = data.configuracion || {};
         
-        // Conversión y desempaquetado seguro de los JSON estructurados por el admin
         const deserializar = (campo) => {
             if (!campo) return {};
             if (typeof campo === 'object') return campo;
             try { return JSON.parse(campo); } catch(e) { return {}; }
         };
 
-        configuracion.empresa = deserializar(conf.empresa);
-        configuracion.horarios = deserializar(conf.horarios);
-        configuracion.redes = deserializar(conf.redes);
-        configuracion.tienda = deserializar(conf.tienda);
-        configuracion.diseno = deserializar(conf.diseno);
-        configuracion.mayorista = deserializar(conf.mayorista);
-        configuracion.logo = conf.logo || '';
-        configuracion.banners = conf.banners || [];
-        configuracion.anuncios = conf.anuncios || [];
+        // Guardamos todo en la nueva variable sin conflicto con el HTML
+        misConfiguraciones.empresa = deserializar(conf.empresa);
+        misConfiguraciones.horarios = deserializar(conf.horarios);
+        misConfiguraciones.redes = deserializar(conf.redes);
+        misConfiguraciones.tienda = deserializar(conf.tienda);
+        misConfiguraciones.diseno = deserializar(conf.diseno);
+        misConfiguraciones.mayorista = deserializar(conf.mayorista);
+        misConfiguraciones.logo = conf.logo || '';
+        misConfiguraciones.banners = conf.banners || [];
+        misConfiguraciones.anuncios = conf.anuncios || [];
 
         const esMobile = window.innerWidth <= 768;
         productos.forEach(p => {
@@ -950,9 +949,8 @@ async function cargarDatos(){
             }
         });
         
-        // Aplicación dinámica de la paleta de colores del administrador
-        if(configuracion.diseno){
-            const d = configuracion.diseno;
+        if(misConfiguraciones.diseno){
+            const d = misConfiguraciones.diseno;
             const root = document.documentElement.style;
             if(d.colorPrimario) root.setProperty('--primary', d.colorPrimario);
             if(d.colorSecundario) root.setProperty('--secondary', d.colorSecundario);
@@ -961,8 +959,8 @@ async function cargarDatos(){
         }
         
         const bannersContainer = document.getElementById('banners-container');
-        if(bannersContainer && configuracion.banners?.length){
-            let bannerHTML = configuracion.banners.map(b => `
+        if(bannersContainer && misConfiguraciones.banners?.length){
+            let bannerHTML = misConfiguraciones.banners.map(b => `
                 <div style="background:linear-gradient(135deg,var(--primary),var(--secondary));padding:20px;border-radius:16px;display:flex;align-items:center;gap:20px">
                     ${b.imagen ? `<img src="${b.imagen}" style="width:120px;height:80px;object-fit:cover;border-radius:8px">` : ''}
                     <div>
@@ -992,69 +990,41 @@ async function cargarDatos(){
             });
         }
         
-        // Renderizado estricto de textos desde la configuración guardada
-        const miEmpresaNombre = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'CASA ELEGIDA';
-        const miEmpresaSlogan = configuracion.empresa?.slogan || 'TEXTILES PREMIUM';
+        // Renderizado dinámico de la info de base de datos
+        const nombreTienda = misConfiguraciones()?.nombre || 'CASA ELEGIDA';
+        const sloganTienda = misConfiguracion().slogan || 'TEXTILES PREMIUM';
         
-        document.getElementById('tienda-nombre').textContent = miEmpresaNombre;
-        document.getElementById('tienda-slogan').textContent = miEmpresaSlogan;
-        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || miEmpresaNombre;
+        document.getElementById('tienda-nombre').textContent = nombreTienda;
+        document.getElementById('tienda-slogan').textContent = sloganTienda;
+        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || nombreFinal;
         document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
-        document.getElementById('footer-nombre').textContent = miEmpresaNombre;
-        if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').textContent = miEmpresaNombre;
-        document.title = miEmpresaNombre;
-
+        document.getElementById('footer-nombre').textContent = nombreFinal;
+        document.getElementById('footer-copyright').textContent = nombreFinal;
+        
         if(configuracion.logo){
             document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
             document.getElementById('hero-logo').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
         }
-        
+        if(configuracion.redes?.whatsapp){
+            document.getElementById('footer-whatsapp').innerHTML = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
+        }
         if(configuracion.empresa?.telefono){
             document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
-            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ` + configuracion.empresa.telefono;
-        } else {
-            document.getElementById('header-phone').textContent = '';
-            document.getElementById('footer-telefono').innerHTML = '';
+            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
         }
-
-        if(configuracion.horarios){
-            const lv = configuracion.horarios.lunesViernes || '';
-            const sab = configuracion.horarios.sabados || '';
-            document.getElementById('header-hours-text').textContent = lv ? `L a V ${lv} | Sáb ${sab}` : '';
-            document.getElementById('footer-horario-lv').innerHTML = lv ? `<i class="fas fa-clock"></i> L a V: ${lv}` : '';
-            document.getElementById('footer-horario-sab').innerHTML = sab ? `<i class="fas fa-clock"></i> Sáb: ${sab}` : '';
-        }
-        
         if(configuracion.empresa?.direccion){
-            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ` + configuracion.empresa.direccion;
-        } else {
-            document.getElementById('footer-direccion').innerHTML = '';
+            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
         }
-
-        if(configuracion.empresa?.email){
-            document.getElementById('footer-email').innerHTML = `<i class="fas fa-envelope"></i> ` + configuracion.empresa.email;
-        } else {
-            document.getElementById('footer-email').innerHTML = '';
+        if(configuracion.horarios){
+            document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
+            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes}`;
+            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados}`;
         }
-
-        if(configuracion.redes?.whatsapp){
-            const linkWsp = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
-            document.getElementById('footer-whatsapp').innerHTML = linkWsp;
-            if(document.getElementById('whatsapp-float')) document.getElementById('whatsapp-float').href = `https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`;
-        } else {
-            document.getElementById('footer-whatsapp').innerHTML = '';
-        }
-
         if(configuracion.redes?.instagram){
             document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${configuracion.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${configuracion.redes.instagram.replace('@','')}</a>`;
-        } else {
-            document.getElementById('footer-instagram').innerHTML = '';
         }
-
         if(configuracion.redes?.facebook){
             document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${configuracion.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${configuracion.redes.facebook}</a>`;
-        } else {
-            document.getElementById('footer-facebook').innerHTML = '';
         }
         
         renderizarCategorias();
@@ -1065,11 +1035,18 @@ async function cargarDatos(){
         mostrarProductoDestacado();
         actualizarWhatsAppPago();
     } catch(e) {
-        console.error("Falla en la lectura de configuraciones:", e);
+        console.error(e);
     }
 }
+
+// Función auxiliar interna para desempaquetar config de manera segura
+function obtenerDatosEmpresa() {
+    let emp = configuracion.empresa;
+    if (typeof emp === 'string') { try { emp = JSON.parse(emp); } catch(e) { emp = {}; } }
+    return emp || {};
+}
     
-function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML suicide=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22140%22 fill=%22%23FAEDCD%22><rect width=%22140%22 height=%22140%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2214%22>Sin foto</text></svg>'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
+function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22140%22 fill=%22%23FAEDCD%22><rect width=%22140%22 height=%22140%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2214%22>Sin foto</text></svg>'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
     
 function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i> ${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
 function renderizarSubcategorias(){const c=document.getElementById('subcategory-list');const subs=[...new Set(productos.filter(p=>p.subcategoria).map(p=>p.subcategoria))];let h=`<label class="subcategory-item ${!subcategoriaSeleccionada?'active':''}"><input type="radio" name="subcategory" value="" ${!subcategoriaSeleccionada?'checked':''} onchange="filtrarPorSubcategoria(null)"><span>Todas</span></label>`;subs.sort().forEach(s=>h+=`<label class="subcategory-item ${subcategoriaSeleccionada===s?'active':''}"><input type="radio" name="subcategory" value="${escapeHtml(s)}" ${subcategoriaSeleccionada===s?'checked':''} onchange="filtrarPorSubcategoria('${escapeHtml(s)}')"><span>${escapeHtml(s)}</span></label>`);c.innerHTML=h}
