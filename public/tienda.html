@@ -922,6 +922,13 @@ async function cargarDatos(){
         categorias = data.categorias || [];
         configuracion = data.configuracion || configuracion;
         
+        // Desempaquetar los objetos JSON de la base de datos si vienen como strings
+        if (typeof configuracion.empresa === 'string') { try { configuracion.empresa = JSON.parse(configuracion.empresa); } catch(e){} }
+        if (typeof configuracion.horarios === 'string') { try { configuracion.horarios = JSON.parse(configuracion.horarios); } catch(e){} }
+        if (typeof configuracion.redes === 'string') { try { configuracion.redes = JSON.parse(configuracion.redes); } catch(e){} }
+        if (typeof configuracion.tienda === 'string') { try { configuracion.tienda = JSON.parse(configuracion.tienda); } catch(e){} }
+        if (typeof configuracion.diseno === 'string') { try { configuracion.diseno = JSON.parse(configuracion.diseno); } catch(e){} }
+
         const esMobile = window.innerWidth <= 768;
         productos.forEach(p => {
             if (p.variantes) {
@@ -946,10 +953,6 @@ async function cargarDatos(){
             link.rel = 'stylesheet';
             document.head.appendChild(link);
             document.body.style.fontFamily = `'${configuracion.diseno.fuentePrincipal}', system-ui, sans-serif`;
-        }
-        
-        if(configuracion.diseno?.tamanoBase){
-            document.documentElement.style.fontSize = configuracion.diseno.tamanoBase;
         }
         
         const bannersContainer = document.getElementById('banners-container');
@@ -984,42 +987,39 @@ async function cargarDatos(){
             });
         }
         
-        const nombreFinal = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'Mi Tienda';
-        document.getElementById('tienda-nombre').textContent = nombreFinal;
-        document.getElementById('tienda-slogan').textContent = configuracion.empresa?.slogan || '';
-        document.getElementById('hero-titulo').textContent = nombreFinal;
-        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
-        document.getElementById('footer-nombre').textContent = nombreFinal;
-        document.getElementById('footer-copyright').textContent = nombreFinal;
-        document.title = nombreFinal + ' | Premium';
+        // Forzar datos desde configuracion.empresa de la base de datos
+        const miEmpresaNombre = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'ESENCIA CURVY';
+        const miEmpresaSlogan = configuracion.empresa?.slogan || '';
         
+        document.getElementById('tienda-nombre').textContent = miEmpresaNombre;
+        document.getElementById('tienda-slogan').textContent = miEmpresaSlogan;
+        document.getElementById('hero-titulo').textContent = miEmpresaNombre;
+        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
+        document.getElementById('footer-nombre').textContent = miEmpresaNombre;
+        if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').textContent = miEmpresaNombre;
+        document.title = miEmpresaNombre;
+
         if(configuracion.logo){
             document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
             document.getElementById('hero-logo').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
         }
-        if(configuracion.redes?.whatsapp){
-            document.getElementById('footer-whatsapp').innerHTML = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
-        }
+        
         if(configuracion.empresa?.telefono){
             document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
+            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
         }
         if(configuracion.horarios){
-            document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
+            document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes || ''} | Sáb ${configuracion.horarios.sabados || ''}`;
+            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes || ''}`;
+            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados || ''}`;
         }
-        
-        document.getElementById('footer-nombre').textContent = configuracion.empresa?.nombre || 'CASA ELEGIDA';
         if(configuracion.empresa?.direccion){
             document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
         }
-        if(configuracion.empresa?.telefono){
-            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
-        }
         if(configuracion.redes?.whatsapp){
-            document.getElementById('footer-whatsapp').innerHTML = `<i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}`;
-        }
-        if(configuracion.horarios){
-            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes}`;
-            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados}`;
+            const linkWsp = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
+            document.getElementById('footer-whatsapp').innerHTML = linkWsp;
+            if(document.getElementById('whatsapp-float')) document.getElementById('whatsapp-float').href = `https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}`;
         }
         if(configuracion.redes?.instagram){
             document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${configuracion.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${configuracion.redes.instagram.replace('@','')}</a>`;
@@ -1039,7 +1039,7 @@ async function cargarDatos(){
         console.error(e);
     }
 }
-
+    
 function mostrarProductoDestacado(){const destacado=productos.find(p=>p.destacado)||productos[0];if(!destacado)return;const banner=document.getElementById('producto-destacado');if(banner){banner.innerHTML suicide=`<div class="destacado-card"><img src="${sanitizarUrl(destacado.variantes[0]?.foto)}" class="destacado-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22140%22 fill=%22%23FAEDCD%22><rect width=%22140%22 height=%22140%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2214%22>Sin foto</text></svg>'"><div><div class="destacado-badge">🌟 PRODUCTO DESTACADO</div><h3 class="destacado-nombre">${escapeHtml(destacado.nombre)}</h3><p class="destacado-precio">${fmt.format(destacado.precio)}</p>${destacado.precioMayor>0?`<p style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:-2px">💎 Mayorista: ${fmt.format(destacado.precioMayor)}</p>`:''}<button class="destacado-btn" onclick="abrirModalProducto(${destacado.id})">🛒 Ver producto</button></div></div>`}}
     
 function renderizarCategorias(){const c=document.getElementById('categories-container');let h='<button class="category-chip active" onclick="filtrarPorCategoria(null)"><i class="fas fa-grid-2"></i> Todos</button>';categorias.forEach(cat=>{h+=`<button class="category-chip" onclick="filtrarPorCategoria('${escapeHtml(cat.nombre)}')"><i class="fas fa-folder"></i> ${escapeHtml(cat.nombre)}</button>`});c.innerHTML=h}
