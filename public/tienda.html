@@ -273,52 +273,116 @@ body {
 }
 
 /* ==========================================================================
-   HERO EDITORIAL
+   HERO PREMIUM & TEXTIL MINIMALISTA
    ========================================================================== */
 .hero {
-    background: linear-gradient(135deg, #3D312A 0%, #52433A 100%);
-    color: white;
-    padding: 60px 16px;
-    margin-bottom: 32px;
+    background: #2b221e; /* Fondo moka profundo sobrio */
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px;
+    color: #ffffff;
+    padding: 80px 40px;
+    margin-bottom: 40px;
     position: relative;
-    border-radius: var(--border-radius);
+    border: 1px solid rgba(197, 168, 128, 0.2); /* Sutil línea champagne */
+    border-radius: 4px; /* Bordes rectos minimalistas de boutique */
+    overflow: hidden;
 }
 
 .hero-content {
-    max-width: 1400px;
+    max-width: 1300px;
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 40px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
 }
 
 .hero-text h2 {
-    font-size: 36px;
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
     font-weight: 700;
-    margin-bottom: 12px;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    color: #ffffff;
+    margin: 0;
 }
 
 .hero-text p {
-    font-size: 14px;
-    opacity: 0.85;
-    max-width: 500px;
-    margin-bottom: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    color: #dcd6d2;
+    max-width: 550px;
     font-weight: 300;
+    letter-spacing: 0.5px;
+    margin: 0;
+    border-left: 2px solid var(--secondary);
+    padding-left: 16px;
 }
 
 .hero-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 6px 14px;
-    border-radius: var(--border-radius);
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--secondary); /* Enmarcado en tono champagne */
+    color: var(--secondary);
+    padding: 8px 18px;
     font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
+    margin-top: 8px;
 }
 
+#hero-logo {
+    width: 220px !important;
+    height: 220px !important;
+    opacity: 0.15 !important; /* Logo integrado delicadamente al fondo */
+    filter: brightness(0) invert(1); /* Fuerza el logo a blanco puro para máxima elegancia */
+    transition: all 0.4s ease;
+}
+
+#hero-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@media(max-width: 768px) {
+    .hero {
+        padding: 50px 24px;
+        text-align: center;
+    }
+    .hero-content {
+        flex-direction: column;
+        gap: 24px;
+    }
+    .hero-text {
+        align-items: center;
+    }
+    .hero-text h2 {
+        font-size: 32px;
+    }
+    .hero-text p {
+        border-left: none;
+        padding-left: 0;
+        font-size: 14px;
+    }
+    #hero-logo {
+        width: 140px !important;
+        height: 140px !important;
+    }
+}
+    
 /* Layout Espacios */
 .main-content {
     max-width: 1400px;
