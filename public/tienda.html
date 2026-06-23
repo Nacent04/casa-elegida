@@ -929,7 +929,7 @@ async function cargarDatos(){
             try { return JSON.parse(campo); } catch(e) { return {}; }
         };
 
-        // Guardamos todo en la nueva variable sin conflicto con el HTML
+        // Guardamos todo de forma limpia en la variable unificada
         misConfiguraciones.empresa = deserializar(conf.empresa);
         misConfiguraciones.horarios = deserializar(conf.horarios);
         misConfiguraciones.redes = deserializar(conf.redes);
@@ -976,8 +976,8 @@ async function cargarDatos(){
         while(document.querySelector('.anuncio-flotante')) {
             document.querySelector('.anuncio-flotante').remove();
         }
-        if(configuracion.anuncios?.length){
-            configuracion.anuncios.filter(a => a.activo !== false).forEach(a => {
+        if(misConfiguraciones.anuncios?.length){
+            misConfiguraciones.anuncios.filter(a => a.activo !== false).forEach(a => {
                 const el = document.createElement('div');
                 el.className = 'anuncio-flotante';
                 el.style.cssText = `background:${a.color};color:white;text-align:center;padding:10px;font-weight:600;font-size:14px`;
@@ -990,41 +990,43 @@ async function cargarDatos(){
             });
         }
         
-        // Renderizado dinámico de la info de base de datos
-        const nombreTienda = misConfiguraciones()?.nombre || 'CASA ELEGIDA';
-        const sloganTienda = misConfiguracion().slogan || 'TEXTILES PREMIUM';
+        // Renderizado dinámico usando estrictamente misConfiguraciones
+        const nombreTienda = misConfiguraciones.empresa?.nombre || 'CASA ELEGIDA';
+        const sloganTienda = misConfiguraciones.empresa?.slogan || 'TEXTILES PREMIUM';
         
         document.getElementById('tienda-nombre').textContent = nombreTienda;
         document.getElementById('tienda-slogan').textContent = sloganTienda;
-        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || nombreFinal;
-        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
-        document.getElementById('footer-nombre').textContent = nombreFinal;
-        document.getElementById('footer-copyright').textContent = nombreFinal;
+        document.getElementById('hero-titulo').textContent = misConfiguraciones.tienda?.titulo || nombreTienda;
+        document.getElementById('hero-mensaje').textContent = misConfiguraciones.tienda?.mensajeBienvenida || '';
+        document.getElementById('footer-nombre').textContent = nombreTienda;
+        if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').textContent = nombreTienda;
+        document.title = nombreTienda;
         
-        if(configuracion.logo){
-            document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
-            document.getElementById('hero-logo').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
+        if(misConfiguraciones.logo){
+            document.getElementById('logo-container').innerHTML = `<img src="${misConfiguraciones.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
+            document.getElementById('hero-logo').innerHTML = `<img src="${misConfiguraciones.logo}" style="width:100%;height:100%;object-fit:contain;opacity:0.25">`;
         }
-        if(configuracion.redes?.whatsapp){
-            document.getElementById('footer-whatsapp').innerHTML = `<a href="https://wa.me/${configuracion.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${configuracion.redes.whatsapp}</a>`;
+        if(misConfiguraciones.redes?.whatsapp){
+            document.getElementById('footer-whatsapp').innerHTML = `<a href="https://wa.me/${misConfiguraciones.redes.whatsapp.replace(/\D/g,'')}" target="_blank" style="color:white; text-decoration:none;"><i class="fab fa-whatsapp"></i> ${misConfiguraciones.redes.whatsapp}</a>`;
+            if(document.getElementById('whatsapp-float')) document.getElementById('whatsapp-float').href = `https://wa.me/${misConfiguraciones.redes.whatsapp.replace(/\D/g,'')}`;
         }
-        if(configuracion.empresa?.telefono){
-            document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
-            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
+        if(misConfiguraciones.empresa?.telefono){
+            document.getElementById('header-phone').textContent = misConfiguraciones.empresa.telefono;
+            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${misConfiguraciones.empresa.telefono}`;
         }
-        if(configuracion.empresa?.direccion){
-            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
+        if(misConfiguraciones.empresa?.direccion){
+            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${misConfiguraciones.empresa.direccion}`;
         }
-        if(configuracion.horarios){
-            document.getElementById('header-hours-text').textContent = `L a V ${configuracion.horarios.lunesViernes} | Sáb ${configuracion.horarios.sabados}`;
-            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${configuracion.horarios.lunesViernes}`;
-            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${configuracion.horarios.sabados}`;
+        if(misConfiguraciones.horarios){
+            document.getElementById('header-hours-text').textContent = `L a V ${misConfiguraciones.horarios.lunesViernes || ''} | Sáb ${misConfiguraciones.horarios.sabados || ''}`;
+            document.getElementById('footer-horario-lv').innerHTML = `<i class="fas fa-clock"></i> L a V: ${misConfiguraciones.horarios.lunesViernes || ''}`;
+            document.getElementById('footer-horario-sab').innerHTML = `<i class="fas fa-clock"></i> Sáb: ${misConfiguraciones.horarios.sabados || ''}`;
         }
-        if(configuracion.redes?.instagram){
-            document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${configuracion.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${configuracion.redes.instagram.replace('@','')}</a>`;
+        if(misConfiguraciones.redes?.instagram){
+            document.getElementById('footer-instagram').innerHTML = `<a href="https://instagram.com/${misConfiguraciones.redes.instagram.replace('@','')}" target="_blank" style="color:white"><i class="fab fa-instagram"></i> @${misConfiguraciones.redes.instagram.replace('@','')}</a>`;
         }
-        if(configuracion.redes?.facebook){
-            document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${configuracion.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${configuracion.redes.facebook}</a>`;
+        if(misConfiguraciones.redes?.facebook){
+            document.getElementById('footer-facebook').innerHTML = `<a href="https://facebook.com/${misConfiguraciones.redes.facebook}" target="_blank" style="color:white"><i class="fab fa-facebook"></i> /${misConfiguraciones.redes.facebook}</a>`;
         }
         
         renderizarCategorias();
@@ -1035,7 +1037,7 @@ async function cargarDatos(){
         mostrarProductoDestacado();
         actualizarWhatsAppPago();
     } catch(e) {
-        console.error(e);
+        console.error("Error al cargar configuraciones:", e);
     }
 }
 
