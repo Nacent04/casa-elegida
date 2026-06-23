@@ -920,14 +920,26 @@ async function cargarDatos(){
         const data = await safeFetch('/tienda/listar-productos',{method:'POST'});
         productos = data.productos || [];
         categorias = data.categorias || [];
-        configuracion = data.configuracion || configuracion;
         
-        // Desempaquetar de forma segura los objetos JSON de la base de datos
-        if (typeof configuracion.empresa === 'string') { try { configuracion.empresa = JSON.parse(configuracion.empresa); } catch(e){} }
-        if (typeof configuracion.horarios === 'string') { try { configuracion.horarios = JSON.parse(configuracion.horarios); } catch(e){} }
-        if (typeof configuracion.redes === 'string') { try { configuracion.redes = JSON.parse(configuracion.redes); } catch(e){} }
-        if (typeof configuracion.tienda === 'string') { try { configuracion.tienda = JSON.parse(configuracion.tienda); } catch(e){} }
-        if (typeof configuracion.diseno === 'string') { try { configuracion.diseno = JSON.parse(configuracion.diseno); } catch(e){} }
+        // Asignamos la configuración recibida
+        let conf = data.configuracion || {};
+        
+        // Conversión y desempaquetado seguro de los JSON estructurados por el admin
+        const deserializar = (campo) => {
+            if (!campo) return {};
+            if (typeof campo === 'object') return campo;
+            try { return JSON.parse(campo); } catch(e) { return {}; }
+        };
+
+        configuracion.empresa = deserializar(conf.empresa);
+        configuracion.horarios = deserializar(conf.horarios);
+        configuracion.redes = deserializar(conf.redes);
+        configuracion.tienda = deserializar(conf.tienda);
+        configuracion.diseno = deserializar(conf.diseno);
+        configuracion.mayorista = deserializar(conf.mayorista);
+        configuracion.logo = conf.logo || '';
+        configuracion.banners = conf.banners || [];
+        configuracion.anuncios = conf.anuncios || [];
 
         const esMobile = window.innerWidth <= 768;
         productos.forEach(p => {
@@ -938,6 +950,7 @@ async function cargarDatos(){
             }
         });
         
+        // Aplicación dinámica de la paleta de colores del administrador
         if(configuracion.diseno){
             const d = configuracion.diseno;
             const root = document.documentElement.style;
@@ -945,14 +958,6 @@ async function cargarDatos(){
             if(d.colorSecundario) root.setProperty('--secondary', d.colorSecundario);
             if(d.colorFondo) root.setProperty('--bg-light', d.colorFondo);
             if(d.colorTexto) root.setProperty('--text-dark', d.colorTexto);
-        }
-        
-        if(configuracion.diseno?.fuentePrincipal){
-            const link = document.createElement('link');
-            link.href = `https://fonts.googleapis.com/css2?family=${configuracion.diseno.fuentePrincipal.replace(/ /g,'+')}:wght@400;600;700;800&display=swap`;
-            link.rel = 'stylesheet';
-            document.head.appendChild(link);
-            document.body.style.fontFamily = `'${configuracion.diseno.fuentePrincipal}', system-ui, sans-serif`;
         }
         
         const bannersContainer = document.getElementById('banners-container');
@@ -987,17 +992,17 @@ async function cargarDatos(){
             });
         }
         
-        // Control de contingencia estricto para CASA ELEGIDA
+        // Renderizado estricto de textos desde la configuración guardada
         const miEmpresaNombre = configuracion.empresa?.nombre || configuracion.tienda?.titulo || 'CASA ELEGIDA';
         const miEmpresaSlogan = configuracion.empresa?.slogan || 'TEXTILES PREMIUM';
         
         document.getElementById('tienda-nombre').textContent = miEmpresaNombre;
         document.getElementById('tienda-slogan').textContent = miEmpresaSlogan;
-        document.getElementById('hero-titulo').textContent = miEmpresaNombre;
-        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || 'Calidad y confort';
+        document.getElementById('hero-titulo').textContent = configuracion.tienda?.titulo || miEmpresaNombre;
+        document.getElementById('hero-mensaje').textContent = configuracion.tienda?.mensajeBienvenida || '';
         document.getElementById('footer-nombre').textContent = miEmpresaNombre;
         if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').textContent = miEmpresaNombre;
-        document.title = miEmpresaNombre + " | Tienda Oficial";
+        document.title = miEmpresaNombre;
 
         if(configuracion.logo){
             document.getElementById('logo-container').innerHTML = `<img src="${configuracion.logo}" style="width:100%;height:100%;object-fit:contain;border-radius:0">`;
@@ -1006,7 +1011,7 @@ async function cargarDatos(){
         
         if(configuracion.empresa?.telefono){
             document.getElementById('header-phone').textContent = configuracion.empresa.telefono;
-            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ${configuracion.empresa.telefono}`;
+            document.getElementById('footer-telefono').innerHTML = `<i class="fas fa-phone"></i> ` + configuracion.empresa.telefono;
         } else {
             document.getElementById('header-phone').textContent = '';
             document.getElementById('footer-telefono').innerHTML = '';
@@ -1015,19 +1020,19 @@ async function cargarDatos(){
         if(configuracion.horarios){
             const lv = configuracion.horarios.lunesViernes || '';
             const sab = configuracion.horarios.sabados || '';
-            document.getElementById('header-hours-text').textContent = lv ? `L a V ${lv} | Sáb ${sab}` : 'Consultar horarios';
+            document.getElementById('header-hours-text').textContent = lv ? `L a V ${lv} | Sáb ${sab}` : '';
             document.getElementById('footer-horario-lv').innerHTML = lv ? `<i class="fas fa-clock"></i> L a V: ${lv}` : '';
             document.getElementById('footer-horario-sab').innerHTML = sab ? `<i class="fas fa-clock"></i> Sáb: ${sab}` : '';
         }
         
         if(configuracion.empresa?.direccion){
-            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${configuracion.empresa.direccion}`;
+            document.getElementById('footer-direccion').innerHTML = `<i class="fas fa-map-marker-alt"></i> ` + configuracion.empresa.direccion;
         } else {
             document.getElementById('footer-direccion').innerHTML = '';
         }
 
         if(configuracion.empresa?.email){
-            document.getElementById('footer-email').innerHTML = `<i class="fas fa-envelope"></i> ${configuracion.empresa.email}`;
+            document.getElementById('footer-email').innerHTML = `<i class="fas fa-envelope"></i> ` + configuracion.empresa.email;
         } else {
             document.getElementById('footer-email').innerHTML = '';
         }
@@ -1060,7 +1065,7 @@ async function cargarDatos(){
         mostrarProductoDestacado();
         actualizarWhatsAppPago();
     } catch(e) {
-        console.error("Error crítico al renderizar interfaz:", e);
+        console.error("Falla en la lectura de configuraciones:", e);
     }
 }
     
