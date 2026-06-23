@@ -344,11 +344,15 @@ body {
 }
 
 #hero-logo {
-    width: 220px !important;
-    height: 220px !important;
-    opacity: 0.15 !important; /* Logo integrado delicadamente al fondo */
-    filter: brightness(0) invert(1); /* Fuerza el logo a blanco puro para máxima elegancia */
+    width: 350px !important;
+    height: 100% !important;
+    max-height: 240px !important;
+    opacity: 0.25 !important; /* Le damos un poco más de fuerza visual al estar grande */
+    filter: brightness(0) invert(1); 
     transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #hero-logo img {
