@@ -1249,52 +1249,21 @@ function renderizarProductos() {
     let html = '';
 
     productos.forEach(p => {
-        // 1. CÁLCULO DE STOCK ULTRA-SEGURO
-        let stockTotal = 0;
-
-        // Comprobamos si las variantes existen y son un array válido
-        if (p.variantes && Array.isArray(p.variantes) && p.variantes.length > 0) {
-            p.variantes.forEach(v => {
-                stockTotal += parseInt(v.stock || 0);
-            });
-        } 
-        // Si el servidor guardó las variantes como un texto JSON por error, intentamos decodificarlo
-        else if (p.variantes && typeof p.variantes === 'string') {
-            try {
-                const varsParseadas = JSON.parse(p.variantes);
-                if (Array.isArray(varsParseadas)) {
-                    varsParseadas.forEach(v => { stockTotal += parseInt(v.stock || 0); });
-                }
-            } catch(e) {
-                stockTotal = parseInt(p.stock || 0);
-            }
-        }
-        // Si no tiene variantes en ninguna de las formas anteriores, usamos el stock general directo del producto
-        else {
-            stockTotal = parseInt(p.stock || 0);
-        }
-
-        // 2. ELIMINAMOS LA RESTRICCIÓN AGRESIVA TEMPORALMENTE 
-        // Si por alguna razón da 0 pero el producto existe, le ponemos "1" ficticio para obligar a la web a mostrarlo y poder verificar si es un error de render
-        if (stockTotal <= 0 && (!p.variantes || p.variantes.length === 0)) {
-            stockTotal = 1; 
-        }
-
-        // 3. SELECCIÓN DE FOTO DE PORTADA
+        // Tomamos la primera imagen disponible de las variantes o la general
         let fotoProducto = '';
         if (p.variantes && Array.isArray(p.variantes) && p.variantes[0] && p.variantes[0].foto) {
             fotoProducto = p.variantes[0].foto;
         } else if (p.foto) {
-            fotoProducto = p.foto; // fallback si está en la raíz del producto
+            fotoProducto = p.foto;
         } else {
-            fotoProducto = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23F6F3EA"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%233D312A" font-size="14">Casa Elegida</text></svg>';
+            fotoProducto = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23F6F3EA"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="#3D312A" font-size="14">Casa Elegida</text></svg>';
         }
 
-        // 4. RENDERIZADO DE LA TARJETA EN FORMATO SÁBANA (4:3)
+        // Renderizado directo sin filtros restrictivos de stock
         html += `
             <div class="producto-card" style="border-radius:16px; overflow:hidden; background:white; border:1px solid #E6E1DA; display:flex; flex-direction:column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                 <div class="producto-img-container" style="position:relative; aspect-ratio: 4/3 !important; background:#F6F3EA; width:100%; overflow:hidden;">
-                    <img src="${fotoProducto}" alt="${escapeHtml(p.nombre)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22 fill=%22%23F6F3EA%22><rect width=%22400%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%233D312A%22 font-size=%2214%22>🛏️ Sin Imagen</text></svg>'">
+                    <img src="${fotoProducto}" alt="${escapeHtml(p.nombre)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22 fill=%22%23F6F3EA%22><rect width=%22400%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%233D312A%22 font-size=%2214%22>🛏️ Casa Elegida</text></svg>'">
                 </div>
                 <div class="producto-info" style="padding:16px; text-align:center; flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
                     <div>
