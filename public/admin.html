@@ -1323,7 +1323,6 @@ function renderAdmin(){
         card.className = 'producto-card'; 
         card.setAttribute('data-id', p.id);
 
-        // Tomamos la primera foto disponible para la vista previa del admin
         const fotoPreview = p.variantes[0]?.foto || '';
 
         card.innerHTML = `
@@ -1383,18 +1382,29 @@ function renderAdmin(){
                     </div>
                 </div>
                 <div id="contenedor-filas-variantes-${p.id}" style="display:flex; flex-direction:column; gap:12px">
-                    ${p.variantes.map((v, i) => `
-                        <div class="variante-item row-variante-accion" style="display:grid; grid-template-columns:2fr 1fr 2fr auto; gap:12px; align-items:center;">
+                    ${p.variantes.map((v, i) => {
+                        const tieneFoto = v.foto && v.foto.trim() !== '';
+                        return `
+                        <div class="variante-item row-variante-accion" style="display:grid; grid-template-columns: 2.5fr 1fr auto auto; gap:12px; align-items:center;">
                             <input type="text" class="v-input-nombre" placeholder="Ej: 1 Plaza / Blanco" value="${escapeHtml(v.nombre)}" style="border-radius:50px; padding:10px 14px;">
                             <input type="number" class="v-input-stock" placeholder="Cantidad" value="${v.stock || 0}" min="0" style="border-radius:50px; padding:10px 14px; text-align:center;">
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <input type="text" class="v-input-foto" placeholder="URL Imagen" value="${escapeHtml(v.foto || '')}" style="border-radius:50px; padding:10px 14px; font-size:11px;">
-                                <button type="button" onclick="document.getElementById('file-v-${p.id}-${i}').click()" style="background:#3D312A; color:white; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="fas fa-cloud-upload-alt"></i></button>
+                            
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <div style="width:48px; height:38px; border-radius:8px; background:#F6F3EA; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid #E6E1DA;">
+                                    <img id="prev-v-${p.id}-${i}" src="${tieneFoto ? sanitizarUrl(v.foto) : ''}" 
+                                         style="width:100%; height:100%; object-fit:cover; ${tieneFoto ? '' : 'display:none;'}">
+                                    <span id="icon-v-${p.id}-${i}" style="font-size:14px; color:#D4A373; ${tieneFoto ? 'display:none;' : ''}">🖼️</span>
+                                </div>
+                                
+                                <input type="text" class="v-input-foto" value="${escapeHtml(v.foto || '')}" style="display:none;">
+                                
+                                <button type="button" onclick="document.getElementById('file-v-${p.id}-${i}').click()" style="background:#3D312A; color:white; border:none; border-radius:50%; width:36px; height:36px; flex-shrink:0; cursor:pointer;"><i class="fas fa-cloud-upload-alt"></i></button>
                                 <input type="file" id="file-v-${p.id}-${i}" accept="image/*" style="display:none" onchange="subirFotoVarianteNativa(this,'${p.id}',${i})">
                             </div>
+                            
                             <button type="button" onclick="this.closest('.row-variante-accion').remove()" style="background:none; border:none; color:#D96B6B; cursor:pointer; padding:0 8px;"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    `).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
             </div>`;
         a.appendChild(card);
@@ -1422,7 +1432,7 @@ function renderAdmin(){
         });
     }
 }
-
+    
 function agregarVarianteFilaNueva(pid) {
     const container = document.getElementById(`contenedor-filas-variantes-${pid}`);
     if(!container) return;
