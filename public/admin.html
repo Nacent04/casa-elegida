@@ -1309,7 +1309,7 @@ function renderAdmin(){
         a.innerHTML = `
             <div style="text-align:center; padding:40px; color:#8C7E74; opacity:0.7;">
                 <i class="fas fa-box-open" style="font-size:48px; margin-bottom:16px;"></i>
-                <p>No hay productos cargados en el sistema. Presioná "Nuevo" para empezar.</p>
+                <p>No hay productos cargados en el sistema.</p>
             </div>`;
         return;
     }
@@ -1333,7 +1333,7 @@ function renderAdmin(){
                 </div>
                 <div class="producto-info">
                     <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px">
-                        <input type="text" id="en-${p.id}" value="${escapeHtml(p.nombre)}" placeholder="Nombre del Producto" style="flex:1; padding:14px; border-radius:16px; border:1px solid #E6E1DA; font-size:16px; font-weight:600;">
+                        <input type="text" id="en-${p.id}" value="${escapeHtml(p.nombre)}" placeholder="Nombre" style="flex:1; padding:14px; border-radius:16px; border:1px solid #E6E1DA; font-size:16px; font-weight:600;">
                         <button type="button" onclick="saveEdit('${p.id}')" class="btn-confirm" style="width:auto; padding:14px 24px"><i class="fas fa-save"></i> Guardar</button>
                         <button type="button" onclick="eliminarProducto('${p.id}')" class="tab-btn btn-danger" style="padding:14px; border-radius:16px;"><i class="fas fa-trash"></i></button>
                     </div>
@@ -1386,7 +1386,7 @@ function renderAdmin(){
                         const tieneFoto = v.foto && v.foto.trim() !== '';
                         return `
                         <div class="variante-item row-variante-accion" style="display:grid; grid-template-columns: 2.5fr 1fr auto auto; gap:12px; align-items:center;">
-                            <input type="text" class="v-input-nombre" placeholder="Ej: 1 Plaza / Blanco" value="${escapeHtml(v.nombre)}" style="border-radius:50px; padding:10px 14px;">
+                            <input type="text" class="v-input-nombre" placeholder="Ej: 1 Plaza" value="${escapeHtml(v.nombre)}" style="border-radius:50px; padding:10px 14px;">
                             <input type="number" class="v-input-stock" placeholder="Cantidad" value="${v.stock || 0}" min="0" style="border-radius:50px; padding:10px 14px; text-align:center;">
                             
                             <div style="display:flex; gap:8px; align-items:center;">
@@ -1471,30 +1471,53 @@ function aplicarStockGlobal(pid){const s=parseInt(document.getElementById('stock
 function actualizarSubcategorias(pid){const catId=document.getElementById(`cat-${pid}`).value;const cat=categorias.find(c=>c.id==parseInt(catId));const sel=document.getElementById(`subcat-${pid}`);if(!sel)return;let h='<option value="">Sin subcategoría</option>';if(cat?.subcategorias?.length)h+=cat.subcategorias.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');sel.innerHTML=h;}
 
 async function saveEdit(id){
-    const nombre=document.getElementById(`en-${id}`)?.value?.trim();
-    const precio=parseFloat(document.getElementById(`ep-${id}`)?.value);
-    const precioMayor=parseFloat(document.getElementById(`epm-${id}`)?.value)||0;
-    const categoriaId=parseInt(document.getElementById(`cat-${id}`)?.value)||null;
-    const subcategoria=document.getElementById(`subcat-${id}`)?.value||null;
-    const descripcion=document.getElementById(`desc-${id}`)?.value?.trim()||'';
-    if(!nombre){mostrarToast('Nombre requerido',true);return;}
-    if(!precio||precio<=0){mostrarToast('Precio > 0',true);return;}
+    const nombre = document.getElementById(`en-${id}`)?.value?.trim();
+    const precio = parseFloat(document.getElementById(`ep-${id}`)?.value);
+    const precioMayor = parseFloat(document.getElementById(`epm-${id}`)?.value) || 0;
+    const categoriaId = parseInt(document.getElementById(`cat-${id}`)?.value) || null;
+    const subcategoria = document.getElementById(`subcat-${id}`)?.value || null;
+    const descripcion = document.getElementById(`desc-${id}`)?.value?.trim() || '';
     
-    const variantes=[];
-    document.querySelectorAll(`#contenedor-filas-variantes-${id} .row-variante-accion`).forEach(row => {
-        const nom = row.querySelector('.v-input-nombre').value.trim();
-        const stk = parseInt(row.querySelector('.v-input-stock').value) || 0;
-        const fot = row.querySelector('.v-input-foto').value.trim();
-        if(nom) variantes.push({ nombre: nom, stock: stk, foto: fot });
+    if(!nombre){ mostrarToast('Nombre requerido', true); return; }
+    if(!precio || precio <= 0){ mostrarToast('Precio > 0', true); return; }
+    
+    const variantes = [];
+    // Buscamos exactamente el contenedor y la clase de cada fila de variante
+    const filas = document.querySelectorAll(`#contenedor-filas-variantes-${id} .row-variante-accion`);
+    
+    filas.forEach(row => {
+        const nom = row.querySelector('.v-input-nombre')?.value?.trim();
+        const stk = parseInt(row.querySelector('.v-input-stock')?.value) || 0;
+        const fot = row.querySelector('.v-input-foto')?.value?.trim() || '';
+        
+        if(nom) {
+            variantes.push({ nombre: nom, stock: stk, foto: fot });
+        }
     });
     
-    if(!variantes.length){mostrarToast('Al menos 1 variante',true);return;}
-    const p=productos.find(x=>x.id==id); if(!p)return;
-    p.nombre=nombre;p.precio=precio;p.precioMayor=precioMayor;p.categoriaId=categoriaId;p.subcategoria=subcategoria;p.descripcion=descripcion;p.variantes=variantes;
-    await safeFetch('/guardar-producto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-    mostrarToast('✅ Guardado con variantes');
+    if(!variantes.length){ mostrarToast('Al menos 1 variante', true); return; }
+    
+    const p = productos.find(x => x.id == id); 
+    if(!p) return;
+    
+    p.nombre = nombre;
+    p.precio = precio;
+    p.precioMayor = precioMayor;
+    p.categoriaId = categoriaId;
+    p.subcategoria = subcategoria;
+    p.descripcion = descripcion;
+    p.variantes = variantes;
+    
+    await safeFetch('/guardar-producto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p)
+    });
+    
+    mostrarToast('✅ Guardado con variantes con éxito');
     cargarYRenderAdmin();
 }
+    
 async function eliminarProducto(id){if(!confirm('¿Eliminar?'))return;await safeFetch('/eliminar-producto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});mostrarToast('✅ Eliminado');cargarYRenderAdmin();}
 function nuevoProd(){let id=Date.now().toString();productos.unshift({id,nombre:"Nuevo artículo",precio:0,precioMayor:0,variantes:[{nombre:"Única",stock:0,foto:""}],descripcion:""});renderAdmin();}
 async function verStockBajo(){let d=await safeFetch('/stock-bajo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minimo:5})});if(!d.stockBajo?.length)mostrarToast('✅ Stock OK');else mostrarToast(`⚠️ ${d.stockBajo.length} bajas`,true);}
