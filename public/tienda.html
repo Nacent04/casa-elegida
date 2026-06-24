@@ -1198,12 +1198,19 @@ async function cargarDatos(){
         cargarCarritoLocal();
         checkLogin();
         mostrarProductoDestacado();
-        actualizarWhatsAppPago();
-    } catch(e) {
-        console.error("Error al cargar configuraciones:", e);
-    }
-}
 
+        // Envolvemos la función con error de referencia en su propio try/catch protector
+        try {
+            actualizarWhatsAppPago();
+        } catch(errPago) {
+            console.error("Aviso controlado: Falló actualizarWhatsAppPago, pero la tienda sigue operativa:", errPago);
+        }
+
+    } catch(e) {
+        console.error("Error crítico al cargar configuraciones:", e);
+    }
+}<        
+    
 // Función auxiliar interna para desempaquetar config de manera segura
 function obtenerDatosEmpresa() {
     let emp = configuracion.empresa;
@@ -1313,8 +1320,23 @@ function cambiarCantidadModal(d){const i=document.getElementById('modal-quantity
 function agregarDesdeModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];const cant=parseInt(document.getElementById('modal-quantity').value);if(isNaN(cant)||cant<1)return;if(v.stock<cant){mostrarToast('❌ Stock insuficiente','error');return}const precio=productoModalActual.precio;const existente=carrito.find(i=>i.pId===productoModalActual.id&&i.vNom===v.nombre);if(existente){if(v.stock<existente.cant+cant){mostrarToast('❌ Stock insuficiente','error');return}existente.cant+=cant}else{carrito.push({pId:productoModalActual.id,pNom:productoModalActual.nombre,vNom:v.nombre,vFoto:v.foto,precio:precio,precioOriginal:productoModalActual.precio,cant:cant,esManual:false})}recalcularPreciosMayoristas();guardarCarritoLocal();renderizarCarrito();actualizarProgresoMayorista();cerrarModal();mostrarToast('✅ ¡Agregado al pedido!')}
 function cerrarModal(){document.getElementById('product-modal').classList.remove('active');productoModalActual=null}
 function toggleCarrito(){document.getElementById('cart-sidebar').classList.toggle('active');document.getElementById('cart-overlay').classList.toggle('active')}
-function actualizarWhatsAppPago(){const wsp=configuracion.redes?.whatsapp||'';const el=document.getElementById('whatsapp-pago');if(el&&wsp){el.style.display='flex';el.href=`https://wa.me/${wsp.replace(/\D/g,'')}?text=Hola%20Esencia%20Curvy%20adjunto%20comprobante%20de%20pago`}}
 
+function actualizarWhatsAppPago() {
+    // Validamos que exista el objeto unificado que creaste en cargarDatos()
+    if (typeof misConfiguraciones !== 'undefined' && misConfiguraciones.redes?.whatsapp) {
+        const numeroLimpio = misConfiguraciones.redes.whatsapp.replace(/\D/g, '');
+        
+        // Ajustá estos IDs según los elementos reales que tengas en tu sección de pago/carrito
+        const btnPago = document.getElementById('btn-enviar-pago-whatsapp');
+        if (btnPago) {
+            // Ejemplo de cómo actualizaría el enlace de compra directa por WhatsApp
+            btnPago.href = `https://wa.me/${numeroLimpio}`;
+        }
+    } else {
+        console.warn("actualizarWhatsAppPago: No se encontró un número de WhatsApp en misConfiguraciones.redes");
+    }
+}
+    
 function irACheckout(){
     if(!carrito.length){mostrarToast('🛒 Carrito vacío','error');return}
     const token=localStorage.getItem('token');
