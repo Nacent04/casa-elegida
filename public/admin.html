@@ -1182,7 +1182,7 @@ function renderProductosVenta() {
         let idx = varianteSeleccionada[p.id]; 
         let v = p.variantes[idx] || p.variantes[0]; 
 
-        // Renderizado limpio de variantes una debajo de la otra respetando las curvas
+        // Renderizado limpio de variantes una debajo de la otra
         let variantesHTML = '<div style="display:flex; flex-direction:column; gap:8px; width:100%;">';
         p.variantes.forEach((vr, i) => {
             const tieneImagen = vr.foto && vr.foto.trim() !== '';
@@ -1193,8 +1193,9 @@ function renderProductosVenta() {
                      data-index="${i}" 
                      style="display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:16px; border:2px solid #E6E1DA; background:white; text-align:left; width:100%;">
                     
-                    <div style="width:40px; height:45px; border-radius:10px; background:#F6F3EA; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(197,168,128,0.15);">
-                        <img src="${tieneImagen ? sanitizarUrl(vr.foto) : 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2245%22 fill=%22%23FAEDCD%22><rect width=%2240%22 height=%2245%22/><text x=%2250%%22 y=%2255%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%229%22 font-weight=%22bold%22>🏠</text></svg>'}" 
+                    <!-- Formato rectangular horizontal para la miniatura de la sábana -->
+                    <div style="width:60px; height:45px; border-radius:10px; background:#F6F3EA; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(197,168,128,0.15);">
+                        <img src="${tieneImagen ? sanitizarUrl(vr.foto) : 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2245%22 fill=%22%23FAEDCD%22><rect width=%2260%22 height=%2245%22/><text x=%2250%%22 y=%2260%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2214%22>🛏️</text></svg>'}" 
                              style="width:100%; height:100%; object-fit:cover;">
                     </div>
                     
@@ -1214,8 +1215,15 @@ function renderProductosVenta() {
                     <span class="stock-badge ${v.stock <= 5 ? 'stock-bajo' : ''}" id="stock-badge-${p.id}"><i class="fas fa-box"></i> Stock: ${v.stock}</span>
                     ${p.precioMayor > 0 ? `<span style="background:#E4EDE1; color:#3C763D; font-size:10px; padding:4px 10px; border-radius:40px; font-weight:600">MAYORISTA</span>` : ''}
                 </div>
-                <img id="img-principal-${p.id}" src="${sanitizarUrl(v.foto)}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 fill=%22%23F6F3EA%22><rect width=%22100%22 height=%22100%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%233D312A%22 font-size=%2212%22>Casa Elegida</text></svg>'" class="producto-imagen-principal" alt="${escapeHtml(p.nombre)}">
-                <h4 style="font-family:'Poppins', sans-serif; font-size:15px; color:#3D312A;">${escapeHtml(p.nombre)}</h4>
+                
+                <!-- Ajustado aspect-ratio a 4/3 para fotos de sábanas/empaques sin cortes verticales -->
+                <img id="img-principal-${p.id}" src="${sanitizarUrl(v.foto)}" 
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22 fill=%22%23F6F3EA%22><rect width=%22400%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%233D312A%22 font-size=%2216%22>Casa Elegida Blanquería</text></svg>'" 
+                     class="producto-imagen-principal" 
+                     style="aspect-ratio: 4/3 !important; object-fit: cover; width:100%; border-radius:16px; background:#F6F3EA;" 
+                     alt="${escapeHtml(p.nombre)}">
+                
+                <h4 style="font-family:'Poppins', sans-serif; font-size:15px; color:#3D312A; margin-top:12px;">${escapeHtml(p.nombre)}</h4>
                 <div class="precio-producto">${fmt.format(p.precio)}</div>
                 ${p.precioMayor > 0 ? `<div class="precio-mayor">💰 Mayorista: ${fmt.format(p.precioMayor)}</div>` : ''}
                 
