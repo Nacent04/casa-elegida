@@ -1300,43 +1300,127 @@ async function checkout(){
 }
 function buscarProductos(){ let b=document.getElementById('buscador').value.toLowerCase(); document.querySelectorAll('#grid-prods .card').forEach(c=>c.style.display=c.getAttribute('data-nombre').includes(b)?'':'none'); }
 
-/* ==========================================================================
-   ESTRUCTURA DE COMPONENTES DE VARIANTES EN STOCK DE ALTA GAMA
-   ========================================================================== */
 function renderAdmin(){
-    const a=document.getElementById('admin-lista'); if(!a)return; a.innerHTML='';
-    productos.forEach(p=>{
-        if(!p.variantes?.length) p.variantes=[{nombre:"Unica",stock:0,foto:""}];
-        const card=document.createElement('div'); card.className='producto-card'; card.setAttribute('data-id',p.id);
-        card.innerHTML=`<div class="producto-header"><div class="drag-handle"><i class="fas fa-grip-vertical"></i></div><div class="producto-imagen"><img src="${sanitizarUrl(p.variantes[0]?.foto)}" style="width:100px;height:100px;object-fit:cover;border-radius:20px" onerror="this.style.display='none'"></div><div class="producto-info"><div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><input type="text" id="en-${p.id}" value="${escapeHtml(p.nombre)}" placeholder="Nombre" style="flex:1;padding:14px;border-radius:16px;border:2px solid #e2e8f0;font-size:16px;font-weight:600"><button type="button" onclick="saveEdit('${p.id}')" class="btn-confirm" style="width:auto;padding:14px 24px"><i class="fas fa-save"></i> Guardar</button><button type="button" onclick="eliminarProducto('${p.id}')" class="tab-btn btn-danger" style="padding:14px"><i class="fas fa-trash"></i></button></div><div class="form-row"><div><label>💰 Precio</label><input type="number" id="ep-${p.id}" value="${p.precio}" step="0.01"></div><div><label>🏷️ Mayorista</label><input type="number" id="epm-${p.id}" value="${p.precioMayor||0}" step="0.01"></div></div><div class="form-row"><div><label>📁 Categoría</label><select id="cat-${p.id}" style="border-radius:16px" onchange="actualizarSubcategorias('${p.id}')"><option value="">Sin categoría</option>${categorias.map(c=>`<option value="${c.id}" ${p.categoriaId==c.id?'selected':''}>${escapeHtml(c.nombre)}</option>`).join('')}</select></div><div><label>📂 Subcategoría</label><select id="subcat-${p.id}" style="border-radius:16px"><option value="">Sin subcategoría</option>${(()=>{const cat=categorias.find(c=>c.id==p.categoriaId);if(cat?.subcategorias?.length)return cat.subcategorias.map(s=>`<option value="${escapeHtml(s)}" ${p.subcategoria==s?'selected':''}>${escapeHtml(s)}</option>`).join('');return'';})()}</select></div></div><div style="margin-top:8px"><label>📝 Descripción</label><textarea id="desc-${p.id}" rows="2" style="border-radius:16px">${escapeHtml(p.descripcion||'')}</textarea></div><button type="button" onclick="toggleVariantes('${p.id}')" id="btn-toggle-${p.id}" class="btn-toggle-variantes"><i class="fas fa-layer-group"></i> Variantes (${p.variantes.length}) <i class="fas fa-chevron-down"></i></button></div></div>
-        <div id="variantes-panel-${p.id}" class="variantes-panel" style="display:none">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h4 style="margin:0;color:#3D312A">Variantes Activas (${p.variantes.length})</h4>
-                <div style="display:flex;gap:8px">
-                    <button type="button" onclick="aplicarStockATodas('${p.id}')" class="tab-btn" style="padding:8px 16px;font-size:12px"><i class="fas fa-copy"></i> Mismo stock</button>
-                    <button type="button" class="tab-btn btn-success" onclick="agregarVarianteFilaNueva('${p.id}')" style="padding:8px 16px;font-size:12px"><i class="fas fa-plus"></i> Añadir</button>
-                    <button type="button" onclick="asignarFotoPorColor('${p.id}')" class="tab-btn" style="padding:8px 16px;font-size:12px;background:#D4A373;color:white"><i class="fas fa-image"></i> Foto x Color</button>
-                    <button type="button" onclick="generarVariantesColorTalle('${p.id}')" class="tab-btn" style="padding:8px 16px;font-size:12px;background:#D4A373;color:white"><i class="fas fa-magic"></i> Generar</button>
+    const a = document.getElementById('admin-lista'); 
+    if(!a) return; 
+    a.innerHTML = '';
+
+    if (!productos || productos.length === 0) {
+        a.innerHTML = `
+            <div style="text-align:center; padding:40px; color:#8C7E74; opacity:0.7;">
+                <i class="fas fa-box-open" style="font-size:48px; margin-bottom:16px;"></i>
+                <p>No hay productos cargados en el sistema. Presioná "Nuevo" para empezar.</p>
+            </div>`;
+        return;
+    }
+
+    productos.forEach(p => {
+        if(!p.variantes || p.variantes.length === 0) {
+            p.variantes = [{nombre: "Única", stock: 0, foto: ""}];
+        }
+        
+        const card = document.createElement('div'); 
+        card.className = 'producto-card'; 
+        card.setAttribute('data-id', p.id);
+
+        // Tomamos la primera foto disponible para la vista previa del admin
+        const fotoPreview = p.variantes[0]?.foto || '';
+
+        card.innerHTML = `
+            <div class="producto-header">
+                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                <div class="producto-imagen">
+                    <img src="${sanitizarUrl(fotoPreview)}" style="width:100px; height:75px; object-fit:cover; border-radius:12px; border:1px solid #E6E1DA;" onerror="this.style.display='none'">
+                </div>
+                <div class="producto-info">
+                    <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px">
+                        <input type="text" id="en-${p.id}" value="${escapeHtml(p.nombre)}" placeholder="Nombre del Producto" style="flex:1; padding:14px; border-radius:16px; border:1px solid #E6E1DA; font-size:16px; font-weight:600;">
+                        <button type="button" onclick="saveEdit('${p.id}')" class="btn-confirm" style="width:auto; padding:14px 24px"><i class="fas fa-save"></i> Guardar</button>
+                        <button type="button" onclick="eliminarProducto('${p.id}')" class="tab-btn btn-danger" style="padding:14px; border-radius:16px;"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="form-row">
+                        <div><label class="form-label">💰 Precio Menor</label><input type="number" id="ep-${p.id}" value="${p.precio || 0}" step="0.01"></div>
+                        <div><label class="form-label">🏷️ Precio Mayorista</label><input type="number" id="epm-${p.id}" value="${p.precioMayor || 0}" step="0.01"></div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label class="form-label">📁 Categoría</label>
+                            <select id="cat-${p.id}" style="border-radius:16px" onchange="actualizarSubcategorias('${p.id}')">
+                                <option value="">Sin categoría</option>
+                                ${categorias.map(c => `<option value="${c.id}" ${p.categoriaId == c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">📂 Subcategoría</label>
+                            <select id="subcat-${p.id}" style="border-radius:16px">
+                                <option value="">Sin subcategoría</option>
+                                ${(() => {
+                                    const cat = categorias.find(c => c.id == p.categoriaId);
+                                    if (cat?.subcategorias?.length) {
+                                        return cat.subcategorias.map(s => `<option value="${escapeHtml(s)}" ${p.subcategoria == s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+                                    }
+                                    return '';
+                                })()}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top:8px">
+                        <label class="form-label">📝 Descripción</label>
+                        <textarea id="desc-${p.id}" rows="2" style="border-radius:16px">${escapeHtml(p.descripcion || '')}</textarea>
+                    </div>
+                    <button type="button" onclick="toggleVariantes('${p.id}')" id="btn-toggle-${p.id}" class="btn-toggle-variantes">
+                        <i class="fas fa-layer-group"></i> Opciones de Stock (${p.variantes.length}) <i class="fas fa-chevron-down"></i>
+                    </button>
                 </div>
             </div>
-            <div id="contenedor-filas-variantes-${p.id}" style="display:flex;flex-direction:column;gap:12px">
-                ${p.variantes.map((v,i)=>`
-                    <div class="variante-item row-variante-accion" style="display:grid; grid-template-columns:2fr 1fr 2fr auto; gap:12px; align-items:center;">
-                        <input type="text" class="v-input-nombre" placeholder="Ej: Blanco / King" value="${escapeHtml(v.nombre)}" style="border-radius:50px; padding:10px 14px;">
-                        <input type="number" class="v-input-stock" placeholder="Stock" value="${v.stock}" min="0" style="border-radius:50px; padding:10px 14px; text-align:center;">
-                        <div style="display:flex; gap:6px; align-items:center;">
-                            <input type="text" class="v-input-foto" placeholder="URL Foto" value="${escapeHtml(v.foto)}" style="border-radius:50px; padding:10px 14px; font-size:11px;">
-                            <button type="button" onclick="document.getElementById('file-v-${p.id}-${i}').click()" style="background:#3D312A; color:white; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="fas fa-cloud-upload-alt"></i></button>
-                            <input type="file" id="file-v-${p.id}-${i}" accept="image/*" style="display:none" onchange="subirFotoVarianteNativa(this,'${p.id}',${i})">
-                        </div>
-                        <button type="button" onclick="this.closest('.row-variante-accion').remove()" style="background:none; border:none; color:#D96B6B; cursor:pointer; padding:0 8px;"><i class="fas fa-trash-alt"></i></button>
+            
+            <div id="variantes-panel-${p.id}" class="variantes-panel" style="display:none">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h4 style="margin:0; color:#3D312A">Variantes Reales (${p.variantes.length})</h4>
+                    <div style="display:flex; gap:8px">
+                        <button type="button" onclick="aplicarStockATodas('${p.id}')" class="tab-btn" style="padding:8px 16px; font-size:12px"><i class="fas fa-copy"></i> Mismo stock</button>
+                        <button type="button" class="tab-btn btn-success" onclick="agregarVarianteFilaNueva('${p.id}')" style="padding:8px 16px; font-size:12px"><i class="fas fa-plus"></i> Añadir Variante</button>
                     </div>
-                `).join('')}
-            </div>
-        </div>`;
+                </div>
+                <div id="contenedor-filas-variantes-${p.id}" style="display:flex; flex-direction:column; gap:12px">
+                    ${p.variantes.map((v, i) => `
+                        <div class="variante-item row-variante-accion" style="display:grid; grid-template-columns:2fr 1fr 2fr auto; gap:12px; align-items:center;">
+                            <input type="text" class="v-input-nombre" placeholder="Ej: 1 Plaza / Blanco" value="${escapeHtml(v.nombre)}" style="border-radius:50px; padding:10px 14px;">
+                            <input type="number" class="v-input-stock" placeholder="Cantidad" value="${v.stock || 0}" min="0" style="border-radius:50px; padding:10px 14px; text-align:center;">
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input type="text" class="v-input-foto" placeholder="URL Imagen" value="${escapeHtml(v.foto || '')}" style="border-radius:50px; padding:10px 14px; font-size:11px;">
+                                <button type="button" onclick="document.getElementById('file-v-${p.id}-${i}').click()" style="background:#3D312A; color:white; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer;"><i class="fas fa-cloud-upload-alt"></i></button>
+                                <input type="file" id="file-v-${p.id}-${i}" accept="image/*" style="display:none" onchange="subirFotoVarianteNativa(this,'${p.id}',${i})">
+                            </div>
+                            <button type="button" onclick="this.closest('.row-variante-accion').remove()" style="background:none; border:none; color:#D96B6B; cursor:pointer; padding:0 8px;"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
         a.appendChild(card);
     });
-    if(window.Sortable) new Sortable(a,{handle:'.drag-handle',animation:200,onEnd:async()=>{const o=[];document.querySelectorAll('#admin-lista .producto-card').forEach(c=>{const id=c.getAttribute('data-id');const p=productos.find(x=>x.id==id);if(p)o.push(p);});if(o.length) await safeFetch('/reordenar-productos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lista:o})});}});
+
+    if(window.Sortable) {
+        new Sortable(a, {
+            handle: '.drag-handle',
+            animation: 200,
+            onEnd: async () => {
+                const o = [];
+                document.querySelectorAll('#admin-lista .producto-card').forEach(c => {
+                    const id = c.getAttribute('data-id');
+                    const prod = productos.find(x => x.id == id);
+                    if (prod) o.push(prod);
+                });
+                if (o.length) {
+                    await safeFetch('/reordenar-productos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lista: o })
+                    });
+                }
+            }
+        });
+    }
 }
 
 function agregarVarianteFilaNueva(pid) {
