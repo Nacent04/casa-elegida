@@ -1166,7 +1166,80 @@ async function cargarMetodosEnvio() {
     } catch(e) {} 
 }
 
-function renderProductosVenta() { const g=document.getElementById('grid-prods'); if(!g) return; g.innerHTML=''; productos.forEach(p=>{ if(!p.variantes?.length) p.variantes=[{nombre:"Unica",stock:0,foto:""}]; if(!varianteSeleccionada[p.id]) varianteSeleccionada[p.id]=p.variantes.findIndex(v=>v.stock>0); if(varianteSeleccionada[p.id]===-1) varianteSeleccionada[p.id]=0; let idx=varianteSeleccionada[p.id]; let v=p.variantes[idx]; const porColor={};p.variantes.forEach((vr,i)=>{const partes=vr.nombre.split(' - ');const talle=partes[0]||'';const color=partes[1]||vr.nombre;if(!porColor[color])porColor[color]=[];porColor[color].push({...vr,index:i,talle:talle})});let variantesHTML='<div style="display:flex;flex-direction:column;gap:8px">';Object.entries(porColor).forEach(([color,talles])=>{variantesHTML+=`<div style="border:1px solid #FAEDCD;border-radius:10px;padding:8px;background:white"><div style="font-weight:700;color:#4A3728;margin-bottom:4px;font-size:11px">🎨 ${escapeHtml(color)}</div><div style="display:flex;flex-wrap:wrap;gap:4px">${talles.map(vr=>`<div onclick="seleccionarVarianteVisual(${p.id},${vr.index})" class="variante-item-venta ${idx===vr.index?'activa':''} ${vr.stock===0?'sin-stock':''}" id="variante-${p.id}-${vr.index}" data-index="${vr.index}" style="padding:6px 8px;min-width:40px;text-align:center;font-size:10px"><span class="variante-nombre" style="font-size:10px">${escapeHtml(vr.talle)}</span><span class="variante-stock" style="font-size:9px">${vr.stock===0?'Sin stock':vr.stock+' u.'}</span></div>`).join('')}</div></div>`});variantesHTML+='</div>';g.innerHTML+=`<div class="card" data-nombre="${p.nombre.toLowerCase()}" data-id="${p.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="stock-badge ${v.stock<=5?'stock-bajo':''}" id="stock-badge-${p.id}"><i class="fas fa-box"></i> Stock: ${v.stock}</span>${p.precioMayor>0?`<span style="background:#d1fae5;color:#065f46;font-size:10px;padding:4px 8px;border-radius:40px;font-weight:600">MAY</span>`:''}</div><img id="img-principal-${p.id}" src="${sanitizarUrl(v.foto)}" onerror="this.src='https://via.placeholder.com/400x300'" class="producto-imagen-principal" alt="${escapeHtml(p.nombre)}"><h4>${escapeHtml(p.nombre)}</h4><div class="precio-producto">${fmt.format(p.precio)}</div>${p.precioMayor>0?`<div class="precio-mayor">💰 Mayorista: ${fmt.format(p.precioMayor)}</div>`:''}<button type="button" class="btn-desplegar-variantes" id="btn-desplegar-${p.id}" onclick="toggleVariantesVenta(${p.id})"><i class="fas fa-layer-group"></i> <span id="btn-texto-${p.id}">Talles y colores (${p.variantes.length})</span><i class="fas fa-chevron-down" id="btn-icono-${p.id}"></i></button><div class="variantes-grid-container" id="variantes-container-${p.id}">${variantesHTML}</div><div class="cantidad-selector"><button type="button" class="cantidad-btn" onclick="cambiarCantidad(${p.id},-1)">−</button><input type="number" id="q-${p.id}" value="1" min="1" max="${v.stock}" class="cantidad-input" onchange="validarCantidad(${p.id})"><button type="button" class="cantidad-btn" onclick="cambiarCantidad(${p.id},1)">+</button></div><button type="button" class="btn-add" onclick="addAlCarrito(${p.id})" ${v.stock===0?'disabled':''} id="btn-add-${p.id}"><i class="fas fa-cart-plus"></i> ${v.stock===0?'Sin Stock':'Agregar al Pedido'}</button></div>`; }); }
+function renderProductosVenta() { 
+    const g = document.getElementById('grid-prods'); 
+    if (!g) return; 
+    g.innerHTML = ''; 
+
+    productos.forEach(p => { 
+        if (!p.variantes || p.variantes.length === 0) p.variantes = [{ nombre: "Única", stock: 0, foto: "" }]; 
+        
+        if (varianteSeleccionada[p.id] === undefined) {
+            varianteSeleccionada[p.id] = p.variantes.findIndex(v => v.stock > 0);
+        }
+        if (varianteSeleccionada[p.id] === -1) varianteSeleccionada[p.id] = 0; 
+        
+        let idx = varianteSeleccionada[p.id]; 
+        let v = p.variantes[idx] || p.variantes[0]; 
+
+        // Renderizado limpio de variantes una debajo de la otra respetando las curvas
+        let variantesHTML = '<div style="display:flex; flex-direction:column; gap:8px; width:100%;">';
+        p.variantes.forEach((vr, i) => {
+            const tieneImagen = vr.foto && vr.foto.trim() !== '';
+            variantesHTML += `
+                <div onclick="seleccionarVarianteVisual(${p.id}, ${i})" 
+                     class="variante-item-venta ${idx === i ? 'activa' : ''} ${vr.stock === 0 ? 'sin-stock' : ''}" 
+                     id="variante-${p.id}-${i}" 
+                     data-index="${i}" 
+                     style="display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:16px; border:2px solid #E6E1DA; background:white; text-align:left; width:100%;">
+                    
+                    <div style="width:40px; height:45px; border-radius:10px; background:#F6F3EA; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(197,168,128,0.15);">
+                        <img src="${tieneImagen ? sanitizarUrl(vr.foto) : 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2245%22 fill=%22%23FAEDCD%22><rect width=%2240%22 height=%2245%22/><text x=%2250%%22 y=%2255%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%229%22 font-weight=%22bold%22>🏠</text></svg>'}" 
+                             style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                    
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                        <span class="variante-nombre" style="font-size:12px; font-weight:600; color:#3D312A; padding:0;">${escapeHtml(vr.nombre)}</span>
+                        <span class="variante-stock" style="font-size:11px; color:#8C7E74; background:none; padding:0; text-align:left;">
+                            ${vr.stock === 0 ? '<span style="color:#D96B6B; font-weight:600;">Sin stock</span>' : `Stock: <strong>${vr.stock} u.</strong>`}
+                        </span>
+                    </div>
+                </div>`;
+        });
+        variantesHTML += '</div>';
+
+        g.innerHTML += `
+            <div class="card" data-nombre="${p.nombre.toLowerCase()}" data-id="${p.id}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                    <span class="stock-badge ${v.stock <= 5 ? 'stock-bajo' : ''}" id="stock-badge-${p.id}"><i class="fas fa-box"></i> Stock: ${v.stock}</span>
+                    ${p.precioMayor > 0 ? `<span style="background:#E4EDE1; color:#3C763D; font-size:10px; padding:4px 10px; border-radius:40px; font-weight:600">MAYORISTA</span>` : ''}
+                </div>
+                <img id="img-principal-${p.id}" src="${sanitizarUrl(v.foto)}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 fill=%22%23F6F3EA%22><rect width=%22100%22 height=%22100%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%233D312A%22 font-size=%2212%22>Casa Elegida</text></svg>'" class="producto-imagen-principal" alt="${escapeHtml(p.nombre)}">
+                <h4 style="font-family:'Poppins', sans-serif; font-size:15px; color:#3D312A;">${escapeHtml(p.nombre)}</h4>
+                <div class="precio-producto">${fmt.format(p.precio)}</div>
+                ${p.precioMayor > 0 ? `<div class="precio-mayor">💰 Mayorista: ${fmt.format(p.precioMayor)}</div>` : ''}
+                
+                <button type="button" class="btn-desplegar-variantes" id="btn-desplegar-${p.id}" onclick="toggleVariantesVenta(${p.id})">
+                    <i class="fas fa-layer-group"></i> 
+                    <span id="btn-texto-${p.id}">Ver opciones disponibles (${p.variantes.length})</span>
+                    <i class="fas fa-chevron-down" id="btn-icono-${p.id}"></i>
+                </button>
+                
+                <div class="variantes-grid-container" id="variantes-container-${p.id}">
+                    ${variantesHTML}
+                </div>
+                
+                <div class="cantidad-selector">
+                    <button type="button" class="cantidad-btn" onclick="cambiarCantidad(${p.id},-1)">−</button>
+                    <input type="number" id="q-${p.id}" value="1" min="1" max="${v.stock}" class="cantidad-input" onchange="validarCantidad(${p.id})">
+                    <button type="button" class="cantidad-btn" onclick="cambiarCantidad(${p.id},1)">+</button>
+                </div>
+                <button type="button" class="btn-add" onclick="addAlCarrito(${p.id})" ${v.stock === 0 ? 'disabled' : ''} id="btn-add-${p.id}">
+                    <i class="fas fa-cart-plus"></i> ${v.stock === 0 ? 'Sin Stock' : 'Agregar al Pedido'}
+                </button>
+            </div>`; 
+    }); 
+}
     
 function toggleVariantesVenta(id){ const c=document.getElementById(`variantes-container-${id}`); const b=document.getElementById(`btn-desplegar-${id}`); const t=document.getElementById(`btn-texto-${id}`); const ic=document.getElementById(`btn-icono-${id}`); if(!c||!b)return; if(c.classList.contains('desplegado')){c.classList.remove('desplegado');b.classList.remove('activo');t.textContent=`Desplegar variantes (${productos.find(p=>p.id==id)?.variantes.length||0})`;ic.className='fas fa-chevron-down';}else{c.classList.add('desplegado');b.classList.add('activo');t.textContent='Ocultar variantes';ic.className='fas fa-chevron-up';setTimeout(()=>{const a=c.querySelector('.variante-item-venta.activa');if(a)a.scrollIntoView({behavior:'smooth',block:'nearest'});},100);} }
 
