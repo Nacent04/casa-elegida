@@ -1226,7 +1226,66 @@ function toggleFavorito(id,event){event.stopPropagation();const idx=favoritos.in
 
 function getRelacionados(producto,limite=5){const catId=producto.categoriaId;let rel=productos.filter(p=>p.id!==producto.id&&p.categoriaId===catId);if(rel.length<limite){rel=rel.concat(productos.filter(p=>p.id!==producto.id&&p.categoriaId!==catId))}return rel.slice(0,limite)}
 
-function renderizarProductos(){const g=document.getElementById('products-grid');const f=getProductosFiltrados();if(!f.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#666;grid-column:1/-1"><i class="fas fa-search" style="font-size:48px;margin-bottom:12px;opacity:0.4"></i><h3>No encontramos productos</h3></div>';return}let h='';f.forEach(p=>{if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];const stock=p.variantes.reduce((s,v)=>s+v.stock,0);const mayorista=p.precioMayor>0&&configuracion.mayorista?.habilitado;const stockBajo=stock<=2&&stock>0;h+=`<div class="product-card" onclick="abrirModalProducto(${p.id})">${mayorista?'<div class="product-badge"><span class="badge-mayorista"><i class="fas fa-tags"></i> Mayorista</span></div>':''}${p.nuevo?'<div class="badge-nuevo"><i class="fas fa-star"></i> Nuevo</div>':''}<span class="badge-stock ${stock<=5?'low':''} ${stockBajo?'ultimas':''}"><i class="fas fa-box"></i> ${stock} ${stockBajo?'⚡ ¡Últimas!':''}</span><button class="favorito-btn ${esFavorito(p.id)?'activo':''}" onclick="toggleFavorito(${p.id},event)"><i class="${esFavorito(p.id)?'fas':'far'} fa-heart"></i></button><img src="${sanitizarUrl(p.variantes[0].foto)}" class="product-image" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22 fill=%22%23FAEDCD%22><rect width=%22300%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2216%22>Sin foto</text></svg>'" draggable="false"><div class="product-info"><h3 class="product-name">${escapeHtml(p.nombre)}</h3><div class="product-prices"><span class="price-current">${fmt.format(p.precio)}</span></div>${mayorista?`<div style="font-size:11px;color:#FF8F00;font-weight:600;margin-top:-6px">💎 Mayorista: ${fmt.format(p.precioMayor)}</div>`:''}<button class="btn-add-product" ${stock===0?'disabled':''} onclick="event.stopPropagation();abrirModalProducto(${p.id})"><i class="fas fa-eye"></i> Ver</button></div></div>`});g.innerHTML=h}
+function renderizarProductos() {
+    const contenedor = document.getElementById('contenedor-productos');
+    if (!contenedor) return;
+
+    // Si no hay productos cargados en la base de datos
+    if (!productos || productos.length === 0) {
+        contenedor.innerHTML = `
+            <div style="text-align:center; padding:40px; color:var(--text-dark); opacity:0.6;">
+                <i class="fas fa-box-open" style="font-size:48px; margin-bottom:16px;"></i>
+                <p>No encontramos productos disponibles en este momento.</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+
+    productos.forEach(p => {
+        // 1. CONTROL DE STOCK: Calculamos el stock total sumando todas sus variantes
+        let stockTotal = 0;
+        if (p.variantes && p.variantes.length > 0) {
+            p.variantes.forEach(v => {
+                stockTotal += parseInt(v.stock || 0);
+            });
+        } else {
+            // Si creaste el producto pero te olvidaste de agregarle variantes en el admin
+            stockTotal = parseInt(p.stock || 0); 
+        }
+
+        // 2. FILTRO ACTIVO: Si el stock total es 0, nos aseguramos de manejarlo (ocultar o poner "Sin Stock")
+        // Si preferís que SÍ aparezca aunque no tenga stock (diciendo "Sin Stock"), quitá este IF:
+        if (stockTotal <= 0) {
+            return; // Saltea este producto y no lo dibuja en la tienda
+        }
+
+        // Si pasa el filtro de stock, tomamos la primera foto disponible de la variante
+        const fotoProducto = p.variantes && p.variantes[0] && p.variantes[0].foto 
+            ? p.variantes[0].foto 
+            : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23FAEDCD"><rect width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" fill="%233D312A" font-size="12">Sin Foto</text></svg>';
+
+        html += `
+            <div class="producto-card" style="border-radius:16px; overflow:hidden; background:white; border:1px solid #E6E1DA;">
+                <div class="producto-img-container" style="position:relative; aspect-ratio:1; background:#fbfbfb;">
+                    <img src="${fotoProducto}" alt="${escapeHtml(p.nombre)}" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+                <div class="producto-info" style="padding:16px; text-align:center;">
+                    <h3 style="font-family:'Playfair Display', serif; font-size:16px; color:#3D312A; margin:0 0 8px 0;">${escapeHtml(p.nombre)}</h3>
+                    <p style="font-size:15px; font-weight:600; color:#C5A880; margin:0 0 12px 0;">${fmt.format(p.precio)}</p>
+                    <button class="btn-ver" onclick="abrirModalProducto(${p.id})" style="width:100%; padding:10px; background:#3D312A; color:white; border:none; border-radius:50px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; cursor:pointer;">Ver Producto</button>
+                </div>
+            </div>
+        `;
+    });
+
+    contenedor.innerHTML = html || `
+        <div style="text-align:center; padding:40px; color:var(--text-dark); opacity:0.6;">
+            <i class="fas fa-eye-slash" style="font-size:48px; margin-bottom:16px;"></i>
+            <p>Los productos creados no tienen stock disponible en el Admin.</p>
+        </div>`;
+}
+    
 function abrirModalProducto(id){const p=productos.find(x=>x.id==id);if(!p)return;productoModalActual=p;if(!p.variantes?.length)p.variantes=[{nombre:"Unica",stock:0,foto:""}];varianteSeleccionada=p.variantes.findIndex(v=>v.stock>0);if(varianteSeleccionada===-1)varianteSeleccionada=0;document.getElementById('modal-title').textContent=p.nombre;document.getElementById('modal-name').textContent=p.nombre;document.getElementById('modal-description').textContent=p.descripcion||'Producto de alta calidad';actualizarImagenModal();const porColor={};p.variantes.forEach((v,i)=>{const partes=v.nombre.split(' - ');const talle=partes[0]||'';const color=partes[1]||v.nombre;if(!porColor[color])porColor[color]=[];porColor[color].push({...v,index:i,talle:talle})});let variantesHTML='<div style="display:flex;flex-direction:column;gap:12px">';Object.entries(porColor).forEach(([color,talles])=>{variantesHTML+=`<div style="border:2px solid #FAEDCD;border-radius:12px;padding:10px;background:white"><div style="font-weight:700;color:#4A3728;margin-bottom:6px;font-size:13px">🎨 ${escapeHtml(color)}</div><div style="display:flex;flex-wrap:wrap;gap:5px">${talles.map(v=>`<div class="variant-chip ${varianteSeleccionada===v.index?'active':''} ${v.stock===0?'disabled':''}" data-index="${v.index}" style="padding:8px 10px;min-width:45px;text-align:center;font-size:11px" onclick="${v.stock>0?`seleccionarVariante(${v.index})`:''}">${escapeHtml(v.talle)}${v.stock===0?'<div style="font-size:8px;color:#ef4444">Sin stock</div>':''}</div>`).join('')}</div></div>`});variantesHTML+='</div>';document.getElementById('modal-variants').innerHTML=variantesHTML;actualizarInfoVariante();actualizarInfoModal();const rel=getRelacionados(p);const relGrid=document.getElementById('relacionados-grid');if(relGrid&&rel.length){relGrid.innerHTML=rel.map(r=>`<div class="relacionado-item" onclick="abrirModalProducto(${r.id})"><img src="${sanitizarUrl(r.variantes[0]?.foto)}" onerror="this.src='https://via.placeholder.com/80'"><span>${r.nombre.substring(0,25)}</span><small style="color:#D4A373;font-weight:700">${fmt.format(r.precio)}</small></div>`).join('')}document.getElementById('product-modal').classList.add('active')}
 function actualizarImagenModal(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];const img=document.getElementById('modal-product-image');if(img){img.style.opacity='0.4';setTimeout(()=>{img.src=sanitizarUrl(v.foto);img.onerror=function(){this.src='https://via.placeholder.com/400?text=Sin+Imagen'};img.style.opacity='1'},150)}}
 function actualizarInfoVariante(){if(!productoModalActual)return;const v=productoModalActual.variantes[varianteSeleccionada];document.getElementById('variant-selected-name').textContent=v.nombre;document.getElementById('variant-selected-stock').textContent=v.stock}
