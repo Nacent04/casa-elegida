@@ -2,71 +2,246 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cargando Prenda Premium...</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
         
         :root {
-            --primary: #3D312A;
-            --secondary: #C5A880;
-            --bg-light: #FDFBF7;
+            --primary: #3D312A;              /* Moka Premium */
+            --secondary: #C5A880;            /* Champagne / Oro */
+            --bg-light: #FDFBF7;             /* Lino Orgánico */
             --text-dark: #3D312A;
             --text-light: #8C7E74;
             --border-radius: 20px;
+            --shadow-sm: 0 4px 12px rgba(61,49,42,0.02);
+            --shadow-lg: 0 16px 40px rgba(61,49,42,0.06);
         }
 
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-light); color: var(--text-dark); padding: 24px 16px; }
-
-        .container-premium { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; background: white; border-radius: var(--border-radius); padding: 40px; border: 1px solid #E6E1DA; box-shadow: 0 8px 24px rgba(61,49,42,0.03); }
-        @media(max-width: 850px) { .container-premium { grid-template-columns: 1fr; gap: 24px; padding: 20px; } }
-
-        /* Galería e Imagen de Variante */
-        .galeria-wrapper { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 40px; }
-        .visor-principal { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 16px; background: #F6F3EA; border: 1px solid #E6E1DA; transition: opacity 0.2s ease-in-out; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* Detalles de Compra */
-        .detalles-compra { display: flex; flex-direction: column; gap: 20px; }
-        .volviendo-btn { text-decoration: none; color: var(--text-light); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: color 0.2s; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg-light); 
+            color: var(--text-dark); 
+            padding: 40px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        @media(max-width: 768px) {
+            body { padding: 16px 8px; }
+        }
+
+        /* Contenedor Principal Lookbook */
+        .container-premium { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: grid; 
+            grid-template-columns: 1.1fr 1fr; 
+            gap: 48px; 
+            background: #ffffff; 
+            border-radius: var(--border-radius); 
+            padding: 40px; 
+            border: 1px solid #E6E1DA; 
+            box-shadow: var(--shadow-lg); 
+        }
+
+        @media(max-width: 850px) { 
+            .container-premium { 
+                grid-template-columns: 1fr; 
+                gap: 24px; 
+                padding: 20px; 
+            } 
+        }
+
+        /* Columna Izquierda: Imagen y Descripción Fija abajo */
+        .galeria-wrapper { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 16px; 
+            position: sticky; 
+            top: 40px; 
+        }
+        @media(max-width: 850px) {
+            .galeria-wrapper { position: relative; top: 0; }
+        }
+
+        .visor-principal { 
+            width: 100%; 
+            aspect-ratio: 4/3; 
+            object-fit: cover; 
+            border-radius: 16px; 
+            background: #F6F3EA; 
+            border: 1px solid #E6E1DA; 
+            transition: opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1); 
+            will-change: opacity;
+        }
+        
+        /* Contenedor de la Descripción debajo de la foto */
+        .descripcion-contenedor {
+            padding: 20px; 
+            background: #F6F3EA; 
+            border-radius: 16px; 
+            border: 1px dashed var(--secondary);
+        }
+
+        /* Columna Derecha: Lógica comercial */
+        .detalles-compra { display: flex; flex-direction: column; gap: 24px; }
+        
+        .volviendo-btn { 
+            text-decoration: none; 
+            color: var(--text-light); 
+            font-size: 13px; 
+            font-weight: 600; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            transition: color 0.2s; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .volviendo-btn:hover { color: var(--primary); }
-        .titulo-producto { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; line-height: 1.2; }
+        
+        .titulo-producto { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 36px; 
+            font-weight: 700; 
+            line-height: 1.2; 
+            color: var(--text-dark);
+        }
+        @media(max-width: 480px) { .titulo-producto { font-size: 28px; } }
+
         .descripcion-text { font-size: 14px; color: var(--text-light); line-height: 1.6; }
 
-        /* Lista de Variantes Lineal Estilo Admin */
-        .variante-cajon { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
-        .variante-fila { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; border: 2px solid #E6E1DA; background: white; cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
-        .variante-fila:hover { border-color: var(--secondary); }
-        .variante-fila.activa { border-color: var(--primary) !important; background: #FDFBF7; box-shadow: 0 4px 12px rgba(61,49,42,0.04); transform: translateY(-1px); }
-        .variante-fila.sin-stock { opacity: 0.35; pointer-events: none; }
-        .variante-thumb { width: 56px; height: 42px; border-radius: 8px; background: #F6F3EA; object-fit: cover; border: 1px solid rgba(197,168,128,0.15); }
+        /* Mosaico de Variantes de Alta Densidad (Optimizado sin lag) */
+        .variante-cajon { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); 
+            gap: 8px; 
+            max-height: 290px; 
+            overflow-y: auto; 
+            padding-right: 4px;
+            margin: 12px 0;
+            will-change: max-height;
+            transform: translateZ(0);
+        }
+        .variante-cajon::-webkit-scrollbar { width: 4px; }
+        .variante-cajon::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 2px; }
+
+        /* Casilleros del Mosaico */
+        .variante-fila { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px; 
+            padding: 8px; 
+            border-radius: 12px; 
+            border: 2px solid #E6E1DA; 
+            background: #ffffff; 
+            cursor: pointer; 
+            text-align: center;
+            transition: border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        .variante-fila:hover { border-color: var(--secondary); transform: translateY(-1px); }
+        .variante-fila.activa { 
+            border-color: var(--primary) !important; 
+            background: #FDFBF7; 
+            box-shadow: 0 4px 10px rgba(61,49,42,0.04); 
+            transform: scale(1.02);
+        }
+        .variante-fila.sin-stock { opacity: 0.25; pointer-events: none; }
+        
+        .variante-thumb { 
+            width: 100%; 
+            aspect-ratio: 4/3; 
+            border-radius: 6px; 
+            background: #F6F3EA; 
+            object-fit: cover; 
+            border: 1px solid rgba(197,168,128,0.1); 
+        }
+
+        .variante-titulo-micro {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            display: block;
+        }
 
         /* Controles de Cantidad y Botón de Acción */
-        .acciones-compra-bloque { display: flex; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-        .cantidad-caja { display: flex; align-items: center; background: #F6F3EA; border-radius: 50px; padding: 4px; border: 1px solid #E6E1DA; }
-        .cant-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: white; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .cant-btn:hover { background: var(--primary); color: white; }
-        .cant-input { width: 45px; text-align: center; font-size: 15px; font-weight: 700; border: none; background: transparent; }
+        .acciones-compra-bloque { display: flex; align-items: center; gap: 16px; margin-top: 8px; flex-wrap: wrap; }
         
-        .btn-agregar-carrito { flex: 1; min-width: 200px; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 50px; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
-        .btn-agregar-carrito:hover { background: #52433A; }
-        .btn-agregar-carrito:disabled { background: #CBD5E1; cursor: not-allowed; }
+        .cantidad-caja { 
+            display: flex; 
+            align-items: center; 
+            background: #F6F3EA; 
+            border-radius: 50px; 
+            padding: 4px; 
+            border: 1px solid #E6E1DA; 
+        }
+        .cant-btn { 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 50%; 
+            border: none; 
+            background: #ffffff; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 16px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: background-color 0.2s, color 0.2s; 
+        }
+        .cant-btn:hover { background: var(--primary); color: #ffffff; }
+        .cant-input { width: 45px; text-align: center; font-size: 15px; font-weight: 700; border: none; background: transparent; color: var(--text-dark); }
+        
+        .btn-agregar-carrito { 
+            flex: 1; 
+            min-width: 220px; 
+            padding: 16px; 
+            background: var(--primary); 
+            color: #ffffff; 
+            border: none; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            font-size: 13px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            transition: background-color 0.2s, transform 0.2s; 
+            box-shadow: 0 4px 12px rgba(61,49,42,0.15);
+        }
+        .btn-agregar-carrito:hover { background: #52433A; transform: translateY(-1px); }
+        .btn-agregar-carrito:disabled { background: #CBD5E1; color: #8C7E74; cursor: not-allowed; transform: none; box-shadow: none; }
     </style>
 </head>
 <body>
 
 <div class="container-premium">
+    <!-- Columna Izquierda: Portada Visual + Descripción Abajo -->
     <div class="galeria-wrapper">
-        <a href="/tienda" class="volviendo-btn"><i class="fas fa-arrow-left"></i> Volver a la Tienda Boutique</a>
-        <img id="foto-visor" src="" alt="Prenda de Blanquería" class="visor-principal">
+        <a href="/tienda" class="volviendo-btn"><i class="fas fa-arrow-left"></i> Volver a la Tienda</a>
+        <img id="foto-visor" src="" alt="Cargando Prenda..." class="visor-principal">
         
-        <div style="margin-top: 12px; padding: 20px; background: #FAEDCD; border-radius: 16px; border: 1px dashed var(--secondary);">
-            <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; color: var(--primary); font-weight: 700;"><i class="fas fa-align-left"></i> Descripción del Artículo</h4>
+        <!-- Bloque de Descripción debajo de la imagen principal -->
+        <div class="descripcion-contenedor">
+            <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; color: var(--primary); font-weight: 700;"><i class="fas fa-align-left"></i> Descripción del Artículo</h4>
             <p class="descripcion-text" id="prod-descripcion" style="margin: 0;"></p>
         </div>
     </div>
 
+    <!-- Columna Derecha: Precios y Mosaico Estilo Muestrario -->
     <div class="detalles-compra">
         <div>
             <h1 class="titulo-producto" id="prod-nombre">Cargando...</h1>
@@ -79,12 +254,14 @@
         <hr style="border:none; border-top:1px solid #E6E1DA">
 
         <div>
-            <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;"><i class="fas fa-layer-group"></i> Seleccionar Opción Disponible</h4>
+            <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;"><i class="fas fa-palette"></i> Elegir Variante</h4>
+            <!-- Mosaico Compacto Lookbook -->
             <div class="variante-cajon" id="cajon-variantes"></div>
         </div>
 
         <hr style="border:none; border-top:1px solid #E6E1DA">
 
+        <!-- Acciones e inyección al pedido -->
         <div class="acciones-compra-bloque">
             <div class="cantidad-caja">
                 <button type="button" class="cant-btn" onclick="modificarCantidad(-1)">−</button>
@@ -92,7 +269,7 @@
                 <button type="button" class="cant-btn" onclick="modificarCantidad(1)">+</button>
             </div>
             <button class="btn-agregar-carrito" id="btn-add-master" onclick="inyectarAlPedido()">
-                <i class="fas fa-shopping-bag"></i> Agregar al Pedido Actual
+                <i class="fas fa-shopping-bag"></i> Agregar al Pedido
             </button>
         </div>
     </div>
@@ -109,52 +286,56 @@
     async function cargarPaginaProducto() {
         try {
             const res = await fetch(`/api/tienda/producto/${idProducto}`);
-            if(!res.ok) throw new Error("No se pudo obtener el artículo.");
+            if(!res.ok) throw new Error("No pudimos conectar con el catálogo de este artículo.");
             const data = await res.json();
             
             producto = data.producto;
             configuracion = data.configuracion;
             variantes = producto.variantes || [];
             
+            // Inyección de la identidad corporativa de la marca
             if(configuracion.diseno) {
                 const d = configuracion.diseno;
                 if(d.colorPrimario) document.documentElement.style.setProperty('--primary', d.colorPrimario);
                 if(d.colorSecundario) document.documentElement.style.setProperty('--secondary', d.colorSecundario);
+                if(d.colorFondo) document.documentElement.style.setProperty('--bg-light', d.colorFondo);
+                if(d.colorTexto) document.documentElement.style.setProperty('--text-dark', d.colorTexto);
             }
 
             document.title = `${producto.nombre} | Casa Elegida`;
             document.getElementById('prod-nombre').textContent = producto.nombre;
-            document.getElementById('prod-descripcion').textContent = producto.descripcion || "Artículo seleccionado de nuestra línea exclusiva.";
+            document.getElementById('prod-descripcion').textContent = producto.descripcion || "Artículo premium de nuestra línea de blanquería.";
             document.getElementById('prod-precio').textContent = fmt.format(producto.precio);
             
             if (producto.precioMayor > 0 && configuracion.mayorista?.habilitado) {
                 document.getElementById('prod-precio-mayorista').textContent = `💰 Mayorista: ${fmt.format(producto.precioMayor)}`;
             }
 
+            // Selecciona la primera opción que tenga stock real
             varianteSeleccionadaIdx = variantes.findIndex(v => v.stock > 0);
             if(varianteSeleccionadaIdx === -1) varianteSeleccionadaIdx = 0;
 
             renderizarCajonVariantes();
             actualizarAmbienteVariante();
         } catch(e) {
-            alert(e.message);
+            console.error(e);
             window.location.href = '/tienda';
         }
     }
 
     function renderizarCajonVariantes() {
         const cajon = document.getElementById('cajon-variantes');
+        if (!cajon) return;
         cajon.innerHTML = '';
         
         variantes.forEach((v, i) => {
             const esActiva = i === varianteSeleccionadaIdx;
             cajon.innerHTML += `
-                <div class="variante-fila ${esActiva ? 'activa' : ''} ${v.stock === 0 ? 'sin-stock' : ''}" onclick="cambiarOpcionVariante(${i})">
+                <div class="variante-fila ${esActiva ? 'activa' : ''} ${v.stock === 0 ? 'sin-stock' : ''}" 
+                     onclick="cambiarOpcionVariante(${i})" 
+                     title="${escapeHtml(v.nombre)}">
                     <img src="${sanitizarUrl(v.foto)}" class="variante-thumb">
-                    <div style="flex:1;">
-                        <strong style="font-size:13px; color:var(--text-dark);">${escapeHtml(v.nombre)}</strong>
-                        <p style="font-size:11px; color:var(--text-light);">${v.stock === 0 ? 'Sin unidades disponibles' : `Disponibles: ${v.stock} unidades`}</p>
-                    </div>
+                    <span class="variante-titulo-micro">${escapeHtml(v.nombre)}</span>
                 </div>
             `;
         });
@@ -183,7 +364,7 @@
 
         const btn = document.getElementById('btn-add-master');
         btn.disabled = v.stock === 0;
-        btn.innerHTML = v.stock === 0 ? '<i class="fas fa-box-open"></i> Opción sin stock' : '<i class="fas fa-shopping-bag"></i> Agregar al Pedido Actual';
+        btn.innerHTML = v.stock === 0 ? '<i class="fas fa-box-open"></i> Opción sin stock' : '<i class="fas fa-shopping-bag"></i> Agregar al Pedido';
     }
 
     function modificarCantidad(d) {
@@ -205,7 +386,7 @@
         const existente = carrito.find(i => i.pId === producto.id && i.vNom === v.nombre);
         if (existente) {
             if (v.stock < existente.cant + cant) {
-                alert("No hay suficiente stock disponible de esta variante.");
+                alert("No podemos agregar esa cantidad, supera las unidades físicas disponibles en stock.");
                 return;
             }
             existente.cant += cant;
@@ -225,8 +406,8 @@
         localStorage.setItem('tienda_carrito', JSON.stringify(carrito));
         localStorage.setItem('carrito_timestamp', Date.now());
         
-        alert(`¡Agregado con éxito! Elegiste ${cant} unidad(es) de: ${v.nombre}`);
-        window.location.href = '/tienda';
+        alert(`¡Añadido al pedido! Se cargaron ${cant} unidades de: ${v.nombre}`);
+        window.location.href = '/tienda'; 
     }
 
     document.addEventListener('DOMContentLoaded', cargarPaginaProducto);
