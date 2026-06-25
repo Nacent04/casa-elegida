@@ -377,6 +377,36 @@ const generarPIN = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 app.get('/', (req, res) => res.redirect('/tienda'));
 
+// 1. Ruta para que cuando entren a /producto/12345 sirva la nueva interfaz dedicada
+app.get('/producto/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'producto.html'));
+});
+
+// 2. Endpoint API para traer de manera ultra rápida los datos de UN solo producto con sus variantes
+app.get('/api/tienda/producto/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const prodResult = await pool.query('SELECT * FROM productos WHERE id = $1', [id]);
+        const p = prodResult.rows[0];
+        
+        if (!p) return res.status(404).json({ error: 'Producto no encontrado' });
+        
+        // Traemos sus variantes reales asociadas
+        p.variantes = (await pool.query('SELECT * FROM variantes WHERE "productoId"=$1', [p.id])).rows;
+        
+        // Traemos la configuración global para el tema de los colores y reglas mayoristas
+        const resultConfig = await pool.query('SELECT clave, valor FROM configuracion');
+        const config = {};
+        resultConfig.rows.forEach(r => {
+            try { config[r.clave] = JSON.parse(r.valor); } catch(e) { config[r.clave] = r.valor; }
+        });
+
+        res.json({ producto: p, configuracion: config });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback', 
