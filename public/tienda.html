@@ -964,6 +964,108 @@ body {
     .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
     .product-image { height: 180px; }
 }
+
+/* Contenedor de variantes premium (igual al admin) */
+.variantes-grid-container {
+    background: #F6F3EA;
+    border-radius: 14px;
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease, margin 0.3s ease;
+    opacity: 0;
+}
+.variantes-grid-container.desplegado {
+    max-height: 350px;
+    overflow-y: auto;
+    opacity: 1;
+    padding: 12px;
+    margin: 12px 0;
+}
+.variantes-grid-container::-webkit-scrollbar { width: 4px; }
+.variantes-grid-container::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 2px; }
+
+/* Items individuales de variante */
+.variante-item-tienda {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 2px solid #E6E1DA;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 6px;
+    text-align: left;
+}
+.variante-item-tienda:hover { border-color: var(--secondary); }
+.variante-item-tienda.activa {
+    border-color: var(--primary) !important;
+    background: #FDFBF7;
+    box-shadow: var(--shadow-sm);
+    transform: scale(1.01);
+}
+.variante-item-tienda.sin-stock { opacity: 0.4; pointer-events: none; }
+
+/* Selectores de cantidad elegantes en tarjeta */
+.cantidad-selector-tienda { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 6px; 
+    margin: 12px auto; 
+    background: #F6F3EA; 
+    border-radius: 50px; 
+    padding: 4px; 
+    width: fit-content; 
+}
+.btn-cant-tienda { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    border: none; 
+    background: white; 
+    cursor: pointer; 
+    font-weight: 600; 
+    font-size: 16px; 
+    color: var(--text-dark); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s; 
+}
+.btn-cant-tienda:hover { background: var(--primary); color: white; }
+.input-cant-tienda { 
+    width: 45px; 
+    text-align: center; 
+    font-size: 14px; 
+    font-weight: 600; 
+    border: none; 
+    background: transparent; 
+}
+
+/* Botón desplegable */
+.btn-desplegar-tienda {
+    width: 100%;
+    padding: 10px;
+    background: #F6F3EA;
+    color: var(--text-dark);
+    border: 1px solid #E6E1DA;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 8px 0;
+    transition: all 0.2s;
+}
+.btn-desplegar-tienda:hover { background: #E6E1DA; }
+.btn-desplegar-tienda.activo { background: var(--primary); color: white; }
+    
 </style>
 </head>
 <body>
@@ -1233,45 +1335,106 @@ function toggleFavorito(id,event){event.stopPropagation();const idx=favoritos.in
 
 function getRelacionados(producto,limite=5){const catId=producto.categoriaId;let rel=productos.filter(p=>p.id!==producto.id&&p.categoriaId===catId);if(rel.length<limite){rel=rel.concat(productos.filter(p=>p.id!==producto.id&&p.categoriaId!==catId))}return rel.slice(0,limite)}
 
+let variantesTiendaSeleccionadas = {}; // Trackea el índice seleccionado por cada productoId
+
 function renderizarProductos() {
     const contenedor = document.getElementById('products-grid');
     if (!contenedor) return;
 
-    if (!productos || productos.length === 0) {
+    const listaFiltrada = getProductosFiltrados();
+
+    if (!listaFiltrada || listaFiltrada.length === 0) {
         contenedor.innerHTML = `
-            <div style="text-align:center; padding:40px; color:#3D312A; opacity:0.6;">
+            <div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-dark); opacity:0.6;">
                 <i class="fas fa-box-open" style="font-size:48px; margin-bottom:16px;"></i>
-                <p>No encontramos productos cargados en el sistema.</p>
+                <p>No se encontraron prendas con los filtros aplicados.</p>
             </div>`;
         return;
     }
 
     let html = '';
 
-        getProductosFiltrados().forEach(p => {
-        // Tomamos la primera imagen disponible de las variantes o la general
-        let fotoProducto = '';
-        if (p.variantes && Array.isArray(p.variantes) && p.variantes[0] && p.variantes[0].foto) {
-            fotoProducto = p.variantes[0].foto;
-        } else if (p.foto) {
-            fotoProducto = p.foto;
-        } else {
-            fotoProducto = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23F6F3EA"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="#3D312A" font-size="14">Casa Elegida</text></svg>';
+    listaFiltrada.forEach(p => {
+        if (!p.variantes || p.variantes.length === 0) {
+            p.variantes = [{ nombre: "Única", stock: 0, foto: "" }];
         }
 
-        // Renderizado directo sin filtros restrictivos de stock
-        html += `
-            <div class="producto-card" style="border-radius:16px; overflow:hidden; background:white; border:1px solid #E6E1DA; display:flex; flex-direction:column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <div class="producto-img-container" style="position:relative; aspect-ratio: 4/3 !important; background:#F6F3EA; width:100%; overflow:hidden;">
-                    <img src="${fotoProducto}" alt="${escapeHtml(p.nombre)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22 fill=%22%23F6F3EA%22><rect width=%22400%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 fill=%22%233D312A%22 font-size=%2214%22>🛏️ Casa Elegida</text></svg>'">
-                </div>
-                <div class="producto-info" style="padding:16px; text-align:center; flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
-                    <div>
-                        <h3 style="font-family:'Poppins', sans-serif; font-size:15px; font-weight:600; color:#3D312A; margin:0 0 4px 0;">${escapeHtml(p.nombre)}</h3>
-                        <p style="font-size:16px; font-weight:700; color:#C5A880; margin:0;">${fmt.format(p.precio)}</p>
-                        ${p.precioMayor > 0 ? `<p style="font-size:12px; color:#8C7E74; margin-top:2px;">💎 Mayorista: ${fmt.format(p.precioMayor)}</p>` : ''}
+        // Inicializar la variante seleccionada del producto si no existe
+        if (variantesTiendaSeleccionadas[p.id] === undefined) {
+            variantesTiendaSeleccionadas[p.id] = p.variantes.findIndex(v => v.stock > 0);
+        }
+        if (variantesTiendaSeleccionadas[p.id] === -1) variantesTiendaSeleccionadas[p.id] = 0;
+
+        let idx = variantesTiendaSeleccionadas[p.id];
+        let vActiva = p.variantes[idx] || p.variantes[0];
+
+        // Construir la lista vertical interna de variantes
+        let variantesHTML = '<div style="display:flex; flex-direction:column; width:100%;">';
+        p.variantes.forEach((vr, i) => {
+            const tieneImagen = vr.foto && vr.foto.trim() !== '';
+            variantesHTML += `
+                <div onclick="seleccionarVarianteTienda(${p.id}, ${i})" 
+                     class="variante-item-tienda ${idx === i ? 'activa' : ''} ${vr.stock === 0 ? 'sin-stock' : ''}" 
+                     id="v-item-${p.id}-${i}" 
+                     data-index="${i}">
+                    
+                    <div style="width:50px; height:38px; border-radius:8px; background:#F6F3EA; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(197,168,128,0.15);">
+                        <img src="${tieneImagen ? sanitizarUrl(vr.foto) : 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2238%22 fill=%22%23FAEDCD%22><rect width=%2250%22 height=%2238%22/><text x=%2250%%22 y=%2265%%22 text-anchor=%22middle%22 fill=%22%23D4A373%22 font-size=%2212%22>🛏️</text></svg>'}" 
+                             style="width:100%; height:100%; object-fit:cover;">
                     </div>
-                    <button class="btn-ver" onclick="abrirModalProducto(${p.id})" style="width:100%; padding:11px; background:#3D312A; color:white; border:none; border-radius:50px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; cursor:pointer; margin-top:8px;">Ver Opciones</button>
+                    
+                    <div style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                        <span style="font-size:12px; font-weight:600; color:var(--text-dark);">${escapeHtml(vr.nombre)}</span>
+                        <span style="font-size:10px; color:var(--text-light);">
+                            ${vr.stock === 0 ? '<span style="color:var(--danger); font-weight:600;">Sin stock</span>' : `Disponible: <strong>${vr.stock} u.</strong>`}
+                        </span>
+                    </div>
+                </div>`;
+        });
+        variantesHTML += '</div>';
+
+        // Renderizado Lookbook de la Tarjeta Completa
+        html += `
+            <div class="product-card" id="prod-card-${p.id}">
+                <div class="product-badge">
+                    ${p.precioMayor > 0 ? `<span class="badge-mayorista">Por Mayor</span>` : ''}
+                </div>
+                <span class="badge-stock ${vActiva.stock <= 3 ? 'low' : ''}" id="stock-tag-${p.id}">
+                    Stock: ${vActiva.stock} u.
+                </span>
+                
+                <img id="img-tienda-${p.id}" src="${sanitizarUrl(vActiva.foto)}" alt="${escapeHtml(p.nombre)}" class="product-image" style="aspect-ratio: 4/3 !important;">
+                
+                <div class="product-info">
+                    <h3 class="product-name" style="font-size:14px; font-weight:600;">${escapeHtml(p.nombre)}</h3>
+                    
+                    <div class="product-prices">
+                        <span class="price-current">${fmt.format(p.precio)}</span>
+                    </div>
+                    ${p.precioMayor > 0 ? `<p style="font-size:11px; color:var(--text-light); margin-top:-8px; margin-bottom:8px;">💰 Mayorista: ${fmt.format(p.precioMayor)}</p>` : ''}
+                    
+                    <!-- Botón Desplegable Opciones -->
+                    <button type="button" class="btn-desplegar-tienda" id="btn-desplegar-t-${p.id}" onclick="toggleVariantesTienda(${p.id})">
+                        <i class="fas fa-layer-group"></i> 
+                        <span id="btn-text-t-${p.id}">Opciones Disponibles (${p.variantes.length})</span>
+                        <i class="fas fa-chevron-down" id="btn-icon-t-${p.id}"></i>
+                    </button>
+                    
+                    <!-- Cajón Desplegable de Variantes -->
+                    <div class="variantes-grid-container" id="variantes-container-t-${p.id}">
+                        ${variantesHTML}
+                    </div>
+
+                    <!-- Selector de Cantidad -->
+                    <div class="cantidad-selector-tienda">
+                        <button type="button" class="btn-cant-tienda" onclick="cambiarCantidadTienda(${p.id},-1)">−</button>
+                        <input type="number" id="cant-t-${p.id}" value="1" min="1" max="${vActiva.stock}" class="input-cant-tienda" readonly>
+                        <button type="button" class="btn-cant-tienda" onclick="cambiarCantidadTienda(${p.id},1)">+</button>
+                    </div>
+
+                    <button class="btn-add-product" id="btn-add-t-${p.id}" onclick="agregarAlPedidoDirecto(${p.id})" ${vActiva.stock === 0 ? 'disabled' : ''}>
+                        <i class="fas fa-shopping-bag"></i> ${vActiva.stock === 0 ? 'Sin Stock' : 'Agregar al Pedido'}
+                    </button>
                 </div>
             </div>
         `;
@@ -1530,6 +1693,119 @@ async function cargarCarritoLocal(){
             carrito = [];
         }
     }
+}
+
+function toggleVariantesTienda(id) {
+    const container = document.getElementById(`variantes-container-t-${id}`);
+    const btn = document.getElementById(`btn-desplegar-t-${id}`);
+    const txt = document.getElementById(`btn-text-t-${id}`);
+    const icon = document.getElementById(`btn-icon-t-${id}`);
+    if (!container) return;
+
+    if (container.classList.contains('desplegado')) {
+        container.classList.remove('desplegado');
+        btn.classList.remove('activo');
+        const p = productos.find(x => x.id == id);
+        txt.textContent = `Opciones Disponibles (${p?.variantes?.length || 0})`;
+        icon.className = 'fas fa-chevron-down';
+    } else {
+        container.classList.add('desplegado');
+        btn.classList.add('activo');
+        txt.textContent = 'Ocultar Opciones';
+        icon.className = 'fas fa-chevron-up';
+    }
+}
+
+function seleccionarVarianteTienda(id, idx) {
+    const p = productos.find(x => x.id == id);
+    if (!p) return;
+    const v = p.variantes[idx];
+    if (!v || v.stock === 0) { mostrarToast('⚠️ Esta opción se encuentra sin stock', 'error'); return; }
+
+    variantesTiendaSeleccionadas[id] = idx;
+
+    // Cambiar clase activa visualmente
+    document.querySelectorAll(`#variantes-container-t-${id} .variante-item-tienda`).forEach(el => {
+        const i = parseInt(el.getAttribute('data-index'));
+        el.classList.toggle('activa', i === idx);
+    });
+
+    // Actualizar imagen principal con efecto soft fade
+    const img = document.getElementById(`img-tienda-${id}`);
+    if (img) {
+        img.style.opacity = '0.4';
+        setTimeout(() => { img.src = sanitizarUrl(v.foto); img.style.opacity = '1'; }, 120);
+    }
+
+    // Actualizar límites de cantidad
+    const inputCant = document.getElementById(`cant-t-${id}`);
+    if (inputCant) {
+        inputCant.value = 1;
+        inputCant.max = v.stock;
+    }
+
+    // Actualizar tags de stock y botón de compra
+    const stockTag = document.getElementById(`stock-tag-${id}`);
+    if (stockTag) {
+        stockTag.textContent = `Stock: ${v.stock} u.`;
+        stockTag.className = `badge-stock ${v.stock <= 3 ? 'low' : ''}`;
+    }
+
+    const btnAdd = document.getElementById(`btn-add-t-${id}`);
+    if (btnAdd) {
+        btnAdd.disabled = v.stock === 0;
+        btnAdd.innerHTML = v.stock === 0 ? '<i class="fas fa-box"></i> Sin Stock' : '<i class="fas fa-shopping-bag"></i> Agregar al Pedido';
+    }
+}
+
+function cambiarCantidadTienda(id, d) {
+    const input = document.getElementById(`cant-t-${id}`);
+    if (!input) return;
+    let maxVal = parseInt(input.max) || 1;
+    let nuevaCant = (parseInt(input.value) || 1) + d;
+    input.value = Math.max(1, Math.min(nuevaCant, maxVal));
+}
+
+function agregarAlPedidoDirecto(id) {
+    const p = productos.find(x => x.id == id);
+    if (!p) return;
+    const idx = variantesTiendaSeleccionadas[id] || 0;
+    const v = p.variantes[idx];
+    if (!v) return;
+
+    const cantInput = document.getElementById(`cant-t-${id}`);
+    const cantidadAAgregar = parseInt(cantInput ? cantInput.value : 1);
+
+    if (v.stock < cantidadAAgregar) {
+        mostrarToast('❌ Stock insuficiente disponible', 'error');
+        return;
+    }
+
+    const existente = carrito.find(i => i.pId === p.id && i.vNom === v.nombre);
+    if (existente) {
+        if (v.stock < existente.cant + cantidadAAgregar) {
+            mostrarToast('❌ No podés agregar más de este artículo (límite de stock)', 'error');
+            return;
+        }
+        existente.cant += cantidadAAgregar;
+    } else {
+        carrito.push({
+            pId: p.id,
+            pNom: p.nombre,
+            vNom: v.nombre,
+            vFoto: v.foto,
+            precio: p.precio,
+            precioOriginal: p.precio,
+            cant: cantidadAAgregar,
+            esManual: false
+        });
+    }
+
+    recalcularPreciosMayoristas();
+    guardarCarritoLocal();
+    renderizarCarrito();
+    actualizarProgresoMayorista();
+    mostrarToast('✅ ¡Agregado al pedido con éxito!');
 }
     
 function toggleAsistente(){const burbuja=document.getElementById('asistente-burbuja');burbuja.style.display=burbuja.style.display==='block'?'none':'block'}
