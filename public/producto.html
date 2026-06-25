@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando Prenda Premium...</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #3D312A;
+            --secondary: #C5A880;
+            --bg-light: #FDFBF7;
+            --text-dark: #3D312A;
+            --text-light: #8C7E74;
+            --border-radius: 20px;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-light); color: var(--text-dark); padding: 24px 16px; }
+
+        .container-premium { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; background: white; border-radius: var(--border-radius); padding: 40px; border: 1px solid #E6E1DA; box-shadow: 0 8px 24px rgba(61,49,42,0.03); }
+        @media(max-width: 850px) { .container-premium { grid-template-columns: 1fr; gap: 24px; padding: 20px; } }
+
+        /* Galería e Imagen de Variante */
+        .galeria-wrapper { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 40px; }
+        .visor-principal { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 16px; background: #F6F3EA; border: 1px solid #E6E1DA; transition: opacity 0.2s ease-in-out; }
+        
+        /* Detalles de Compra */
+        .detalles-compra { display: flex; flex-direction: column; gap: 20px; }
+        .volviendo-btn { text-decoration: none; color: var(--text-light); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: color 0.2s; }
+        .volviendo-btn:hover { color: var(--primary); }
+        .titulo-producto { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; line-height: 1.2; }
+        .descripcion-text { font-size: 14px; color: var(--text-light); line-height: 1.6; }
+
+        /* Lista de Variantes Lineal Estilo Admin */
+        .variante-cajon { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+        .variante-fila { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; border: 2px solid #E6E1DA; background: white; cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+        .variante-fila:hover { border-color: var(--secondary); }
+        .variante-fila.activa { border-color: var(--primary) !important; background: #FDFBF7; box-shadow: 0 4px 12px rgba(61,49,42,0.04); transform: translateY(-1px); }
+        .variante-fila.sin-stock { opacity: 0.35; pointer-events: none; }
+        .variante-thumb { width: 56px; height: 42px; border-radius: 8px; background: #F6F3EA; object-fit: cover; border: 1px solid rgba(197,168,128,0.15); }
+
+        /* Controles de Cantidad y Botón de Acción */
+        .acciones-compra-bloque { display: flex; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+        .cantidad-caja { display: flex; align-items: center; background: #F6F3EA; border-radius: 50px; padding: 4px; border: 1px solid #E6E1DA; }
+        .cant-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: white; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .cant-btn:hover { background: var(--primary); color: white; }
+        .cant-input { width: 45px; text-align: center; font-size: 15px; font-weight: 700; border: none; background: transparent; }
+        
+        .btn-agregar-carrito { flex: 1; min-width: 200px; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 50px; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
+        .btn-agregar-carrito:hover { background: #52433A; }
+        .btn-agregar-carrito:disabled { background: #CBD5E1; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container-premium">
+    <!-- Bloque Izquierdo: Galería Visual -->
+    <div class="galeria-wrapper">
+        <a href="/tienda" class="volviendo-btn"><i class="fas fa-arrow-left"></i> Volver a la Tienda Boutique</a>
+        <img id="foto-visor" src="" alt="Prenda de Blanquería" class="visor-principal">
+    </div>
+
+    <!-- Bloque Derecho: Información Comercial -->
+    <div class="detalles-compra">
+        <div>
+            <h1 class="titulo-producto" id="prod-nombre">Cargando...</h1>
+            <div style="display:flex; align-items:baseline; gap:16px; margin-top:12px;">
+                <span id="prod-precio" style="font-family:'Playfair Display', serif; font-size: 32px; font-weight:700; color:var(--primary)"></span>
+                <span id="prod-precio-mayorista" style="font-size:13px; color:#4E7A62; font-weight:600;"></span>
+            </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #E6E1DA">
+
+        <div>
+            <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;"><i class="fas fa-layer-group"></i> Seleccionar Opción Disponible</h4>
+            <div class="variante-cajon" id="cajon-variantes"></div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #E6E1DA">
+
+        <div>
+            <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;"><i class="fas fa-align-left"></i> Descripción del Artículo</h4>
+            <p class="descripcion-text" id="prod-descripcion"></p>
+        </div>
+
+        <div class="acciones-compra-bloque">
+            <div class="cantidad-caja">
+                <button type="button" class="cant-btn" onclick="modificarCantidad(-1)">−</button>
+                <input type="number" id="compra-cantidad" value="1" class="cant-input" readonly>
+                <button type="button" class="cant-btn" onclick="modificarCantidad(1)">+</button>
+            </div>
+            <button class="btn-agregar-carrito" id="btn-add-master" onclick="inyectarAlPedido()">
+                <i class="fas fa-shopping-bag"></i> Agregar al Pedido Actual
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let producto = null, variantes = [], configuracion = {}, varianteSeleccionadaIdx = 0;
+    const fmt = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 });
+    const idProducto = window.location.pathname.split('/').pop();
+
+    function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+    function sanitizarUrl(url){ if(!url) return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23F6F3EA"><rect width="400" height="300"/></svg>'; return url; }
+
+    async function cargarPaginaProducto() {
+        try {
+            const res = await fetch(`/api/tienda/producto/${idProducto}`);
+            if(!res.ok) throw new Error("No se pudo obtener el artículo.");
+            const data = await res.json();
+            
+            producto = data.producto;
+            configuracion = data.configuracion;
+            variantes = producto.variantes || [];
+            
+            // Asignamos el color dinámico del tema boutique si está guardado
+            if(configuracion.diseno) {
+                const d = configuracion.diseno;
+                if(d.colorPrimario) document.documentElement.style.setProperty('--primary', d.colorPrimario);
+                if(d.colorSecundario) document.documentElement.style.setProperty('--secondary', d.colorSecundario);
+            }
+
+            document.title = `${producto.nombre} | Casa Elegida`;
+            document.getElementById('prod-nombre').textContent = producto.nombre;
+            document.getElementById('prod-descripcion').textContent = producto.descripcion || "Artículo seleccionado de nuestra línea exclusiva.";
+            document.getElementById('prod-precio').textContent = fmt.format(producto.precio);
+            
+            if (producto.precioMayor > 0 && configuracion.mayorista?.habilitado) {
+                document.getElementById('prod-precio-mayorista').textContent = `💰 Mayorista: ${fmt.format(producto.precioMayor)}`;
+            }
+
+            // Seleccionamos la primera variante con stock disponible
+            varianteSeleccionadaIdx = variantes.findIndex(v => v.stock > 0);
+            if(varianteSeleccionadaIdx === -1) varianteSeleccionadaIdx = 0;
+
+            renderizarCajonVariantes();
+            actualizarAmbienteVariante();
+        } catch(e) {
+            alert(e.message);
+            window.location.href = '/tienda';
+        }
+    }
+
+    function renderizarCajonVariantes() {
+        const cajon = document.getElementById('cajon-variantes');
+        cajon.innerHTML = '';
+        
+        variantes.forEach((v, i) => {
+            const esActiva = i === varianteSeleccionadaIdx;
+            cajon.innerHTML += `
+                <div class="variante-fila ${esActiva ? 'activa' : ''} ${v.stock === 0 ? 'sin-stock' : ''}" onclick="cambiarOpcionVariante(${i})">
+                    <img src="${sanitizarUrl(v.foto)}" class="variante-thumb">
+                    <div style="flex:1;">
+                        <strong style="font-size:13px; color:var(--text-dark);">${escapeHtml(v.nombre)}</strong>
+                        <p style="font-size:11px; color:var(--text-light);">${v.stock === 0 ? 'Sin unidades disponibles' : `Disponibles: ${v.stock} unidades`}</p>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function cambiarOpcionVariante(idx) {
+        varianteSeleccionadaIdx = idx;
+        renderizarCajonVariantes();
+        actualizarAmbienteVariante();
+    }
+
+    function actualizarAmbienteVariante() {
+        const v = variantes[varianteSeleccionadaIdx];
+        if(!v) return;
+
+        // Cambiamos la imagen principal con un efecto suave de fundido
+        const visor = document.getElementById('foto-visor');
+        visor.style.opacity = '0.3';
+        setTimeout(() => {
+            visor.src = sanitizarUrl(v.foto);
+            visor.style.opacity = '1';
+        }, 120);
+
+        // Ajustamos los controles de stock y botón de compra
+        const input = document.getElementById('compra-cantidad');
+        input.value = 1;
+        input.max = v.stock;
+
+        const btn = document.getElementById('btn-add-master');
+        btn.disabled = v.stock === 0;
+        btn.innerHTML = v.stock === 0 ? '<i class="fas fa-box-open"></i> Opción sin stock' : '<i class="fas fa-shopping-bag"></i> Agregar al Pedido Actual';
+    }
+
+    function modificarCantidad(d) {
+        const input = document.getElementById('compra-cantidad');
+        const maxVal = parseInt(input.max) || 1;
+        let valor = parseInt(input.value) + d;
+        input.value = Math.max(1, Math.min(valor, maxVal));
+    }
+
+    function inyectarAlPedido() {
+        const v = variantes[varianteSeleccionadaIdx];
+        const cant = parseInt(document.getElementById('compra-cantidad').value) || 1;
+        
+        let carrito = [];
+        try {
+            carrito = JSON.parse(localStorage.getItem('tienda_carrito') || '[]');
+        } catch(e) { carrito = []; }
+
+        const existente = carrito.find(i => i.pId === producto.id && i.vNom === v.nombre);
+        if (existente) {
+            if (v.stock < existente.cant + cant) {
+                alert("No hay suficiente stock disponible de esta variante.");
+                return;
+            }
+            existente.cant += cant;
+        } else {
+            carrito.push({
+                pId: producto.id,
+                pNom: producto.nombre,
+                vNom: v.nombre,
+                vFoto: v.foto,
+                precio: producto.precio,
+                precioOriginal: producto.precio,
+                cant: cant,
+                esManual: false
+            });
+        }
+
+        // Persistimos el carrito en el ecosistema local de tu tienda
+        localStorage.setItem('tienda_carrito', JSON.stringify(carrito));
+        localStorage.setItem('carrito_timestamp', Date.now());
+        
+        alert(`¡Agregado con éxito! Elegiste ${cant} unidad(es) de: ${v.nombre}`);
+        window.location.href = '/tienda'; // Redirige para ver el carrito consolidado
+    }
+
+    document.addEventListener('DOMContentLoaded', cargarPaginaProducto);
+</script>
+</body>
+</html>
