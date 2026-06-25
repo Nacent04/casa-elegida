@@ -1234,7 +1234,7 @@ function toggleFavorito(id,event){event.stopPropagation();const idx=favoritos.in
 function getRelacionados(producto,limite=5){const catId=producto.categoriaId;let rel=productos.filter(p=>p.id!==producto.id&&p.categoriaId===catId);if(rel.length<limite){rel=rel.concat(productos.filter(p=>p.id!==producto.id&&p.categoriaId!==catId))}return rel.slice(0,limite)}
 
 function renderizarProductos() {
-    const contenedor = document.getElementById('contenedor-productos');
+    const contenedor = document.getElementById('products-grid');
     if (!contenedor) return;
 
     if (!productos || productos.length === 0) {
@@ -1248,7 +1248,7 @@ function renderizarProductos() {
 
     let html = '';
 
-    productos.forEach(p => {
+        getProductosFiltrados().forEach(p => {
         // Tomamos la primera imagen disponible de las variantes o la general
         let fotoProducto = '';
         if (p.variantes && Array.isArray(p.variantes) && p.variantes[0] && p.variantes[0].foto) {
