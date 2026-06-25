@@ -57,13 +57,16 @@
 <body>
 
 <div class="container-premium">
-    <!-- Bloque Izquierdo: Galería Visual -->
     <div class="galeria-wrapper">
         <a href="/tienda" class="volviendo-btn"><i class="fas fa-arrow-left"></i> Volver a la Tienda Boutique</a>
         <img id="foto-visor" src="" alt="Prenda de Blanquería" class="visor-principal">
+        
+        <div style="margin-top: 12px; padding: 20px; background: #FAEDCD; border-radius: 16px; border: 1px dashed var(--secondary);">
+            <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; color: var(--primary); font-weight: 700;"><i class="fas fa-align-left"></i> Descripción del Artículo</h4>
+            <p class="descripcion-text" id="prod-descripcion" style="margin: 0;"></p>
+        </div>
     </div>
 
-    <!-- Bloque Derecho: Información Comercial -->
     <div class="detalles-compra">
         <div>
             <h1 class="titulo-producto" id="prod-nombre">Cargando...</h1>
@@ -81,11 +84,6 @@
         </div>
 
         <hr style="border:none; border-top:1px solid #E6E1DA">
-
-        <div>
-            <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;"><i class="fas fa-align-left"></i> Descripción del Artículo</h4>
-            <p class="descripcion-text" id="prod-descripcion"></p>
-        </div>
 
         <div class="acciones-compra-bloque">
             <div class="cantidad-caja">
@@ -118,7 +116,6 @@
             configuracion = data.configuracion;
             variantes = producto.variantes || [];
             
-            // Asignamos el color dinámico del tema boutique si está guardado
             if(configuracion.diseno) {
                 const d = configuracion.diseno;
                 if(d.colorPrimario) document.documentElement.style.setProperty('--primary', d.colorPrimario);
@@ -134,7 +131,6 @@
                 document.getElementById('prod-precio-mayorista').textContent = `💰 Mayorista: ${fmt.format(producto.precioMayor)}`;
             }
 
-            // Seleccionamos la primera variante con stock disponible
             varianteSeleccionadaIdx = variantes.findIndex(v => v.stock > 0);
             if(varianteSeleccionadaIdx === -1) varianteSeleccionadaIdx = 0;
 
@@ -174,7 +170,6 @@
         const v = variantes[varianteSeleccionadaIdx];
         if(!v) return;
 
-        // Cambiamos la imagen principal con un efecto suave de fundido
         const visor = document.getElementById('foto-visor');
         visor.style.opacity = '0.3';
         setTimeout(() => {
@@ -182,7 +177,6 @@
             visor.style.opacity = '1';
         }, 120);
 
-        // Ajustamos los controles de stock y botón de compra
         const input = document.getElementById('compra-cantidad');
         input.value = 1;
         input.max = v.stock;
@@ -228,12 +222,11 @@
             });
         }
 
-        // Persistimos el carrito en el ecosistema local de tu tienda
         localStorage.setItem('tienda_carrito', JSON.stringify(carrito));
         localStorage.setItem('carrito_timestamp', Date.now());
         
         alert(`¡Agregado con éxito! Elegiste ${cant} unidad(es) de: ${v.nombre}`);
-        window.location.href = '/tienda'; // Redirige para ver el carrito consolidado
+        window.location.href = '/tienda';
     }
 
     document.addEventListener('DOMContentLoaded', cargarPaginaProducto);
