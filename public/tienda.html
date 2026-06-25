@@ -965,27 +965,45 @@ body {
     .product-image { height: 180px; }
 }
 
-/* Contenedor de variantes premium (igual al admin) */
+/* Contenedor de variantes premium (Optimizado sin lag ni trabas) */
 .variantes-grid-container {
     background: #F6F3EA;
     border-radius: 14px;
-    padding: 0;
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease, padding 0.3s ease, margin 0.3s ease;
     opacity: 0;
+    padding: 0 12px; /* Evita saltos bruscos de caja en el renderizado inicial */
+    margin: 0;
+    
+    /* Curva de aceleración fluida con tiempos coordinados */
+    transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                opacity 0.2s ease, 
+                padding 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                margin 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    
+    /* Forzamos al procesador a usar aceleración gráfica directa */
+    will-change: max-height, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
+
 .variantes-grid-container.desplegado {
-    max-height: 350px;
+    max-height: 270px; /* Altura óptima para scroll fluido en tarjetas lookbook */
     overflow-y: auto;
     opacity: 1;
     padding: 12px;
-    margin: 12px 0;
+    margin: 10px 0;
 }
-.variantes-grid-container::-webkit-scrollbar { width: 4px; }
-.variantes-grid-container::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 2px; }
 
-/* Items individuales de variante */
+.variantes-grid-container::-webkit-scrollbar { 
+    width: 4px; 
+}
+.variantes-grid-container::-webkit-scrollbar-thumb { 
+    background: var(--secondary); 
+    border-radius: 2px; 
+}
+
+/* Items individuales de variante (Transiciones atómicas sin 'all') */
 .variante-item-tienda {
     display: flex;
     align-items: center;
@@ -995,18 +1013,29 @@ body {
     border: 2px solid #E6E1DA;
     background: white;
     cursor: pointer;
-    transition: all 0.2s;
     margin-bottom: 6px;
     text-align: left;
+    
+    /* Reemplazado transition:all para prevenir recálculos del DOM innecesarios */
+    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    transform: translateZ(0);
 }
-.variante-item-tienda:hover { border-color: var(--secondary); }
+
+.variante-item-tienda:hover { 
+    border-color: var(--secondary); 
+}
+
 .variante-item-tienda.activa {
     border-color: var(--primary) !important;
     background: #FDFBF7;
     box-shadow: var(--shadow-sm);
     transform: scale(1.01);
 }
-.variante-item-tienda.sin-stock { opacity: 0.4; pointer-events: none; }
+
+.variante-item-tienda.sin-stock { 
+    opacity: 0.4; 
+    pointer-events: none; 
+}
 
 /* Selectores de cantidad elegantes en tarjeta */
 .cantidad-selector-tienda { 
@@ -1020,6 +1049,7 @@ body {
     padding: 4px; 
     width: fit-content; 
 }
+
 .btn-cant-tienda { 
     width: 32px; 
     height: 32px; 
@@ -1033,9 +1063,14 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s; 
+    transition: background-color 0.2s ease, color 0.2s ease; 
 }
-.btn-cant-tienda:hover { background: var(--primary); color: white; }
+
+.btn-cant-tienda:hover { 
+    background: var(--primary); 
+    color: white; 
+}
+
 .input-cant-tienda { 
     width: 45px; 
     text-align: center; 
@@ -1061,10 +1096,17 @@ body {
     justify-content: center;
     gap: 6px;
     margin: 8px 0;
-    transition: all 0.2s;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
-.btn-desplegar-tienda:hover { background: #E6E1DA; }
-.btn-desplegar-tienda.activo { background: var(--primary); color: white; }
+
+.btn-desplegar-tienda:hover { 
+    background: #E6E1DA; 
+}
+
+.btn-desplegar-tienda.activo { 
+    background: var(--primary); 
+    color: white; 
+}
     
 </style>
 </head>
